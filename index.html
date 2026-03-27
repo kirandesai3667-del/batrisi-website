@@ -419,7 +419,7 @@
 <!-- JAVASCRIPT START -->
 <script>
     // ================= SUPABASE INITIALIZATION =================
-    // Declared EXACTLY ONCE here at the very top using the correct Legacy Anon Key.
+    // Declared EXACTLY ONCE here at the very top.
     const supabaseUrl = 'https://njqfgfwxdjsewubkefaj.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWZnZnd4ZGpzZXd1YmtlZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTM0NDksImV4cCI6MjA5MDE2OTQ0OX0.SsiMRppxCjdTLO-5rJvf9t2mqGJWnRLOslOpLQejiVU';
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -548,7 +548,7 @@
 
     function updateNotifUI() {
         if (!currentUser) return;
-        let unreadCount = notifications.filter(n => !n.read && n.to_user !== 'all').length; 
+        let unreadCount = notifications.filter(n => !n.is_read && n.to_user !== 'all').length; 
         
         let role = currentUser.role.toLowerCase();
         if (role === 'laboratory') role = 'lab';
@@ -560,13 +560,13 @@
         list.innerHTML = "";
         notifications.forEach((n) => {
             const li = document.createElement("li");
-            li.className = (n.read) ? "" : "unread";
+            li.className = (n.is_read) ? "" : "unread";
             let titleHtml = n.title ? `<strong style="display:block; color:var(--accent-color); margin-bottom:4px;">${n.title}</strong>` : '';
             li.innerHTML = `${titleHtml}${n.message}<small>${new Date(n.created_at).toLocaleString()}</small>`;
             
             li.onclick = async () => {
                 if (n.to_user !== 'all') {
-                    await supabaseClient.from('notifications').update({ read: true }).eq('id', n.id);
+                    await supabaseClient.from('notifications').update({ is_read: true }).eq('id', n.id);
                     fetchNotifications();
                 }
             };
@@ -585,7 +585,7 @@
     }
 
     async function sendNotification(to_user, title, message) {
-        await supabaseClient.from('notifications').insert([{ to_user, title, message, read: false }]);
+        await supabaseClient.from('notifications').insert([{ to_user, title, message, is_read: false }]);
         fetchNotifications();
     }
 
@@ -644,7 +644,7 @@
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('login-id').value.trim();
-        const pass = document.getElementById('login-password').value;
+        const pass = document.getElementById('login-password').value.trim();
 
         const btn = e.target.querySelector('button');
         btn.innerText = "Checking...";
@@ -652,7 +652,7 @@
 
         // Level 1: Check Committee Table (Admin, Lab, Committee)
         const { data: commData, error: commError } = await supabaseClient
-            .from('committee')
+            .from('Committee')
             .select('*')
             .eq('username', id)
             .eq('password', pass)
@@ -668,14 +668,22 @@
 
         // Level 2: Check Members Table (Member)
         const { data: memData, error: memError } = await supabaseClient
-            .from('members')
+            .from('Members')
             .select('*')
-            .eq('member_number', id)
-            .eq('password', pass)
+            .eq('Member_Number', id)
+            .eq('Password', pass)
             .single();
 
         if (memData) {
-            currentUser = { ...memData, id: memData.member_number, role: 'Member' };
+            currentUser = { 
+                ...memData, 
+                id: memData.Member_Number, 
+                name: memData.Name,
+                address: memData.Address,
+                native: memData.Native_Name,
+                mobile: memData.Mobile_Number,
+                role: 'Member' 
+            };
             finishLogin('Member');
             btn.innerText = "Log In";
             btn.disabled = false;
@@ -740,10 +748,10 @@
         uploadedPrescriptionBase64 = null;
 
         // Fetch committee members & Labs from Supabase
-        const { data: commMembers } = await supabaseClient.from('committee').select('username, name').eq('role', 'Committee');
+        const { data: commMembers } = await supabaseClient.from('Committee').select('username, name').eq('role', 'Committee');
         let committeeOptions = (commMembers || []).map(m => `<option value="${m.username}">${m.name}</option>`).join('');
         
-        const { data: labMembers } = await supabaseClient.from('committee').select('name').eq('role', 'Laboratory');
+        const { data: labMembers } = await supabaseClient.from('Committee').select('name').eq('role', 'Laboratory');
         let labOptions = (labMembers || []).map(l => `<option value="${l.name}">${l.name}</option>`).join('');
 
         const html = `
@@ -807,8 +815,8 @@
             submitBtn.innerText = 'Submitting...';
 
             const patientName = document.getElementById('req-patient-name').value.trim();
-            const lab = document.getElementById('req-lab').value;
-            const assignedComId = document.getElementById('req-committee').value;
+            const lab = document.getElementById('req-lab').value.trim();
+            const assignedComId = document.getElementById('req-committee').value.trim();
 
             try {
                 const { error } = await supabaseClient.from('medical_requests').insert([{
@@ -929,12 +937,13 @@
 
     async function confirmDecline() {
         const id = document.getElementById('decline-request-id').value;
+        const reason = document.getElementById('decline-reason').value.trim();
         try {
             const req = requests.find(r => r.id == id);
             await supabaseClient.from('medical_requests').update({ status: 'Declined' }).eq('id', id);
             closeModal('modal-decline');
             showToast("Request Declined");
-            if(req) sendNotification(req.member_id, "Request Declined", `Your request was declined.`);
+            if(req) sendNotification(req.member_id, "Request Declined", `Your request was declined. Reason: ${reason || 'N/A'}`);
         } catch (e) {
             showToast("Failed to decline.", "error");
         }
