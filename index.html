@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-    <!-- SUPABASE SDK -->
+    <!-- SUPABASE SDK (Sirf EK baar include kiya gaya hai) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -143,8 +143,6 @@
 
         .qr-wrapper { background: #fff; padding: 15px; border-radius: 12px; display: inline-block; margin-top: 10px; }
         .img-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px; margin-top: 10px; border: 1px solid var(--border-light); display: none; }
-        #reader { border-radius: 16px; overflow: hidden; border: 2px solid var(--accent-color); }
-        #reader video { object-fit: cover; }
     </style>
 </head>
 <body>
@@ -396,12 +394,34 @@
         </div>
     </div>
 
+    <!-- Batrisi Programs Admin Modal -->
+    <div id="modal-batrisi-programs" class="modal">
+        <div class="modal-content">
+            <h2 style="text-align: center;">Manage Programs</h2>
+            <div id="admin-program-list" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;"></div>
+            <h3 style="border-top: 1px solid var(--border-color); padding-top: 15px;">Add New Program</h3>
+            <form id="form-add-program">
+                <div class="form-group">
+                    <label>Program Title *</label>
+                    <input type="text" id="prog-title" placeholder="e.g. Annual Medical Camp" required>
+                </div>
+                <div class="form-group">
+                    <label>Message / Description *</label>
+                    <textarea id="prog-msg" rows="3" placeholder="Enter program details..." required></textarea>
+                </div>
+                <button type="submit" class="btn-success" style="margin-top: 15px;">Post Update</button>
+            </form>
+            <button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-batrisi-programs')">Close</button>
+        </div>
+    </div>
+
 </div>
 
+<!-- JAVASCRIPT START -->
 <script>
     // ================= SUPABASE INITIALIZATION =================
-    // Declared exactly once as requested
-    const supabaseUrl = 'https://Njqfgfwxdjsewubkefaj.supabase.co';
+    // Declare supabase client ONLY ONCE here.
+    const supabaseUrl = 'https://njqfgfwxdjsewubkefaj.supabase.co';
     const supabaseKey = 'sb_publishable_43m0NAzvfWnSlinQpaISZg_5nZ191RQ';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
@@ -627,6 +647,10 @@
         const id = document.getElementById('login-id').value.trim();
         const pass = document.getElementById('login-password').value;
 
+        const btn = e.target.querySelector('button');
+        btn.innerText = "Checking...";
+        btn.disabled = true;
+
         // Level 1: Check Committee Table (Admin, Lab, Committee)
         const { data: commData, error: commError } = await supabase
             .from('committee')
@@ -638,6 +662,8 @@
         if (commData) {
             currentUser = { ...commData, id: commData.username };
             finishLogin(currentUser.role);
+            btn.innerText = "Log In";
+            btn.disabled = false;
             return;
         }
 
@@ -652,9 +678,13 @@
         if (memData) {
             currentUser = { ...memData, id: memData.member_number, role: 'Member' };
             finishLogin('Member');
+            btn.innerText = "Log In";
+            btn.disabled = false;
             return;
         }
 
+        btn.innerText = "Log In";
+        btn.disabled = false;
         showToast("Invalid credentials! User not found.", 'error');
     });
 
@@ -846,7 +876,7 @@
         document.getElementById('nav-member-programs').classList.add('active');
         document.getElementById('nav-member-apply').classList.remove('active');
         document.getElementById('nav-member-status').classList.remove('active');
-        document.getElementById('member-content-area').innerHTML = `<h2>Programs and Announcements</h2><p style="color:gray;">No upcoming programs via Supabase link yet.</p>`;
+        document.getElementById('member-content-area').innerHTML = `<h2>Programs and Announcements</h2><p style="color:gray;">No upcoming programs available yet.</p>`;
     }
 
     // ================= COMMITTEE LOGIC =================
@@ -909,10 +939,6 @@
         } catch (e) {
             showToast("Failed to decline.", "error");
         }
-    }
-
-    function renderCommitteePrograms() {
-        document.getElementById('committee-request-list').innerHTML = `<h2>Programs</h2><p style="color:gray;">No upcoming programs.</p>`;
     }
 
     // ================= LABORATORY LOGIC =================
@@ -1023,6 +1049,10 @@
             await supabase.from('medical_requests').delete().eq('id', id);
             showToast("Deleted");
         }
+    }
+
+    function openBatrisiProgramsAdmin() {
+        openModal('modal-batrisi-programs');
     }
 
 </script>
