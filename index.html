@@ -419,10 +419,10 @@
 <!-- JAVASCRIPT START -->
 <script>
     // ================= SUPABASE INITIALIZATION =================
-    // Declare supabase client ONLY ONCE here.
+    // Declared EXACTLY ONCE here at the very top.
     const supabaseUrl = 'https://njqfgfwxdjsewubkefaj.supabase.co';
     const supabaseKey = 'sb_publishable_43m0NAzvfWnSlinQpaISZg_5nZ191RQ';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ================= STATE MANAGEMENT =================
     let currentUser = JSON.parse(localStorage.getItem('sbj_user')) || null;
@@ -533,7 +533,7 @@
     async function fetchNotifications() {
         if (!currentUser) return;
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('notifications')
             .select('*')
             .or(`to_user.eq.${currentUser.id},to_user.eq.all`)
@@ -566,7 +566,7 @@
             
             li.onclick = async () => {
                 if (n.to_user !== 'all') {
-                    await supabase.from('notifications').update({ read: true }).eq('id', n.id);
+                    await supabaseClient.from('notifications').update({ read: true }).eq('id', n.id);
                     fetchNotifications();
                 }
             };
@@ -585,7 +585,7 @@
     }
 
     async function sendNotification(to_user, title, message) {
-        await supabase.from('notifications').insert([{ to_user, title, message, read: false }]);
+        await supabaseClient.from('notifications').insert([{ to_user, title, message, read: false }]);
         fetchNotifications();
     }
 
@@ -597,11 +597,11 @@
 
     // ================= REALTIME REQUESTS & WORKFLOW =================
     async function setupRequestsListener(role) {
-        if (reqSubscription) supabase.removeChannel(reqSubscription);
-        if (notifSubscription) supabase.removeChannel(notifSubscription);
+        if (reqSubscription) supabaseClient.removeChannel(reqSubscription);
+        if (notifSubscription) supabaseClient.removeChannel(notifSubscription);
 
         const fetchAllRequests = async () => {
-            let query = supabase.from('medical_requests').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient.from('medical_requests').select('*').order('created_at', { ascending: false });
             
             if (role === 'Member') query = query.eq('member_id', currentUser.id);
             if (role === 'Committee') query = query.eq('committee_member_id', currentUser.id);
@@ -617,13 +617,13 @@
         await fetchAllRequests();
         await fetchNotifications();
         
-        reqSubscription = supabase.channel('custom-all-channel')
+        reqSubscription = supabaseClient.channel('custom-all-channel')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'medical_requests' }, payload => {
                 fetchAllRequests();
             })
             .subscribe();
             
-        notifSubscription = supabase.channel('custom-notif-channel')
+        notifSubscription = supabaseClient.channel('custom-notif-channel')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, payload => {
                 fetchNotifications();
             })
@@ -651,7 +651,7 @@
         btn.disabled = true;
 
         // Level 1: Check Committee Table (Admin, Lab, Committee)
-        const { data: commData, error: commError } = await supabase
+        const { data: commData, error: commError } = await supabaseClient
             .from('committee')
             .select('*')
             .eq('username', id)
@@ -667,7 +667,7 @@
         }
 
         // Level 2: Check Members Table (Member)
-        const { data: memData, error: memError } = await supabase
+        const { data: memData, error: memError } = await supabaseClient
             .from('members')
             .select('*')
             .eq('member_number', id)
@@ -696,8 +696,8 @@
     }
 
     function logout() {
-        if(reqSubscription) supabase.removeChannel(reqSubscription);
-        if(notifSubscription) supabase.removeChannel(notifSubscription);
+        if(reqSubscription) supabaseClient.removeChannel(reqSubscription);
+        if(notifSubscription) supabaseClient.removeChannel(notifSubscription);
         currentUser = null;
         localStorage.removeItem('sbj_user'); 
         document.getElementById('login-form').reset();
@@ -740,10 +740,10 @@
         uploadedPrescriptionBase64 = null;
 
         // Fetch committee members & Labs from Supabase
-        const { data: commMembers } = await supabase.from('committee').select('username, name').eq('role', 'Committee');
+        const { data: commMembers } = await supabaseClient.from('committee').select('username, name').eq('role', 'Committee');
         let committeeOptions = (commMembers || []).map(m => `<option value="${m.username}">${m.name}</option>`).join('');
         
-        const { data: labMembers } = await supabase.from('committee').select('name').eq('role', 'Laboratory');
+        const { data: labMembers } = await supabaseClient.from('committee').select('name').eq('role', 'Laboratory');
         let labOptions = (labMembers || []).map(l => `<option value="${l.name}">${l.name}</option>`).join('');
 
         const html = `
@@ -811,7 +811,7 @@
             const assignedComId = document.getElementById('req-committee').value;
 
             try {
-                const { error } = await supabase.from('medical_requests').insert([{
+                const { error } = await supabaseClient.from('medical_requests').insert([{
                     member_id: currentUser.id,
                     member_name: currentUser.name,
                     patient_name: patientName,
@@ -914,7 +914,7 @@
     async function approveRequest(id, member_id) {
         const token = generateToken();
         try {
-            await supabase.from('medical_requests').update({ status: 'Approved', token: token }).eq('id', id);
+            await supabaseClient.from('medical_requests').update({ status: 'Approved', token: token }).eq('id', id);
             showToast(`Approved! Token: ${token}`);
             sendNotification(member_id, "Request Approved", `Your request is approved. Lab Token: ${token}`);
         } catch (e) {
@@ -931,7 +931,7 @@
         const id = document.getElementById('decline-request-id').value;
         try {
             const req = requests.find(r => r.id == id);
-            await supabase.from('medical_requests').update({ status: 'Declined' }).eq('id', id);
+            await supabaseClient.from('medical_requests').update({ status: 'Declined' }).eq('id', id);
             closeModal('modal-decline');
             showToast("Request Declined");
             if(req) sendNotification(req.member_id, "Request Declined", `Your request was declined.`);
@@ -976,7 +976,7 @@
         if (!uploadedInvoiceBase64) return showToast("Upload invoice first", "error");
         
         try {
-            await supabase.from('medical_requests').update({ 
+            await supabaseClient.from('medical_requests').update({ 
                 status: 'Completed', 
                 invoice_base64: uploadedInvoiceBase64 
             }).eq('id', activeLabRequest.id);
@@ -1045,7 +1045,7 @@
 
     async function deleteReq(id) {
         if(confirm("Delete this request?")) {
-            await supabase.from('medical_requests').delete().eq('id', id);
+            await supabaseClient.from('medical_requests').delete().eq('id', id);
             showToast("Deleted");
         }
     }
