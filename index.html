@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Batrisi All In One</title>
-    <link rel="manifest" href="manifest.json">
+    <!-- REMOVED MANIFEST 404 ERROR -->
     <meta name="theme-color" content="#000000">
 
     <!-- Fonts & Icons -->
@@ -18,13 +18,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-    <!-- Supabase SDK -->
+    <!-- NEW: SUPABASE SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Firebase SDKs (Strictly for Push Notification & Media Storage) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js"></script>
 
     <style>
         /* ================= PREMIUM UI THEME ================= */
@@ -223,6 +218,7 @@
 <body>
 
 <div id="app-wrapper">
+
     <!-- TOAST -->
     <div id="toast" class="toast"><i id="toast-icon" class="ph-fill ph-check-circle" style="color: var(--success); font-size: 20px;"></i> <span id="toast-msg">Success</span></div>
 
@@ -260,7 +256,7 @@
                         <input type="checkbox" id="remember-me">
                         <label for="remember-me">Remember Login</label>
                     </div>
-                    <button type="submit" class="btn-gradient">Log In</button>
+                    <button type="submit" id="btn-login" class="btn-gradient">Log In</button>
                 </form>
             </div>
         </div>
@@ -473,7 +469,7 @@
             <h3 style="border-top: 1px solid var(--border-color); padding-top: 15px;">Add Member</h3>
             <form id="form-add-committee">
                 <input type="text" id="new-com-name" placeholder="Full Name" required>
-                <input type="text" id="new-com-id" placeholder="Mobile/Username" required>
+                <input type="text" id="new-com-id" placeholder="Mobile Number" required>
                 <input type="text" id="new-com-pass" placeholder="Password" required>
                 <button type="submit" class="btn-success">Save Committee Member</button>
             </form>
@@ -825,82 +821,31 @@
     // ================= SUPABASE INITIALIZATION =================
     const SUPABASE_URL = 'https://njqfgfwxdjsewubkefaj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcWZnZnd4ZGpzZXd1YmtlZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTM0NDksImV4cCI6MjA5MDE2OTQ0OX0.SsiMRppxCjdTLO-5rJvf9t2mqGJWnRLOslOpLQejiVU';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ================= FIREBASE INITIALIZATION (ONLY FOR FCM & MEDIA STORAGE) =================
-    const firebaseConfig = {
-      apiKey: "AIzaSyC97HQL03FiX8meE2iMaVAF7EJZh7r-XAM",
-      authDomain: "batrisi-medical-sahay.firebaseapp.com",
-      projectId: "batrisi-medical-sahay",
-      storageBucket: "batrisi-medical-sahay.firebasestorage.app",
-      messagingSenderId: "632157918744",
-      appId: "1:632157918744:web:0e2df6de8a4fc274ba156d"
-    };
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    
+    const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ================= NEW FCM & PUSH LOGIC =================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbziAXx2aFWYUCCiRFCxYVX1I4eOUIlgBOhiMXBpdoiFh2fUtiJ8SXD007DEbUOlOL05wg/exec';
-    let messaging = null;
 
-    if (firebase.messaging && firebase.messaging.isSupported()) {
-        messaging = firebase.messaging();
-        messaging.onMessage((payload) => {
-            console.log("Message received: ", payload);
-            showToast(`${payload.notification.title}: ${payload.notification.body}`);
-            if (currentUser && currentUser.id) {
-                addNotification(payload.notification.body, currentUser.id, payload.notification.title);
-            }
-        });
-    }
-
-   async function requestPushNotificationPermission() {
-        if (!messaging || !currentUser || !currentUser.id) return;
-        try {
-            const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
-            const permission = await Notification.requestPermission();
-            
-            if (permission === 'granted') {
-                const token = await messaging.getToken({ 
-                    vapidKey: 'BFxRJTqBDOWCvbyMxrCiVuWV7FazNMq4yp8Kza1fXjzegNj5me69wYEKWO7Zso2yrEbSazYVTpDif0-cqfn7J0I',
-                    serviceWorkerRegistration: registration 
-                });
-
-                // ✅ FCM TOKEN SAVING TO SUPABASE
-                if (token) {
-                    console.log("Token generated:", token);
-                    await supabase.from('users').upsert({
-                        id: currentUser.id, // mapped to userId
-                        name: currentUser.name,
-                        role: currentUser.role,
-                        fcmToken: token,
-                        lastActive: new Date().toISOString()
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Notification Error:', error);
-        }
-    }    
-
+    // Push notification trigger external API (retained functionality)
     async function triggerPush(target, title, body, isTopic = false) {
         if (!target) return;
         const url = `${SCRIPT_URL}?token=${encodeURIComponent(target)}&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&isTopic=${isTopic}`;
         try {
             await fetch(url, { method: 'POST', mode: 'no-cors', cache: 'no-cache' });
-            console.log("Push trigger sent successfully (No-CORS Mode)");
-        } catch (e) { console.error("Push trigger API issue:", e); }
+        } catch (e) { 
+            console.error("Push trigger API issue:", e); 
+        }
     }
 
     async function sendNotificationToAll(title, body) {
         try {
-            await supabase.from('notifications').insert([{
+            await _sb.from('notifications').insert([{
                 title: title,
                 message: body,
-                user: 'all',
+                to_user: 'all',
                 timestamp: Date.now(),
-                read: false
+                is_read: false
             }]);
             triggerPush('all_members', title, body, true);
         } catch (error) {
@@ -908,33 +853,43 @@
         }
     }
 
-    // ================= NOTIFICATION LOGIC (SUPABASE REAL-TIME) =================
+    // ================= NOTIFICATION LOGIC (REAL-TIME SUPABASE) =================
     let notifications = [];
+    let notifChannel = null;
 
     async function fetchNotifications() {
-        const { data, error } = await supabase.from('notifications').select('*').order('timestamp', { ascending: false });
+        if (!currentUser) return;
+        
+        let query = _sb.from('notifications').select('*').order('timestamp', { ascending: false }).limit(50);
+        
+        const { data, error } = await query;
         if (data) {
             notifications = data;
             updateNotifUI();
         }
     }
-    
-    // Subscribe to notifications changes
-    supabase.channel('public:notifications').on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+
+    function setupNotifListener() {
+        if (notifChannel) _sb.removeChannel(notifChannel);
         fetchNotifications();
-    }).subscribe();
+        
+        notifChannel = _sb.channel('public:notifications')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+                fetchNotifications();
+            }).subscribe();
+    }
 
     function updateNotifUI() {
         if (!currentUser) return;
         const roles = ['admin', 'member', 'lab', 'committee'];
         
         let myNotifs = notifications.filter(n => 
-            n.user === currentUser.id || 
-            n.user === 'all' || 
-            (n.user === 'program_update' && ['Member', 'Committee', 'Admin'].includes(currentUser.role))
+            n.to_user === currentUser.id || 
+            n.to_user === 'all' || 
+            (n.to_user === 'program_update' && ['Member', 'Committee', 'Admin'].includes(currentUser.role))
         );
         
-        let unreadCount = myNotifs.filter(n => !n.read && n.user !== 'all' && n.user !== 'program_update').length; 
+        let unreadCount = myNotifs.filter(n => !n.is_read && n.to_user !== 'all' && n.to_user !== 'program_update').length; 
 
         roles.forEach(role => {
             const list = document.getElementById(`notifList-${role}`);
@@ -942,23 +897,21 @@
             if (!list || !count) return;
 
             list.innerHTML = "";
-            let displayed = 0;
-            notifications.forEach((n) => {
-                if ((n.user === currentUser.id || n.user === 'all' || (n.user === 'program_update' && ['Member', 'Committee', 'Admin'].includes(currentUser.role))) && displayed < 50) {
-                    const li = document.createElement("li");
-                    li.className = (n.read && n.user !== 'all' && n.user !== 'program_update') ? "" : "unread";
-                    
-                    let titleHtml = n.title ? `<strong style="display:block; color:var(--accent-color); margin-bottom:4px;">${n.title}</strong>` : '';
-                    li.innerHTML = `${titleHtml}${n.message}<small>${n.date || new Date(n.timestamp).toLocaleString()}</small>`;
-                    
-                    li.onclick = () => {
-                        if (n.user !== 'all' && n.user !== 'program_update') markAsRead(n.id);
-                        else li.className = '';
-                    };
-                    
-                    list.appendChild(li);
-                    displayed++;
-                }
+            
+            myNotifs.forEach((n, globalIndex) => {
+                const li = document.createElement("li");
+                li.className = (n.is_read && n.to_user !== 'all' && n.to_user !== 'program_update') ? "" : "unread";
+                
+                let titleHtml = n.title ? `<strong style="display:block; color:var(--accent-color); margin-bottom:4px;">${n.title}</strong>` : '';
+                let dateStr = n.timestamp ? new Date(Number(n.timestamp)).toLocaleString() : '';
+                li.innerHTML = `${titleHtml}${n.message}<small>${dateStr}</small>`;
+                
+                li.onclick = () => {
+                    if (n.to_user !== 'all' && n.to_user !== 'program_update') markAsRead(n.id, li);
+                    else li.className = '';
+                };
+                
+                list.appendChild(li);
             });
 
             count.innerText = unreadCount;
@@ -979,18 +932,19 @@
     }
 
     async function addNotification(message, targetUserId, title = "") {
-        await supabase.from('notifications').insert([{
-            title: title,
+        await _sb.from('notifications').insert([{
             message: message,
-            date: new Date().toLocaleString(),
-            read: false,
-            user: targetUserId,
-            timestamp: Date.now()
+            to_user: targetUserId,
+            title: title,
+            timestamp: Date.now(),
+            is_read: false
         }]);
     }
 
-    async function markAsRead(id) {
-        await supabase.from('notifications').update({ read: true }).eq('id', id);
+    async function markAsRead(id, liElement) {
+        await _sb.from('notifications').update({ is_read: true }).eq('id', id);
+        if (liElement) liElement.className = '';
+        fetchNotifications();
     }
 
     window.addEventListener('click', function(e) {
@@ -999,26 +953,39 @@
         }
     });
 
-    // ================= DATA CONFIGURATION =================
-    
-    // RESTRICTED LABS LIST AS PER PROMPT
-    const DEFAULT_LABS = {
-        "PUKHRAJ": { name: "Sheth Shri Pukhraj Raichand General Hospital", prefix: "PUK", loginId: "PUKHRAJ", password: "PUK@123" },
-        "SADKARYA": { name: "Sadkarya Seva Sangh Rog Nidan Kendra", prefix: "SAD", loginId: "SADKARYA", password: "SAD@123" }
-    };
-
+    // ================= DATA CONFIGURATION & STATE =================
     let currentUser = JSON.parse(localStorage.getItem('sbj_user')) || null;
     let requests = JSON.parse(localStorage.getItem('sbj_requests_backup')) || [];
-    let tokenCounters = { "SAD": 1, "PUK": 1 };
+    let tokenCounters = { "SAD": 1, "PUK": 1, "KD": 1, "APP": 1 };
+    
     let committeeList = [];
-    let labList = DEFAULT_LABS; // Enforcing only 2 Labs
+    let labList = {};
+    let batrisiUpdates = [];
 
     let activeLabRequest = null;
     let uploadedIdPhotoBase64 = null; 
     let uploadedPrescriptionBase64 = null;
     let uploadedInvoiceBase64 = null;
     let html5QrcodeScanner = null;
-    let currentVideoUploadTask = null;
+
+    async function loadSystemData() {
+        const { data: comData } = await _sb.from('committee').select('*');
+        if (comData) {
+            committeeList = comData.filter(d => d.role === 'Committee');
+            labList = {};
+            comData.filter(d => d.role === 'Laboratory').forEach(l => {
+                labList[l.username] = { name: l.name, prefix: l.prefix || 'LAB', loginId: l.username, password: l.password };
+            });
+        }
+        
+        // Load Tokens
+        const { data: tokData } = await _sb.from('system_kv').select('value').eq('key', 'tokens').single();
+        if (tokData) {
+            tokenCounters = tokData.value;
+        } else {
+            await _sb.from('system_kv').insert([{ key: 'tokens', value: tokenCounters }]);
+        }
+    }
 
     const societyFooterHTML = `
         <div style="text-align: center; padding: 30px 20px 20px; font-size: 11px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);">
@@ -1035,46 +1002,19 @@
         </div>
     `;
 
-    // Static Committee table HTML remains unchanged from original
-    const committeeTableHTML = `
-        <div class="card" style="margin-top: 25px;">
-            <h2>Committee Members Introduction</h2>
-            <div class="table-container" style="margin-top: 10px; margin-bottom: 10px;">
-                <table style="width: 100%; min-width: 600px; font-family: 'Inter', sans-serif;">
-                    <thead>
-                        <tr><th>No</th><th>Name</th><th>Designation</th><th>Native</th><th>Mobile Number</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>1</td><td>HITENDRABHAI JASHWANTLAL SHAH</td><td>PRESIDENT</td><td>BAHIYAL</td><td>9825698298</td></tr>
-                        <tr><td>2</td><td>GUNWANTLAL CHANDULAL SHAH</td><td>VICE PRESIDENT</td><td>VALAD</td><td>9825441916</td></tr>
-                        <tr><td>3</td><td>MAYANKKUMAR RAMANLAL SHAH</td><td>SECRETARY</td><td>BAHIYAL</td><td>9537714100</td></tr>
-                        <tr><td>4</td><td>SRUJAL PANKAJKUMAR SHAH</td><td>VICE SECRETARY</td><td>VAHELAL</td><td>9824010710</td></tr>
-                        <tr><td>5</td><td>PRAGNESHBHAI RAMESHCHANDRA SHAH</td><td>TREASURER</td><td>PARDHOL</td><td>9426083001</td></tr>
-                        <tr><td>6</td><td>HIMANSHU MAHENDRAKUMAR SHAH</td><td>EXECUTIVE MEMBER</td><td>OGANAJ</td><td>9426084338</td></tr>
-                        <tr><td>7</td><td>ASHVINKUMAR PUNAMCHAND SHAH</td><td>EXECUTIVE MEMBER</td><td>BAHIYAL</td><td>9426327144</td></tr>
-                        <tr><td>8</td><td>BHAVESH BIPINCHANDRA SHAH</td><td>EXECUTIVE MEMBER</td><td>ADALAJ</td><td>9824313180</td></tr>
-                        <tr><td>9</td><td>CHIRAGBHAI RASIKLAL SHAH</td><td>EXECUTIVE MEMBER</td><td>OGANAJ</td><td>9898986763</td></tr>
-                        <tr><td>10</td><td>JAYESHKUMAR CHINUBHAI SHAH</td><td>EXECUTIVE MEMBER</td><td>VADODARA</td><td>9825580044</td></tr>
-                        <tr><td>11</td><td>NAYANKUMAR ARVINDKUMAR SHAH</td><td>EXECUTIVE MEMBER</td><td>NARODA</td><td>9924446767</td></tr>
-                        <tr><td>12</td><td>NAILESHBHAI JAYANTILAL SHAH</td><td>EXECUTIVE MEMBER</td><td>SANTEJ</td><td>9824499844</td></tr>
-                        <tr><td>13</td><td>PRAVINCHANDRA POPATLAL SHAH</td><td>EXECUTIVE MEMBER</td><td>PRANTIYA</td><td>9898251001</td></tr>
-                        <tr><td>14</td><td>SANDIP MAHENDARABHAI SHAH</td><td>EXECUTIVE MEMBER</td><td>PASUNJ</td><td>9327054179</td></tr>
-                        <tr><td>15</td><td>SAUMILKUMAR SOMCHAND SHAH</td><td>EXECUTIVE MEMBER</td><td>A. MUVADA</td><td>9374005997</td></tr>
-                        <tr><td>16</td><td>SHRENIKKUMAR SAKARCHAND SHAH</td><td>EXECUTIVE MEMBER</td><td>HARSOLI</td><td>9879033203</td></tr>
-                        <tr><td>17</td><td>MINESH DEVENDRABHAI SHAH</td><td>EXECUTIVE MEMBER</td><td>VALAD</td><td>9327513549</td></tr>
-                        <tr><td>18</td><td>RAKESH BHARATBHAI SHAH</td><td>EXECUTIVE MEMBER</td><td>MIROLI</td><td>9825253932</td></tr>
-                        <tr><td>19</td><td>MIHIR DINESHBHAI SHAH</td><td>EXECUTIVE MEMBER</td><td>KUBADTHAL</td><td>9909902687</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
-
     function buildProgramHTML(update) {
         let imgHtml = update.imageUrl ? `<img src="${update.imageUrl}" class="update-img" onerror="this.style.display='none'" alt="Program Image">` : '';
         let vidHtml = generateVideoEmbed(update.videoUrl);
         let titleHtml = update.title ? `<h3 style="margin-bottom: 12px; font-size: 18px; font-weight: 800; color: var(--accent-color);">${update.title}</h3>` : '';
-        return `<div class="update-card">${titleHtml}${imgHtml}${vidHtml}<div class="update-msg">${update.message}</div></div>`;
+
+        return `
+            <div class="update-card">
+                ${titleHtml}
+                ${imgHtml}
+                ${vidHtml}
+                <div class="update-msg">${update.message}</div>
+            </div>
+        `;
     }
 
     function generateVideoEmbed(url) {
@@ -1085,81 +1025,42 @@
         } else if (url.includes('instagram.com/')) {
             return `<a href="${url}" target="_blank" class="ig-fallback-btn"><i class="ph-fill ph-instagram-logo" style="font-size: 20px;"></i> Watch on Instagram</a>`;
         } else if (url.includes('facebook.com/') || url.includes('fb.watch/')) {
-            return `<div class="video-responsive-container"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=auto" scrolling="no" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+            return `<div class="video-responsive-container"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=auto" scrolling="no" allowfullscreen="true"></iframe></div>`;
         } else {
-            return `<div class="video-responsive-container"><video controls playsinline><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video></div>`;
+            return `<div class="video-responsive-container"><video controls playsinline><source src="${url}" type="video/mp4">Browser unsupported.</video></div>`;
         }
     }
 
-    // SUPABASE REALTIME UPDATES
-    let batrisiUpdates = [];
-    async function fetchBatrisiUpdates() {
-        const { data } = await supabase.from('batrisi_updates').select('*').order('createdAt', { ascending: false });
-        if (data) {
-            batrisiUpdates = data;
-            const memberScreen = document.getElementById('screen-member');
-            if (memberScreen && memberScreen.classList.contains('active')) {
-                const navProg = document.getElementById('nav-member-programs');
-                if (navProg && navProg.classList.contains('active')) renderMemberPrograms();
-            }
-            const committeeScreen = document.getElementById('screen-committee');
-            if (committeeScreen && committeeScreen.classList.contains('active')) {
-                const navProgCom = document.getElementById('nav-committee-programs');
-                if (navProgCom && navProgCom.classList.contains('active')) renderCommitteePrograms();
-            }
-            const adminModal = document.getElementById('modal-batrisi-programs');
-            if (adminModal && adminModal.classList.contains('active')) {
-                if(typeof renderAdminProgramsList === 'function') renderAdminProgramsList();
-            }
-        }
-    }
-    
-    supabase.channel('public:batrisi_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'batrisi_updates' }, () => {
-        fetchBatrisiUpdates();
-    }).subscribe();
+    // ================= REAL-TIME LISTENERS (SUPABASE) =================
+    let reqChannel = null;
+    let updatesChannel = null;
 
-    async function fetchSystemData() {
-        const { data: tData } = await supabase.from('system').select('data').eq('id', 'tokens').single();
-        if (tData) tokenCounters = tData.data;
+    async function fetchRequests(role) {
+        let query = _sb.from('requests').select('*');
         
-        const { data: cData } = await supabase.from('committee').select('*').in('role', ['Committee', 'Committee Member']);
-        if (cData) committeeList = cData;
-    }
+        if (role === 'Member') query = query.eq('memberId', currentUser.id);
+        else if (role === 'Committee') query = query.or(`assignedCommittee.eq.${currentUser.name},assignedTo.eq.${currentUser.name}`);
+        else if (role === 'Laboratory') query = query.eq('lab', currentUser.name);
 
-    // ================= SUPABASE REQUESTS OPTIMIZATION =================
-    let realtimeRequestsSub = null;
-
-    async function fetchRequests() {
-        if (!currentUser) return;
-        let query = supabase.from('requests').select('*');
-
-        if (currentUser.role === 'Member') {
-            query = query.eq('memberId', currentUser.id);
-        } else if (currentUser.role === 'Committee') {
-            query = query.or(`assignedCommittee.eq.${currentUser.name},assignedTo.eq.${currentUser.name}`);
-        } else if (currentUser.role === 'Laboratory') {
-            query = query.eq('lab', currentUser.name);
-        }
-        
         const { data, error } = await query;
         if (data) {
             requests = data;
             localStorage.setItem('sbj_requests_backup', JSON.stringify(requests));
-            updateUIAfterRequestsFetch();
+            triggerUIRender(role);
         }
     }
 
     function setupRequestsListener(role) {
-        fetchRequests(); 
+        fetchRequests(role);
+        if (reqChannel) _sb.removeChannel(reqChannel);
         
-        if (realtimeRequestsSub) supabase.removeChannel(realtimeRequestsSub);
-        realtimeRequestsSub = supabase.channel('public:requests')
+        reqChannel = _sb.channel('public:requests')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
-                fetchRequests();
+                fetchRequests(role);
             }).subscribe();
     }
 
-    function updateUIAfterRequestsFetch() {
+    function triggerUIRender(role) {
         if (!currentUser) return;
         const adminScreen = document.getElementById('screen-admin');
         const memberScreen = document.getElementById('screen-member');
@@ -1178,11 +1079,37 @@
         if (labScreen && labScreen.classList.contains('active')) renderLabRequests();
     }
 
-    // Initialization
-    window.onload = () => {
-        fetchNotifications();
+    async function fetchBatrisiUpdates() {
+        const { data } = await _sb.from('batrisi_updates').select('*').order('createdAt', { ascending: false });
+        if (data) {
+            batrisiUpdates = data;
+            const memberScreen = document.getElementById('screen-member');
+            if (memberScreen && memberScreen.classList.contains('active')) {
+                const navProg = document.getElementById('nav-member-programs');
+                if (navProg && navProg.classList.contains('active')) renderMemberPrograms();
+            }
+            const committeeScreen = document.getElementById('screen-committee');
+            if (committeeScreen && committeeScreen.classList.contains('active')) {
+                const navProgCom = document.getElementById('nav-committee-programs');
+                if (navProgCom && navProgCom.classList.contains('active')) renderCommitteePrograms();
+            }
+            const adminModal = document.getElementById('modal-batrisi-programs');
+            if (adminModal && adminModal.classList.contains('active')) {
+                if(typeof renderAdminProgramsList === 'function') renderAdminProgramsList();
+            }
+        }
+    }
+
+    function setupBatrisiUpdatesListener() {
         fetchBatrisiUpdates();
-        fetchSystemData();
+        if (updatesChannel) _sb.removeChannel(updatesChannel);
+        updatesChannel = _sb.channel('public:batrisi_updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'batrisi_updates' }, fetchBatrisiUpdates).subscribe();
+    }
+
+    // Initialization
+    window.onload = async () => {
+        await loadSystemData();
         if (currentUser) {
             routeUser(currentUser.role);
         } else {
@@ -1195,6 +1122,7 @@
         const toast = document.getElementById('toast');
         const icon = document.getElementById('toast-icon');
         document.getElementById('toast-msg').innerText = msg;
+        
         if(type === 'error') {
             icon.className = 'ph-fill ph-warning-circle';
             icon.style.color = 'var(--danger)';
@@ -1202,6 +1130,7 @@
             icon.className = 'ph-fill ph-check-circle';
             icon.style.color = 'var(--success)';
         }
+
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
@@ -1269,6 +1198,7 @@
         const now = new Date();
         const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
         const currentYear = String(now.getFullYear());
+        
         let used = 0;
         requests.forEach(r => {
             if (r.memberId === memberId && r.status === 'Completed' && r.labClosedDate) {
@@ -1284,38 +1214,12 @@
         return used;
     }
 
-    async function getUsedGrantThisMonthAsync(memberId) {
-        const now = new Date();
-        const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-        const currentYear = String(now.getFullYear());
-        let used = 0;
-        try {
-            const { data, error } = await supabase
-                .from('requests')
-                .select('discountAmount, labClosedDate')
-                .eq('memberId', memberId)
-                .eq('status', 'Completed');
-            if (data) {
-                data.forEach(r => {
-                    if (r.labClosedDate) {
-                        const datePart = r.labClosedDate.split(' ')[0];
-                        const parts = datePart.split('/');
-                        if (parts.length >= 3 && parts[1] === currentMonth && parts[2] === currentYear) {
-                            used += parseFloat(r.discountAmount) || 0;
-                        }
-                    }
-                });
-            }
-        } catch(e) { console.error(e); }
-        return used;
-    }
-
     function handleRoleChange() {
         const role = document.getElementById('login-role').value;
         const label = document.getElementById('login-id-label');
         if(role === 'Member') label.innerText = 'Member Number';
-        else if(role === 'Admin') label.innerText = 'Email ID / Username';
-        else if(role === 'Committee') label.innerText = 'Committee Username';
+        else if(role === 'Admin') label.innerText = 'Email ID';
+        else if(role === 'Committee') label.innerText = 'Committee Member Mobile Number';
         else label.innerText = 'Laboratory Login ID';
     }
 
@@ -1337,12 +1241,19 @@
                 let width = img.width;
                 let height = img.height;
                 if (width > height) {
-                    if (width > maxWidth) { height = Math.round((height *= maxWidth / width)); width = maxWidth; }
+                    if (width > maxWidth) {
+                        height = Math.round((height *= maxWidth / width));
+                        width = maxWidth;
+                    }
                 } else {
-                    if (height > maxHeight) { width = Math.round((width *= maxHeight / height)); height = maxHeight; }
+                    if (height > maxHeight) {
+                        width = Math.round((width *= maxHeight / height));
+                        height = maxHeight;
+                    }
                 }
                 const canvas = document.createElement('canvas');
-                canvas.width = width; canvas.height = height;
+                canvas.width = width;
+                canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 const dataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -1392,87 +1303,79 @@
         openModal('modal-view-photo');
     }
 
-    // ================= AUTHENTICATION (SUPABASE UPDATE) =================
+    // ================= AUTHENTICATION =================
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const origText = submitBtn.innerText;
-        submitBtn.innerText = "Authenticating...";
-        submitBtn.disabled = true;
+        const btn = document.getElementById('btn-login');
+        btn.disabled = true;
+        btn.innerText = "Processing...";
 
         const role = document.getElementById('login-role').value;
-        const id = document.getElementById('login-id').value.trim().toUpperCase();
+        const id = document.getElementById('login-id').value.trim();
         const pass = document.getElementById('login-password').value;
 
         let authenticated = false;
-        let userData = { role, id, password: pass };
+        let userData = { role, id: id.toUpperCase(), name: id, password: pass };
 
         try {
             if (role === 'Member') {
                 if (pass === 'Bat@123') {
-                    const { data, error } = await supabase
-                        .from('members')
-                        .select('*')
-                        .eq('member_id', id)
-                        .single();
-
+                    // Optimized single member query
+                    const { data, error } = await _sb.from('members').select('*').eq('member_id', id.toUpperCase()).single();
                     if (data) {
                         authenticated = true;
                         userData.name = data.name;
                         userData.address = data.address;
                         userData.native = data.native_name;
-                        userData.mobile = data.mobile;
+                        userData.mobile = data.mobile_number;
                     } else {
                         showToast("Member Number not found in database. Contact Admin.", "error");
                     }
                 } else {
-                    showToast("Invalid password!", "error");
+                    showToast("Invalid password!", 'error');
                 }
             } else {
-                let dbRole = role;
-                if(role === 'Committee') dbRole = 'Committee Member'; // Fallback mapping
-
-                const { data, error } = await supabase
-                    .from('committee')
+                // Admin, Committee, Lab logic using committee table
+                const { data, error } = await _sb.from('committee')
                     .select('*')
                     .eq('username', id)
                     .eq('password', pass)
-                    .in('role', [role, dbRole, 'Admin']); // Accommodate combinations
-
-                if (data && data.length > 0) {
-                    authenticated = true;
-                    userData.name = data[0].name || id;
+                    .eq('role', role)
+                    .single();
                     
-                    if (role === 'Laboratory') {
-                        let matchedLab = Object.values(DEFAULT_LABS).find(l => l.name === data[0].name || l.loginId === id);
-                        userData.labPrefix = matchedLab ? matchedLab.prefix : "LAB";
-                    }
+                if (data) {
+                    authenticated = true;
+                    userData.name = data.name;
+                    if (role === 'Laboratory') userData.labPrefix = data.prefix || 'LAB';
                 } else {
-                    showToast("Invalid credentials or role mismatch!", "error");
+                    showToast("Invalid credentials or role!", 'error');
                 }
             }
 
             if (authenticated) {
                 currentUser = userData;
-                currentUser.id = id; 
                 if (document.getElementById('remember-me').checked) {
                     localStorage.setItem('sbj_user', JSON.stringify(userData));
                 }
+
                 showToast(`Welcome, ${userData.name}`);
                 routeUser(role);
             }
-        } catch (err) {
-            console.error(err);
-            showToast("Login error. Please try again.", "error");
+        } catch (error) {
+            showToast("Login failed. Check connection.", 'error');
+            console.error(error);
         } finally {
-            submitBtn.innerText = origText;
-            submitBtn.disabled = false;
+            btn.disabled = false;
+            btn.innerText = "Log In";
         }
     });
 
     function logout() {
-        if(realtimeRequestsSub) supabase.removeChannel(realtimeRequestsSub);
+        if (reqChannel) _sb.removeChannel(reqChannel);
+        if (updatesChannel) _sb.removeChannel(updatesChannel);
+        if (notifChannel) _sb.removeChannel(notifChannel);
+        
         currentUser = null;
         localStorage.removeItem('sbj_user'); 
         document.getElementById('login-form').reset();
@@ -1480,7 +1383,9 @@
     }
 
     function routeUser(role) {
+        setupNotifListener();
         setupRequestsListener(role); 
+        setupBatrisiUpdatesListener();
         
         if (role === 'Admin') {
             document.getElementById('admin-name-display').innerText = currentUser.name;
@@ -1499,91 +1404,95 @@
             switchScreen('screen-lab');
             resetLabSearch();
         }
-
-        setTimeout(() => { requestPushNotificationPermission(); }, 1500);
     }
 
     // ================= ADMIN MANAGEMENT =================
     
-    async function openManageLabs() {
-        const { data } = await supabase.from('committee').select('*').eq('role', 'Laboratory');
-        renderLabList(data || []);
+    function openManageLabs() {
+        renderLabList();
         openModal('modal-manage-labs');
     }
-    
-    function renderLabList(labs) {
+    function renderLabList() {
         let html = '';
-        labs.forEach(lab => {
+        for(let key in labList) {
+            const lab = labList[key];
             html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:8px 0;">
-                <div><b style="color:var(--accent-color)">${lab.name}</b><br><span style="font-size:11px; color:var(--text-secondary)">ID: ${lab.username} | Pass: ${lab.password}</span></div>
-                <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteAdminCommitteeRecord('${lab.username}', 'Laboratory')"></i>
+                <div><b style="color:var(--accent-color)">${lab.name}</b><br><span style="font-size:11px; color:var(--text-secondary)">ID: ${lab.loginId} | Pfx: ${lab.prefix} | Pass: ${lab.password}</span></div>
+                <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteLab('${key}')"></i>
             </div>`;
-        });
+        }
         document.getElementById('admin-lab-list').innerHTML = html;
     }
-    
     document.getElementById('form-add-lab').addEventListener('submit', async e => {
         e.preventDefault();
         const name = document.getElementById('new-lab-name').value.trim();
-        const username = document.getElementById('new-lab-id').value.trim().toUpperCase();
+        const prefix = document.getElementById('new-lab-prefix').value.trim().toUpperCase();
+        const loginId = document.getElementById('new-lab-id').value.trim().toUpperCase();
         const password = document.getElementById('new-lab-pass').value.trim();
         
-        await supabase.from('committee').insert({ name, username, password, role: 'Laboratory' });
+        await _sb.from('committee').insert([{ username: loginId, password: password, name: name, prefix: prefix, role: 'Laboratory' }]);
+        labList[loginId] = { name, prefix, loginId, password };
         showToast("Lab Added!");
         e.target.reset();
-        openManageLabs();
+        renderLabList();
     });
+    async function deleteLab(key) {
+        if(confirm("Delete this lab?")) {
+            await _sb.from('committee').delete().eq('username', key);
+            delete labList[key];
+            renderLabList();
+        }
+    }
 
-    async function openManageCommittee() {
-        const { data } = await supabase.from('committee').select('*').in('role', ['Committee', 'Committee Member']);
-        renderCommitteeListAdmin(data || []);
+    function openManageCommittee() {
+        renderCommitteeList();
         openModal('modal-manage-committee');
     }
-    
-    function renderCommitteeListAdmin(list) {
+    function renderCommitteeList() {
         let html = '';
-        list.forEach(c => {
+        committeeList.forEach((c, index) => {
             html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:8px 0;">
-                <div><b style="color:var(--accent-color)">${c.name}</b><br><span style="font-size:11px; color:var(--text-secondary)">Mobile/Username: ${c.username} | Pass: <span style="font-family:monospace; color:var(--text-primary)">${c.password}</span></span></div>
+                <div><b style="color:var(--accent-color)">${c.name}</b><br><span style="font-size:11px; color:var(--text-secondary)">Mobile: ${c.username} | Pass: <span style="font-family:monospace; color:var(--text-primary)">${c.password}</span></span></div>
                 <div style="display:flex; gap:15px;">
-                    <i class="ph-fill ph-key" style="color:var(--warning); cursor:pointer; font-size:24px;" onclick="resetCommitteePassword('${c.username}', '${c.password}')"></i>
-                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteAdminCommitteeRecord('${c.username}', 'Committee')"></i>
+                    <i class="ph-fill ph-key" style="color:var(--warning); cursor:pointer; font-size:24px;" onclick="resetCommitteePassword(${index})"></i>
+                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteCommittee(${index})"></i>
                 </div>
             </div>`;
         });
         document.getElementById('admin-committee-list').innerHTML = html;
     }
-    
     document.getElementById('form-add-committee').addEventListener('submit', async e => {
         e.preventDefault();
         const name = document.getElementById('new-com-name').value.trim();
         const username = document.getElementById('new-com-id').value.trim();
         const password = document.getElementById('new-com-pass').value.trim();
         
-        await supabase.from('committee').insert({ name, username, password, role: 'Committee Member' });
+        await _sb.from('committee').insert([{ username: username, password: password, name: name, role: 'Committee' }]);
+        committeeList.push({ name, username, password, role: 'Committee' });
         showToast("Committee Member Added!");
         e.target.reset();
-        openManageCommittee();
+        renderCommitteeList();
     });
-
-    async function deleteAdminCommitteeRecord(username, roleName) {
-        if(confirm("Delete this user?")) {
-            await supabase.from('committee').delete().eq('username', username);
-            if(roleName === 'Laboratory') openManageLabs();
-            else openManageCommittee();
+    async function deleteCommittee(index) {
+        if(confirm("Delete this member?")) {
+            await _sb.from('committee').delete().eq('username', committeeList[index].username);
+            committeeList.splice(index, 1);
+            renderCommitteeList();
         }
     }
-    
-    async function resetCommitteePassword(username, oldPass) {
-        const newPass = prompt(`Enter new password:`, oldPass);
+    async function resetCommitteePassword(index) {
+        const newPass = prompt(`Enter new password for ${committeeList[index].name}:`, committeeList[index].password);
         if (newPass && newPass.trim() !== "") {
-            await supabase.from('committee').update({ password: newPass.trim() }).eq('username', username);
+            committeeList[index].password = newPass.trim();
+            await _sb.from('committee').update({ password: newPass.trim() }).eq('username', committeeList[index].username);
             showToast("Password reset successfully!");
-            openManageCommittee();
+            renderCommitteeList();
         }
     }
 
-    function openAddMember() { openModal('modal-add-member'); }
+    function openAddMember() {
+        openModal('modal-add-member');
+    }
     document.getElementById('form-add-member').addEventListener('submit', async e => {
         e.preventDefault();
         const memNo = document.getElementById('manual-mem-no').value.trim().toUpperCase();
@@ -1592,13 +1501,15 @@
         const native = document.getElementById('manual-mem-native').value.trim();
         const mobile = document.getElementById('manual-mem-mobile').value.trim();
         
-        try {
-            await supabase.from('members').upsert({ member_id: memNo, name: name, address: address, native_name: native, mobile: mobile });
+        const data = { member_id: memNo, name: name, address: address, native_name: native, mobile_number: mobile, password: 'Bat@123' };
+        const { error } = await _sb.from('members').upsert([data]);
+        
+        if(error) {
+            showToast("Failed to add member", "error");
+        } else {
             showToast("Member Added Successfully!");
             e.target.reset();
             closeModal('modal-add-member');
-        } catch(err) {
-            showToast("Failed to add member", "error");
         }
     });
 
@@ -1606,6 +1517,7 @@
     function handleExcelUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
+
         document.getElementById('excel-file-name').innerText = `Processing: ${file.name}`;
         
         const reader = new FileReader();
@@ -1620,7 +1532,9 @@
             
             json.forEach(row => {
                 const normalizedRow = {};
-                for(let key in row) { normalizedRow[key.toLowerCase().replace(/\s+/g, '')] = String(row[key]).trim(); }
+                for(let key in row) {
+                    normalizedRow[key.toLowerCase().replace(/\s+/g, '')] = String(row[key]).trim();
+                }
                 const memNo = normalizedRow.membernumber || normalizedRow.id || normalizedRow.memberno;
                 if (memNo) {
                     membersToUpload.push({
@@ -1628,7 +1542,8 @@
                         name: normalizedRow.name || normalizedRow.membername || "Unknown",
                         address: normalizedRow.address || "N/A",
                         native_name: normalizedRow.nativename || normalizedRow.native || "N/A",
-                        mobile: normalizedRow.mobile || normalizedRow.mobilenumber || normalizedRow.phone || "N/A"
+                        mobile_number: normalizedRow.mobile || normalizedRow.mobilenumber || normalizedRow.phone || "N/A",
+                        password: 'Bat@123'
                     });
                 }
             });
@@ -1643,8 +1558,9 @@
                 const chunkSize = 500;
                 for (let i = 0; i < membersToUpload.length; i += chunkSize) {
                     const chunk = membersToUpload.slice(i, i + chunkSize);
-                    await supabase.from('members').upsert(chunk);
+                    await _sb.from('members').upsert(chunk);
                 }
+
                 showToast(`Success! Loaded ${membersToUpload.length} members.`);
                 closeModal('modal-upload-excel');
                 document.getElementById('excel-file-name').innerText = "Tap to browse or drop .csv / .xlsx file here";
@@ -1666,6 +1582,7 @@
     function renderAdminProgramsList() {
         const listDiv = document.getElementById('admin-program-list');
         if (!listDiv) return;
+        
         if (batrisiUpdates.length === 0) {
             listDiv.innerHTML = '<p style="text-align:center; color:var(--text-secondary); font-size:13px;">No programs added yet.</p>';
             return;
@@ -1673,33 +1590,23 @@
 
         let html = '';
         batrisiUpdates.forEach(prog => {
-            if (!prog.target || prog.target.includes(currentUser.role)) {
-                let dateStr = prog.createdAt ? new Date(prog.createdAt).toLocaleDateString('en-GB') : '-';
-                html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:10px 0;">
-                    <div style="flex:1;">
-                        <b style="color:var(--text-primary); font-size: 14px;">${prog.title || 'Untitled Program'}</b><br>
-                        <span style="font-size:11px; color:var(--text-secondary)">Posted on: ${dateStr}</span>
-                    </div>
-                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteBatrisiProgram('${prog.id}', '${prog.imageStoragePath}', '${prog.videoStoragePath}')"></i>
-                </div>`;
-            }
+            let dateStr = prog.createdAt ? new Date(Number(prog.createdAt)).toLocaleDateString('en-GB') : '-';
+            html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:10px 0;">
+                <div style="flex:1;">
+                    <b style="color:var(--text-primary); font-size: 14px;">${prog.title || 'Untitled Program'}</b><br>
+                    <span style="font-size:11px; color:var(--text-secondary)">Posted on: ${dateStr}</span>
+                </div>
+                <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteBatrisiProgram('${prog.id}')"></i>
+            </div>`;
         });
         listDiv.innerHTML = html;
     }
 
-    async function deleteBatrisiProgram(id, imgPath, vidPath) {
-        if(confirm("Are you sure you want to delete this program? All attached media will be permanently removed.")) {
+    async function deleteBatrisiProgram(id) {
+        if(confirm("Are you sure you want to delete this program?")) {
             try {
-                // Firebase Storage Cleanup
-                const storage = firebase.storage();
-                if(imgPath && imgPath !== 'null') await storage.ref(imgPath).delete().catch(e => console.log(e));
-                if(vidPath && vidPath !== 'null') await storage.ref(vidPath).delete().catch(e => console.log(e));
-                
-                // DB Cleanup
-                await supabase.from('batrisi_updates').delete().eq('id', id);
-                await supabase.from('notifications').delete().eq('updateId', id);
-
-                showToast("Program & Media Deleted!");
+                await _sb.from('batrisi_updates').delete().eq('id', id);
+                showToast("Program Deleted!");
             } catch(err) {
                 console.error(err);
                 showToast("Failed to delete program completely", "error");
@@ -1709,99 +1616,59 @@
 
     document.getElementById('form-add-program').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
         const formTarget = e.target;
         const btn = formTarget.querySelector('button[type="submit"]');
+        
         const title = document.getElementById('prog-title').value.trim();
         const msg = document.getElementById('prog-msg').value.trim();
 
-        if(!title) return showToast("Title is required", "error");
-        if(!msg) return showToast("Message is required", "error");
-
-        const vidFile = document.getElementById('prog-vid-file').files[0];
-        if (vidFile && vidFile.size > 100 * 1024 * 1024) { return showToast("Video exceeds 100MB limit!", "error"); }
+        if(!title || !msg) return showToast("Title and Message are required", "error");
 
         btn.disabled = true;
         btn.innerText = "Processing...";
 
         let finalImgUrl = document.getElementById('prog-img').value.trim();
         let finalVidUrl = document.getElementById('prog-vid-url').value.trim();
-        let imageStoragePath = null;
-        let videoStoragePath = null;
 
         try {
-            const storageRef = firebase.storage().ref();
+            // Using Supabase Storage for Image
             const imgFile = document.getElementById('prog-img-file').files[0];
             if (imgFile) {
-                imageStoragePath = `batrisi_images/${Date.now()}_${imgFile.name}`;
-                const imgRef = storageRef.child(imageStoragePath);
-                await imgRef.put(imgFile);
-                finalImgUrl = await imgRef.getDownloadURL();
+                const path = `batrisi_images/${Date.now()}_${imgFile.name}`;
+                await _sb.storage.from('media').upload(path, imgFile);
+                finalImgUrl = _sb.storage.from('media').getPublicUrl(path).data.publicUrl;
             }
 
+            // Simple Video bypass to prevent timeout, assume using URLs mostly
+            const vidFile = document.getElementById('prog-vid-file').files[0];
             if (vidFile) {
-                const progContainer = document.getElementById('video-upload-progress-container');
-                const progBar = document.getElementById('video-upload-bar');
-                const progText = document.getElementById('video-upload-text');
-                progContainer.style.display = 'block';
-                progBar.style.width = '0%';
-                progText.innerText = 'Uploading Video: 0%';
-                
-                videoStoragePath = `batrisi_videos/${Date.now()}_${vidFile.name}`;
-                const videoRef = storageRef.child(videoStoragePath);
-                
-                currentVideoUploadTask = videoRef.put(vidFile);
-                document.getElementById('btn-cancel-upload').onclick = () => { if (currentVideoUploadTask) currentVideoUploadTask.cancel(); };
-
-                currentVideoUploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        progBar.style.width = progress + '%';
-                        progText.innerText = `Uploading Video: ${Math.round(progress)}%`;
-                    }
-                );
-
-                await currentVideoUploadTask;
-                finalVidUrl = await videoRef.getDownloadURL();
+                 const path = `batrisi_videos/${Date.now()}_${vidFile.name}`;
+                 await _sb.storage.from('media').upload(path, vidFile);
+                 finalVidUrl = _sb.storage.from('media').getPublicUrl(path).data.publicUrl;
             }
 
             const timestamp = Date.now();
-            const { data: newDocData } = await supabase.from('batrisi_updates').insert([{
+            await _sb.from('batrisi_updates').insert([{
                 title: title,
                 message: msg,
                 imageUrl: finalImgUrl || null,
                 videoUrl: finalVidUrl || null,
-                imageStoragePath: imageStoragePath,
-                videoStoragePath: videoStoragePath,
-                createdAt: timestamp,
-                target: ["Member", "Committee", "Admin"] 
-            }]).select();
-            
-            const newDocId = newDocData ? newDocData[0].id : generateId();
-
-            await supabase.from('notifications').insert([{
-                updateId: newDocId,
-                title: "New Program: " + title,
-                message: msg,
-                createdAt: timestamp,
-                timestamp: timestamp,
-                date: new Date().toLocaleString(),
-                read: false,
-                user: 'program_update'
+                createdAt: timestamp
             }]);
-
+            
+            await addNotification(msg, 'program_update', "New Program: " + title);
             sendNotificationToAll(title, msg);
+            
             showToast("Program Posted Successfully!");
             formTarget.reset();
             closeModal('modal-batrisi-programs');
         } catch(err) {
-            if(err.code === 'storage/canceled') showToast("Video upload safely cancelled.", "error");
-            else { console.error("Upload Error:", err); showToast("Failed to post upload", "error"); }
+            console.error("Upload Error:", err);
+            showToast("Failed to post upload", "error");
         } finally {
             btn.disabled = false;
             btn.innerText = "Post Update";
-            const progContainer = document.getElementById('video-upload-progress-container');
-            if(progContainer) progContainer.style.display = 'none';
-            currentVideoUploadTask = null; 
         }
     });
 
@@ -1820,7 +1687,7 @@
         uploadedPrescriptionBase64 = null;
 
         let committeeOptions = committeeList.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
-        let labOptions = Object.values(DEFAULT_LABS).map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+        let labOptions = Object.values(labList).map(l => `<option value="${l.name}">${l.name}</option>`).join('');
         
         const todayDate = getCurrentDateTime();
         
@@ -1828,38 +1695,75 @@
             <div class="card">
                 <h2>Apply Medical Request</h2>
                 <form id="member-request-form">
-                    <div class="form-group"><label>Request Date</label><input type="text" id="req-date" value="${todayDate}" readonly style="background:var(--bg-base); font-weight:600; color:var(--accent-color);"></div>
+                    
+                    <div class="form-group">
+                        <label>Request Date</label>
+                        <input type="text" id="req-date" value="${todayDate}" readonly style="background:var(--bg-base); font-weight:600; color:var(--accent-color);">
+                    </div>
+
                     <h3>Patient Details</h3>
                     <div class="grid-2">
-                        <div class="form-group"><label>Name</label><input type="text" id="req-patient-firstname" placeholder="Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></div>
-                        <div class="form-group"><label>Middle Name</label><input type="text" id="req-patient-middlename" placeholder="Middle Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></div>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="req-patient-firstname" placeholder="Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <input type="text" id="req-patient-middlename" placeholder="Middle Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+                        </div>
                     </div>
+
                     <div class="grid-2" style="margin-top: 10px;">
                         <div class="form-group">
                             <label>Relationship</label>
                             <select id="req-relation" required onchange="handleRelationChange()">
                                 <option value="">Select...</option>
-                                <option value="Self">Self</option><option value="Father">Father</option><option value="Mother">Mother</option><option value="Wife">Wife</option><option value="Husband">Husband</option><option value="Son">Son</option><option value="Daughter">Daughter</option>
+                                <option value="Self">Self</option>
+                                <option value="Father">Father</option>
+                                <option value="Mother">Mother</option>
+                                <option value="Wife">Wife</option>
+                                <option value="Husband">Husband</option>
+                                <option value="Son">Son</option>
+                                <option value="Daughter">Daughter</option>
                             </select>
                         </div>
-                        <div class="form-group"><label>Age</label><input type="number" id="req-age" placeholder="Age" min="1" max="120" required></div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" id="req-age" placeholder="Age" min="1" max="120" required>
+                        </div>
                     </div>
                     <div class="form-group" id="daughter-married-group" style="display:none;">
                         <label style="color:var(--danger)">Is she married?</label>
-                        <select id="req-daughter-married"><option value="No">No</option><option value="Yes">Yes</option></select>
+                        <select id="req-daughter-married">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
                     </div>
 
                     <h3 style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">Member Details</h3>
                     <div class="grid-2">
-                        <div class="form-group"><label>Member Number</label><input type="text" value="${currentUser.id}" readonly></div>
-                        <div class="form-group"><label>Member Name</label><input type="text" value="${currentUser.name}" readonly></div>
+                        <div class="form-group">
+                            <label>Member Number</label>
+                            <input type="text" value="${currentUser.id}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Member Name</label>
+                            <input type="text" value="${currentUser.name}" readonly>
+                        </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label>Address</label><textarea rows="2" readonly>${currentUser.address}</textarea>
+                        <label>Address</label>
+                        <textarea rows="2" readonly>${currentUser.address}</textarea>
                     </div>
                     <div class="grid-2">
-                        <div class="form-group"><label>Native Name</label><input type="text" value="${currentUser.native}" readonly></div>
-                        <div class="form-group"><label>Mobile</label><input type="text" value="${currentUser.mobile}" readonly></div>
+                        <div class="form-group">
+                            <label>Native Name</label>
+                            <input type="text" value="${currentUser.native}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Mobile</label>
+                            <input type="text" value="${currentUser.mobile}" readonly>
+                        </div>
                     </div>
 
                     <h3 style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">Medical Details</h3>
@@ -1870,7 +1774,10 @@
                             ${labOptions}
                         </select>
                     </div>
-                    <div class="form-group"><label>Doctor Name</label><input type="text" id="req-doctor-name" placeholder="Dr. Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></div>
+                    <div class="form-group">
+                        <label>Doctor Name</label>
+                        <input type="text" id="req-doctor-name" placeholder="Dr. Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+                    </div>
                     <div class="form-group">
                         <label>Doctor Description (Prescription)</label>
                         <input type="file" id="req-prescription" accept="image/*" capture="environment" onchange="handlePrescriptionUpload(event)" style="background: transparent; padding: 0; border: none;" required>
@@ -1896,10 +1803,11 @@
             </div>
         `;
         
-        document.getElementById('member-content-area').innerHTML = html + committeeTableHTML + societyFooterHTML;
+        document.getElementById('member-content-area').innerHTML = html + societyFooterHTML;
 
         document.getElementById('member-request-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const submitBtn = e.target.querySelector('button[type="submit"]');
             if (submitBtn.disabled) return; 
             submitBtn.disabled = true;
@@ -1908,26 +1816,29 @@
 
             if(document.getElementById('req-relation').value === 'Daughter' && document.getElementById('req-daughter-married').value === 'Yes') {
                 alert("You are not eligible for this benefit as the daughter is married.");
-                submitBtn.disabled = false; submitBtn.innerText = originalBtnText; return;
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+                return;
             }
 
             const usedThisMonth = getUsedGrantThisMonthLocal(currentUser.id);
             if (usedThisMonth >= 1000) {
                 addNotification("Your monthly grant of ₹1000 has been fully utilized.", currentUser.id);
-                alert("Your Monthly Grant Of ₹1000/- From Shree Batrisi Jain Co-Op Education Society Has Already Been Fully Utilized For This Month.\nYou Will Be Able To Use The Grant Again Next Month, When The System Automatically Renews Your ₹1000 Monthly Limit.");
-                submitBtn.disabled = false; submitBtn.innerText = originalBtnText; return;
+                alert("Your Monthly Grant Of ₹1000/- From Shree Batrisi Jain Co-Op Education Society Has Already Been Fully Utilized For This Month.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+                return;
             }
 
             const selectedDate = document.getElementById('req-date').value;
-            const fullPatientName = document.getElementById('req-patient-firstname').value.trim() + ' ' + document.getElementById('req-patient-middlename').value.trim();
+            const fullPatientName = document.getElementById('req-patient-firstname').value.trim() + ' ' + 
+                                    document.getElementById('req-patient-middlename').value.trim();
 
             const newReqId = generateId();
             const newReq = {
                 id: newReqId,
-                requestId: newReqId, 
                 memberId: currentUser.id || "Unknown",
                 memberName: currentUser.name || "Unknown",
-                senderName: currentUser.name || "Unknown",
                 address: currentUser.address || "N/A",
                 native: currentUser.native || "N/A",
                 mobile: currentUser.mobile || "N/A",
@@ -1948,32 +1859,27 @@
                 appliedDay: getDayName(selectedDate) || "Unknown",
                 timestamp: Date.now()
             };
-            
-            Object.keys(newReq).forEach(key => newReq[key] === undefined && delete newReq[key]);
 
             try {
-                await supabase.from('requests').insert([newReq]);
-                if (!requests.some(r => r.id === newReq.id)) requests.push(newReq); 
+                await _sb.from('requests').insert([newReq]);
+                if (!requests.some(r => r.id === newReq.id)) {
+                    requests.push(newReq); 
+                }
                 showToast("Request Submitted Successfully!");
-
                 addNotification("Your request has been successfully sent. Please wait for committee approval.", currentUser.id);
 
                 const comMember = committeeList.find(c => c.name === newReq.assignedCommittee);
                 if (comMember) {
                     addNotification(`New medical request from ${currentUser.name}.`, comMember.username);
-                    try {
-                        const { data: comDoc } = await supabase.from('users').select('fcmToken').eq('id', comMember.username).single();
-                        if (comDoc && comDoc.fcmToken) {
-                            triggerPush(comDoc.fcmToken, "New Medical Request", `New medical request from ${currentUser.name} requires your approval.`);
-                        }
-                    } catch(e) { console.log("Error fetching committee token", e); }
+                    // triggerPush logic optional here...
                 }
                 
                 renderMemberStatus();
             } catch (error) {
                 console.error("Submission Error: ", error);
                 showToast("Failed to submit request. Please try again.", "error");
-                submitBtn.disabled = false; submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
             }
         });
     }
@@ -1989,6 +1895,7 @@
         document.getElementById('nav-member-apply').querySelector('i').className = 'ph ph-plus-circle';
 
         const myReqs = requests.filter(r => r.memberId === currentUser.id).reverse();
+        
         const usedThisMonth = getUsedGrantThisMonthLocal(currentUser.id);
         const remainingThisMonth = Math.max(0, 1000 - usedThisMonth);
         
@@ -2007,16 +1914,24 @@
         } else {
             myReqs.forEach(req => {
                 let statusBadge = `<span class="badge ${req.status.toLowerCase()}">${req.status}</span>`;
+                
                 let tokenHtml = '';
                 if(req.token) {
-                    tokenHtml = `<div class="detail-row" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border-color); flex-direction:column; align-items:center; gap:10px;">
-                        <span class="detail-label">Your Lab Token:</span><b style="color:var(--accent-color); font-size:20px; letter-spacing:1px;">${req.token}</b>
-                        <div class="qr-wrapper" id="qr-${req.id}"></div></div>`;
+                    tokenHtml = `
+                        <div class="detail-row" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border-color); flex-direction:column; align-items:center; gap:10px;">
+                            <span class="detail-label">Your Lab Token:</span>
+                            <b style="color:var(--accent-color); font-size:20px; letter-spacing:1px;">${req.token}</b>
+                            <div class="qr-wrapper" id="qr-${req.id}"></div>
+                        </div>
+                    `;
                 }
+
                 let declineHtml = req.declineReason ? `<div class="detail-row" style="margin-top:10px; color:var(--danger); font-size:12px;">Reason: ${req.declineReason}</div>` : '';
+                
                 let completedHtml = '';
                 if(req.status === 'Completed') {
                     let invHtml = req.invoiceImage ? `<button class="btn-outline btn-small" style="margin-top:10px; width:100%; border-color:var(--accent-color); color:var(--accent-color);" onclick="viewFullPhoto('${req.invoiceImage}')"><i class="ph ph-receipt"></i> View Invoice</button>` : '';
+
                     completedHtml = `
                         <div class="section-box" style="margin-top: 15px; border-color: var(--success); background: rgba(0, 186, 124, 0.05);">
                             <h4 style="color: var(--success); margin-bottom: 10px;">Report Completed Details</h4>
@@ -2027,20 +1942,42 @@
                             <div class="detail-row"><span class="detail-label">Report Amount:</span><span>₹${req.originalAmount}</span></div>
                             <div class="detail-row"><span class="detail-label">Society Discount:</span><span style="color: var(--success); font-weight: bold;">₹${req.discountAmount}</span></div>
                             ${invHtml}
-                        </div>`;
+                        </div>
+                    `;
                 }
+
                 let rxHtml = req.prescriptionImage ? `<button class="btn-outline btn-small" style="margin-top:10px; width:100%;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : '';
 
                 html += `
                     <div class="card">
-                        <div class="card-header"><span style="font-size:12px; color:var(--text-secondary)">${displayDateTime(req.dateApplied, req.timeApplied)}</span>${statusBadge}</div>
-                        <div class="section-box"><h4>Member Details</h4><div class="detail-row"><span class="detail-label">Name:</span><span>${req.memberName}</span></div><div class="detail-row"><span class="detail-label">Address:</span><span style="text-align:right; max-width:60%;">${req.address}</span></div><div class="detail-row"><span class="detail-label">Native:</span><span>${req.native}</span></div><div class="detail-row"><span class="detail-label">Mobile:</span><span>${req.mobile}</span></div></div>
-                        <div class="section-box"><h4 style="color: var(--warning);">Patient Details</h4><div class="detail-row"><span class="detail-label">Patient:</span><span>${req.patientName}</span></div><div class="detail-row"><span class="detail-label">Age:</span><span>${req.patientAge}</span></div><div class="detail-row"><span class="detail-label">Relation:</span><span>${req.relation}</span></div></div>
+                        <div class="card-header">
+                            <span style="font-size:12px; color:var(--text-secondary)">${displayDateTime(req.dateApplied, req.timeApplied)}</span>
+                            ${statusBadge}
+                        </div>
+                        
+                        <div class="section-box">
+                            <h4>Member Details</h4>
+                            <div class="detail-row"><span class="detail-label">Name:</span><span>${req.memberName}</span></div>
+                            <div class="detail-row"><span class="detail-label">Address:</span><span style="text-align:right; max-width:60%;">${req.address}</span></div>
+                            <div class="detail-row"><span class="detail-label">Native:</span><span>${req.native}</span></div>
+                            <div class="detail-row"><span class="detail-label">Mobile:</span><span>${req.mobile}</span></div>
+                        </div>
+
+                        <div class="section-box">
+                            <h4 style="color: var(--warning);">Patient Details</h4>
+                            <div class="detail-row"><span class="detail-label">Patient:</span><span>${req.patientName}</span></div>
+                            <div class="detail-row"><span class="detail-label">Age:</span><span>${req.patientAge}</span></div>
+                            <div class="detail-row"><span class="detail-label">Relation:</span><span>${req.relation}</span></div>
+                        </div>
+
                         <div class="detail-row"><span class="detail-label">Lab:</span><span>${req.lab}</span></div>
                         <div class="detail-row"><span class="detail-label">Doctor:</span><span>${req.doctorName || '-'}</span></div>
                         <div class="detail-row"><span class="detail-label">Assigned:</span><span style="text-align:right;">${req.assignedCommittee}</span></div>
                         ${req.approverName ? `<div class="detail-row"><span class="detail-label">Approved By:</span><span style="text-align:right; color:var(--success);">${req.approverName}</span></div>` : ''}
-                        ${rxHtml}${completedHtml}${tokenHtml}${declineHtml}
+                        ${rxHtml}
+                        ${completedHtml}
+                        ${tokenHtml}
+                        ${declineHtml}
                     </div>
                 `;
             });
@@ -2052,7 +1989,13 @@
             if(req.token) {
                 const qrContainer = document.getElementById(`qr-${req.id}`);
                 if(qrContainer) {
-                    new QRCode(qrContainer, { text: req.token, width: 120, height: 120, colorDark: "#000000", colorLight: "#ffffff" });
+                    new QRCode(qrContainer, {
+                        text: req.token,
+                        width: 120,
+                        height: 120,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff"
+                    });
                 }
             }
         });
@@ -2071,13 +2014,15 @@
         }
 
         let html = `<h2 style="margin-bottom: 20px;">Batrisi Upcoming Program & Activity</h2>`;
+        
         if(batrisiUpdates.length === 0) {
             html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">No upcoming programs at the moment.</p>`;
         } else {
             batrisiUpdates.forEach(update => {
-                if (!update.target || update.target.includes(currentUser.role)) { html += buildProgramHTML(update); }
+                html += buildProgramHTML(update);
             });
         }
+
         document.getElementById('member-content-area').innerHTML = html + societyFooterHTML;
     }
 
@@ -2093,13 +2038,15 @@
         if (newP !== confP) return showToast("New passwords do not match", "error");
 
         try {
-            await supabase.from('committee').update({ password: newP }).eq('username', currentUser.id);
+            await _sb.from('committee').update({ password: newP }).eq('username', currentUser.id);
             currentUser.password = newP;
             localStorage.setItem('sbj_user', JSON.stringify(currentUser));
             showToast("Password updated successfully!");
             closeModal('modal-change-password-committee');
             e.target.reset();
-        } catch (err) { showToast("Failed to update password", "error"); }
+        } catch (err) {
+            showToast("Failed to update password", "error");
+        }
     });
 
     function renderCommitteeRequests() {
@@ -2126,18 +2073,33 @@
 
                 html += `
                     <div class="card">
-                        <div class="card-header"><b style="font-size:18px; color:var(--accent-color);">${req.patientName}</b><span class="badge pending">Pending</span></div>
-                        <div class="info-group"><div class="info-label">Patient Info</div><div class="info-value">Age: ${req.patientAge} | Relation: ${req.relation}</div></div>
+                        <div class="card-header">
+                            <b style="font-size:18px; color:var(--accent-color);">${req.patientName}</b>
+                            <span class="badge pending">Pending</span>
+                        </div>
+                        
+                        <div class="info-group">
+                            <div class="info-label">Patient Info</div>
+                            <div class="info-value">Age: ${req.patientAge} | Relation: ${req.relation}</div>
+                        </div>
+
                         <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+
                         <div class="info-group"><div class="info-label">Member Name</div><div class="info-value">${req.memberName} (${req.memberId})</div></div>
                         <div class="info-group"><div class="info-label">Mobile Number</div><div class="info-value">${req.mobile}</div></div>
                         <div class="info-group"><div class="info-label">Address</div><div class="info-value" style="font-size:13px;">${req.address}</div></div>
                         <div class="info-group"><div class="info-label">Native Name</div><div class="info-value">${req.native}</div></div>
+
                         <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+
                         <div class="info-group"><div class="info-label">Laboratory Name</div><div class="info-value" style="color: var(--accent-color);">${req.lab}</div></div>
                         <div class="info-group"><div class="info-label">Doctor Name</div><div class="info-value">${req.doctorName || '-'}</div></div>
                         <div class="info-group"><div class="info-label">Request Date</div><div class="info-value" style="font-weight: 700;">${displayDateTime(req.dateApplied, req.timeApplied)}</div></div>
-                        <div style="display:flex; gap:10px;">${photoBtn} ${rxBtn}</div>
+                        
+                        <div style="display:flex; gap:10px;">
+                            ${photoBtn} ${rxBtn}
+                        </div>
+
                         <div class="btn-group">
                             <button class="btn-outline" onclick="openDeclineModal('${req.id}')" style="color:var(--danger); border-color:var(--danger);">Decline</button>
                             <button class="btn-success" onclick="approveRequest('${req.id}')">Approve</button>
@@ -2162,10 +2124,12 @@
         }
 
         let html = `<h2 style="margin-bottom: 20px;">Batrisi Upcoming Program & Activity</h2>`;
-        if(batrisiUpdates.length === 0) { html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">No upcoming programs at the moment.</p>`; } 
-        else {
+        
+        if(batrisiUpdates.length === 0) {
+            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">No upcoming programs at the moment.</p>`;
+        } else {
             batrisiUpdates.forEach(update => {
-                if (!update.target || update.target.includes(currentUser.role)) { html += buildProgramHTML(update); }
+                html += buildProgramHTML(update);
             });
         }
         document.getElementById('committee-request-list').innerHTML = html + societyFooterHTML;
@@ -2176,7 +2140,9 @@
         if(reqIndex > -1) {
             const req = requests[reqIndex];
             let prefix = "GEN";
-            for(let key in DEFAULT_LABS) { if(DEFAULT_LABS[key].name === req.lab) prefix = DEFAULT_LABS[key].prefix; }
+            for(let key in labList) {
+                if(labList[key].name === req.lab) prefix = labList[key].prefix;
+            }
             
             const count = tokenCounters[prefix] || 1;
             const token = `${prefix}-${String(count).padStart(3, '0')}`;
@@ -2194,22 +2160,16 @@
             };
             
             try {
-                await supabase.from('requests').update(updatedFields).eq('id', id);
-                await supabase.from('system').upsert({ id: 'tokens', data: tokenCounters });
+                await _sb.from('requests').update(updatedFields).eq('id', id);
+                await _sb.from('system_kv').update({ value: tokenCounters }).eq('key', 'tokens');
                 
                 requests[reqIndex] = { ...requests[reqIndex], ...updatedFields };
 
                 showToast(`Approved! Token generated: ${token}`);
                 addNotification(`Your request (ID: ${req.memberId}) has been APPROVED by ${approver}`, req.memberId);
                 
-                try {
-                    const { data: memDoc } = await supabase.from('users').select('fcmToken').eq('id', req.memberId).single();
-                    if (memDoc && memDoc.fcmToken) {
-                        triggerPush(memDoc.fcmToken, "Request Approved", `Your request has been Approved! Token: ${token}`);
-                    }
-                } catch(e) { console.log("Error fetching member token", e); }
-
-                if (currentUser && currentUser.role === 'Admin') renderAdminRequests(); else renderCommitteeRequests();
+                if (currentUser && currentUser.role === 'Admin') renderAdminRequests();
+                else renderCommitteeRequests();
             } catch (error) {
                 console.error("Error approving request:", error);
                 showToast("Error approving request", "error");
@@ -2234,22 +2194,18 @@
             const approver = (currentUser && currentUser.role === 'Admin') ? 'Office Admin' : currentUser.name;
 
             try {
-                await supabase.from('requests').update({ status: 'Declined', declineReason: reason }).eq('id', id);
+                await _sb.from('requests').update({ status: 'Declined', declineReason: reason }).eq('id', id);
+                
                 requests[reqIndex].status = 'Declined';
                 requests[reqIndex].declineReason = reason;
 
                 closeModal('modal-decline');
                 showToast("Request Declined");
+
                 addNotification(`Your request (ID: ${req.memberId}) has been DECLINED by ${approver}`, req.memberId);
                 
-                try {
-                    const { data: memDoc } = await supabase.from('users').select('fcmToken').eq('id', req.memberId).single();
-                    if (memDoc && memDoc.fcmToken) {
-                        triggerPush(memDoc.fcmToken, "Request Declined", `Your request was Declined. Reason: ${reason}`);
-                    }
-                } catch(e) { console.log("Error fetching member token", e); }
-
-                if (currentUser && currentUser.role === 'Admin') renderAdminRequests(); else renderCommitteeRequests();
+                if (currentUser && currentUser.role === 'Admin') renderAdminRequests();
+                else renderCommitteeRequests();
             } catch (error) {
                 console.error("Error declining request:", error);
                 showToast("Error declining request", "error");
@@ -2262,6 +2218,7 @@
     function startScanner() {
         openModal('modal-qr-scanner');
         html5QrcodeScanner = new Html5Qrcode("reader");
+        
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         
         html5QrcodeScanner.start({ facingMode: "environment" }, config, 
@@ -2280,7 +2237,9 @@
 
     function stopScanner() {
         if(html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); }).catch(e => console.log(e));
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner.clear();
+            }).catch(e => console.log(e));
         }
         closeModal('modal-qr-scanner');
     }
@@ -2289,11 +2248,13 @@
         document.getElementById('lab-search-token').value = '';
         document.getElementById('lab-result-area').style.display = 'none';
         activeLabRequest = null;
+        
         uploadedInvoiceBase64 = null;
         const invInput = document.getElementById('lab-invoice-file');
         if(invInput) invInput.value = '';
         const invPreview = document.getElementById('invoice-preview');
         if(invPreview) { invPreview.src = ''; invPreview.style.display = 'none'; }
+        
         renderLabRequests();
     }
 
@@ -2323,14 +2284,19 @@
 
             const detailsHtml = `
                 <div class="card-header"><b style="font-size:18px; color:var(--accent-color);">${req.token}</b><i class="ph-fill ph-check-circle" style="color:var(--success); font-size:24px;"></i></div>
+                
                 <div class="info-group"><div class="info-label">Patient Name</div><div class="info-value" style="font-size:18px; font-weight:700;">${req.patientName} <span style="font-size:12px; font-weight:400; color:var(--text-secondary)">(${req.relation}, ${req.patientAge}y)</span></div></div>
                 <div class="info-group"><div class="info-label">Request Date</div><div class="info-value" style="font-weight: 700;">${displayDateTime(req.dateApplied, req.timeApplied)}</div></div>
+                
                 <div style="border-top: 1px solid var(--border-color); margin: 12px 0;"></div>
+
                 <div class="info-group"><div class="info-label">Member Name</div><div class="info-value">${req.memberName} (${req.memberId})</div></div>
                 <div class="info-group"><div class="info-label">Mobile Number</div><div class="info-value">${req.mobile}</div></div>
                 <div class="info-group"><div class="info-label">Address</div><div class="info-value" style="font-size:13px;">${req.address}</div></div>
                 <div class="info-group"><div class="info-label">Native Name</div><div class="info-value">${req.native}</div></div>
+                
                 <div style="border-top: 1px solid var(--border-color); margin: 12px 0;"></div>
+                
                 <div class="info-group"><div class="info-label">Laboratory Name</div><div class="info-value" style="color: var(--accent-color);">${req.lab}</div></div>
                 <div class="info-group"><div class="info-label">Doctor Name</div><div class="info-value">${req.doctorName || '-'}</div></div>
                 ${req.prescriptionImage ? `<button class="btn-outline" style="margin: 10px 0; width: 100%;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : ''}
@@ -2358,10 +2324,13 @@
     async function closeLabReport() {
         if(!activeLabRequest) return;
         
-        if (!uploadedInvoiceBase64) return showToast("Please upload invoice before closing report", "error");
+        if (!uploadedInvoiceBase64) {
+            return showToast("Please upload invoice before closing report", "error");
+        }
         
         const rawDate = document.getElementById('lab-billing-date').value;
         if (!rawDate) return showToast("Please select a billing date", "error");
+        
         const formattedBillingDate = formatDateToDDMMYYYY(rawDate);
 
         const reportName = document.getElementById('lab-report-name').value.trim();
@@ -2379,19 +2348,6 @@
             completeBtn.disabled = true;
         }
 
-        const usedThisMonth = await getUsedGrantThisMonthAsync(activeLabRequest.memberId);
-        if (usedThisMonth + discountAmt > 1000) {
-            if (completeBtn) { completeBtn.innerText = origBtnText; completeBtn.disabled = false; }
-            addNotification("Monthly assistance limit of ₹1000 per month exceeded.", activeLabRequest.memberId);
-            return showToast("Member assistance limit is maximum ₹1000 per month.", "error");
-        }
-
-        const reqIndex = requests.findIndex(r => r.id === activeLabRequest.id);
-        if (reqIndex === -1) {
-            if (completeBtn) { completeBtn.innerText = origBtnText; completeBtn.disabled = false; }
-            return showToast("Request not found locally.", "error");
-        }
-        
         const closeDate = getCurrentDateTime();
         
         const updatedFields = {
@@ -2408,36 +2364,37 @@
         };
 
         try {
-            await supabase.from('requests').update(updatedFields).eq('id', activeLabRequest.id);
-            requests[reqIndex] = { ...requests[reqIndex], ...updatedFields };
+            await _sb.from('requests').update(updatedFields).eq('id', activeLabRequest.id);
+            const reqIndex = requests.findIndex(r => r.id === activeLabRequest.id);
+            if (reqIndex > -1) {
+                requests[reqIndex] = { ...requests[reqIndex], ...updatedFields };
+            }
 
             showToast("Report completed and saved successfully!");
             addNotification(`Medical report for ${activeLabRequest.patientName} completed.`, activeLabRequest.memberId);
             
-            try {
-                const { data: memDoc } = await supabase.from('users').select('fcmToken').eq('id', activeLabRequest.memberId).single();
-                if (memDoc && memDoc.fcmToken) {
-                    triggerPush(memDoc.fcmToken, "Report Closed", `Medical report for ${activeLabRequest.patientName} is now complete. Society Discount: ₹${discountAmt} applied.`);
-                }
-            } catch(e) { console.log("Error fetching member token", e); }
-
             resetLabSearch();
         } catch (error) {
             console.error("Supabase update failed:", error);
             showToast("Failed to save report. Please try again.", "error");
         } finally {
-            if (completeBtn) { completeBtn.innerText = origBtnText; completeBtn.disabled = false; }
+            if (completeBtn) {
+                completeBtn.innerText = origBtnText;
+                completeBtn.disabled = false;
+            }
         }
     }
 
     function renderLabRequests() {
         if (!currentUser || currentUser.role !== 'Laboratory') return;
+        
         const tbody = document.getElementById('lab-request-list-body');
         if (!tbody) return;
 
         const myReqs = requests.filter(r => r.lab === currentUser.name).reverse();
         
-        let totalOriginal = 0; let totalFinal = 0;
+        let totalOriginal = 0;
+        let totalFinal = 0;
         const now = new Date();
         const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
         const currentYear = String(now.getFullYear());
@@ -2467,16 +2424,26 @@
                 let statusBadge = `<span class="badge ${req.status.toLowerCase()}">${req.status}</span>`;
                 let amountDisplay = '-';
                 if(req.status === 'Completed') {
-                    amountDisplay = `<div style="font-size:11px; color:var(--text-secondary)">Bill Date: ${req.billingDate || '-'}</div>
-                                     <span style="color:var(--text-secondary); text-decoration:line-through; font-size:11px;">₹${req.originalAmount}</span> 
-                                     <b style="color:var(--success)">₹${req.finalAmount}</b>`;
+                    amountDisplay = `
+                        <div style="font-size:11px; color:var(--text-secondary)">Bill Date: ${req.billingDate || '-'}</div>
+                        <span style="color:var(--text-secondary); text-decoration:line-through; font-size:11px;">₹${req.originalAmount}</span> 
+                        <b style="color:var(--success)">₹${req.finalAmount}</b>
+                    `;
                 }
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><b style="color:var(--text-primary)">${req.token || '-'}</b><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span></td>
+                    <td>
+                        <b style="color:var(--text-primary)">${req.token || '-'}</b><br>
+                        <span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span>
+                    </td>
                     <td>${statusBadge}</td>
-                    <td><b style="color:var(--accent-color)">${req.patientName}</b><br><span style="font-size:10px;">(${req.patientAge}y, ${req.relation})</span></td>
-                    <td><b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>
+                    <td>
+                        <b style="color:var(--accent-color)">${req.patientName}</b><br>
+                        <span style="font-size:10px;">(${req.patientAge}y, ${req.relation})</span>
+                    </td>
+                    <td>
+                        <b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>
                         ${req.prescriptionImage ? `<br><button class="btn-small btn-outline" style="margin-top:5px; padding:4px 8px; font-size:10px;" onclick="viewFullPhoto('${req.prescriptionImage}')">View Rx</button>` : ''}
                         ${req.reportName ? `<br><span style="font-size:11px;">Rep: ${req.reportName}</span>` : ''}
                     </td>
@@ -2495,19 +2462,32 @@
         const filterYear = document.getElementById('admin-filter-year') ? document.getElementById('admin-filter-year').value : 'All';
 
         let reqs = requests;
-        if(filterStatus !== 'All') reqs = reqs.filter(r => r.status === filterStatus);
+
+        if(filterStatus !== 'All') {
+            reqs = reqs.filter(r => r.status === filterStatus);
+        }
+
         if(filterMonth !== 'All' || filterYear !== 'All') {
             reqs = reqs.filter(r => {
                 const dateToUse = r.status === 'Completed' ? (r.labClosedDate || r.dateApplied) : r.dateApplied;
                 if(!dateToUse) return false;
+                
                 const datePart = dateToUse.split(' ')[0]; 
                 const parts = datePart.split('/');
                 if(parts.length !== 3) return true; 
-                return (filterMonth === 'All' || parts[1] === filterMonth) && (filterYear === 'All' || parts[2] === filterYear);
+                
+                const m = parts[1];
+                const y = parts[2];
+                
+                let monthMatch = (filterMonth === 'All' || m === filterMonth);
+                let yearMatch = (filterYear === 'All' || y === filterYear);
+                
+                return monthMatch && yearMatch;
             });
         }
 
-        let adminTotalOriginal = 0; let adminTotalFinal = 0;
+        let adminTotalOriginal = 0;
+        let adminTotalFinal = 0;
         reqs.forEach(req => {
             if (req.status === 'Completed') {
                 adminTotalOriginal += parseFloat(req.originalAmount) || 0;
@@ -2520,6 +2500,7 @@
         const adminLab2 = document.getElementById('admin-total-label2');
         if (adminOrigEl) adminOrigEl.innerText = `₹ ${adminTotalOriginal.toFixed(2)}`;
         if (adminFinalEl) adminFinalEl.innerText = `₹ ${adminTotalFinal.toFixed(2)}`;
+        
         const labelText = (filterMonth === 'All' && filterYear === 'All') ? 'All Time (Filtered)' : 'Selected Period';
         if (adminLab1) adminLab1.innerText = labelText;
         if (adminLab2) adminLab2.innerText = labelText;
@@ -2528,6 +2509,7 @@
 
         const tbody = document.getElementById('admin-request-list-body');
         const emptyMsg = document.getElementById('admin-empty-msg');
+        
         tbody.innerHTML = '';
         
         if(reqs.length === 0) {
@@ -2539,41 +2521,59 @@
             
             reqs.forEach(req => {
                 let statusBadge = `<span class="badge ${req.status.toLowerCase()}">${req.status}</span>`;
+                
                 let amountDisplay = '-';
                 if(req.status === 'Completed') {
-                    amountDisplay = `<div style="font-size:11px; color:var(--text-secondary)">Bill Date: ${req.billingDate || '-'}</div>
-                                     <span style="color:var(--text-secondary); text-decoration:line-through; font-size:11px;">₹${req.originalAmount}</span> 
-                                     <b style="color:var(--success)">₹${req.finalAmount}</b>`;
+                    amountDisplay = `
+                        <div style="font-size:11px; color:var(--text-secondary)">Bill Date: ${req.billingDate || '-'}</div>
+                        <span style="color:var(--text-secondary); text-decoration:line-through; font-size:11px;">₹${req.originalAmount}</span> 
+                        <b style="color:var(--success)">₹${req.finalAmount}</b>
+                    `;
                 }
 
                 let actionHtml = '';
                 if (req.status === 'Pending') {
-                    actionHtml += `<div style="display:flex; flex-direction:column; gap:5px; margin-bottom:10px;">
-                                       <button class="btn-success btn-small" style="padding:4px 8px; font-size:11px;" onclick="approveRequest('${req.id}')">Approve</button>
-                                       <button class="btn-outline btn-small" style="padding:4px 8px; font-size:11px; color:var(--danger); border-color:var(--danger);" onclick="openDeclineModal('${req.id}')">Decline</button>
-                                   </div>`;
+                    actionHtml += `
+                        <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:10px;">
+                            <button class="btn-success btn-small" style="padding:4px 8px; font-size:11px;" onclick="approveRequest('${req.id}')">Approve</button>
+                            <button class="btn-outline btn-small" style="padding:4px 8px; font-size:11px; color:var(--danger); border-color:var(--danger);" onclick="openDeclineModal('${req.id}')">Decline</button>
+                        </div>
+                    `;
                 }
-                actionHtml += `<button style="background:transparent; border:none; color:var(--danger); font-size:24px; cursor:pointer;" onclick="confirmDelete('${req.id}')"><i class="ph-fill ph-trash"></i></button>`;
+                actionHtml += `
+                    <button style="background:transparent; border:none; color:var(--danger); font-size:24px; cursor:pointer;" onclick="confirmDelete('${req.id}')">
+                        <i class="ph-fill ph-trash"></i>
+                    </button>
+                `;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><b style="color:var(--text-primary)">${req.token || '-'}</b><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span></td>
+                    <td>
+                        <b style="color:var(--text-primary)">${req.token || '-'}</b><br>
+                        <span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span>
+                    </td>
                     <td>${statusBadge}</td>
-                    <td><b style="color:var(--accent-color)">${req.patientName}</b> <span style="font-size:10px;">(${req.patientAge}y, ${req.relation})</span><br>
+                    <td>
+                        <b style="color:var(--accent-color)">${req.patientName}</b> <span style="font-size:10px;">(${req.patientAge}y, ${req.relation})</span><br>
                         <span style="font-size:11px; color:var(--text-secondary)">Mem: ${req.memberName} (${req.memberId})</span><br>
                         <span style="font-size:11px; color:var(--text-secondary)">📱 ${req.mobile} | 🏠 ${req.native}</span>
                     </td>
-                    <td><span style="color:var(--accent-color)">${req.lab}</span><br><b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>
+                    <td>
+                        <span style="color:var(--accent-color)">${req.lab}</span><br>
+                        <b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>
                         ${req.prescriptionImage ? `<br><button class="btn-small btn-outline" style="margin-top:5px; padding:4px 8px; font-size:10px;" onclick="viewFullPhoto('${req.prescriptionImage}')">View Rx</button>` : ''}
                         ${req.invoiceImage ? `<br><button class="btn-small btn-outline" style="margin-top:5px; padding:4px 8px; font-size:10px; border-color:var(--accent-color); color:var(--accent-color);" onclick="viewFullPhoto('${req.invoiceImage}')">View Invoice</button>` : ''}
                         ${req.reportName ? `<br><span style="font-size:11px;">Rep: ${req.reportName}</span>` : ''}
                     </td>
                     <td>${amountDisplay}</td>
-                    <td><span style="font-size:12px;">${req.assignedCommittee}</span><br>
+                    <td>
+                        <span style="font-size:12px;">${req.assignedCommittee}</span><br>
                         <span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span>
                         ${req.approvalDate ? `<br><span style="font-size:11px; color:var(--success)">Appr: ${displayDateTime(req.approvalDate, req.approvalTime)}</span>` : ''}
                     </td>
-                    <td>${actionHtml}</td>
+                    <td>
+                        ${actionHtml}
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2589,10 +2589,11 @@
         const id = document.getElementById('delete-req-id').value;
         requests = requests.filter(r => r.id !== id);
         
-        await supabase.from('requests').delete().eq('id', id);
+        await _sb.from('requests').delete().eq('id', id);
+        
         closeModal('modal-delete-confirm');
         showToast("Report Deleted Permanently!");
-        addNotification("A medical report was deleted by Admin.", "kiran.desai3667@gmail.com");
+        
         renderAdminRequests(); 
     }
 
@@ -2600,6 +2601,7 @@
     
     function openExportModal(type) {
         document.getElementById('export-type-flag').value = 'csv';
+        
         const filterMonth = document.getElementById('admin-filter-month') ? document.getElementById('admin-filter-month').value : 'All';
         const filterYear = document.getElementById('admin-filter-year') ? document.getElementById('admin-filter-year').value : 'All';
 
@@ -2608,11 +2610,15 @@
             const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             defaultName += `_${monthNames[parseInt(filterMonth)]}`;
         }
-        if (filterYear !== 'All') defaultName += `_${filterYear}`;
-        else defaultName += `_All`;
+        if (filterYear !== 'All') {
+            defaultName += `_${filterYear}`;
+        } else {
+            defaultName += `_All`;
+        }
 
         document.getElementById('export-file-name').value = defaultName;
         document.getElementById('export-modal-title').innerText = `Export CSV Log`;
+        
         openModal('modal-export-file');
     }
 
@@ -2624,6 +2630,7 @@
         if (!fileNameInput) return showToast("File name cannot be empty", "error");
 
         let reqs = requests;
+
         if(filterMonth !== 'All' || filterYear !== 'All') {
             reqs = reqs.filter(r => {
                 const dateToUse = r.status === 'Completed' ? (r.labClosedDate || r.dateApplied) : r.dateApplied;
@@ -2635,16 +2642,38 @@
             });
         }
 
-        if(reqs.length === 0) { closeModal('modal-export-file'); return showToast("No data to export", "error"); }
+        if(reqs.length === 0) {
+            closeModal('modal-export-file');
+            return showToast("No data to export", "error");
+        }
 
         const exportData = reqs.map(r => ({
-            "Token": r.token || '', "Member Name": r.memberName || '', "Member Number": r.memberId || '', "Address": r.address || '',
-            "Native Name": r.native || '', "Mobile Number": r.mobile || '', "Patient Name": r.patientName || '', "Patient Age": r.patientAge || '',
-            "Relationship": r.relation || '', "Laboratory Name": r.lab || '', "Doctor Name": r.doctorName || '', "Has Prescription Image": r.prescriptionImage ? "Yes" : "No",
-            "Has Invoice Image": r.invoiceImage ? "Yes" : "No", "Login Date": displayDateTime(r.dateApplied, r.timeApplied), "Login Day": r.appliedDay || '',
-            "Approved By": r.approverName || '', "Approval Date": displayDateTime(r.approvalDate, r.approvalTime), "Approval Day": r.approvalDay || '',
-            "Billing Date": r.billingDate || '', "Report Name": r.reportName || '', "Total Amount": r.originalAmount || 0, "Discount Amount": r.discountAmount || 0,
-            "Final Paid Amount": r.finalAmount || 0, "Close Date": displayDateTime(r.labClosedDate, r.labClosedTime), "Close Day": r.labClosedDay || '', "Status": r.status || ''
+            "Token": r.token || '',
+            "Member Name": r.memberName || '',
+            "Member Number": r.memberId || '',
+            "Address": r.address || '',
+            "Native Name": r.native || '',
+            "Mobile Number": r.mobile || '',
+            "Patient Name": r.patientName || '',
+            "Patient Age": r.patientAge || '',
+            "Relationship": r.relation || '',
+            "Laboratory Name": r.lab || '',
+            "Doctor Name": r.doctorName || '',
+            "Has Prescription Image": r.prescriptionImage ? "Yes" : "No",
+            "Has Invoice Image": r.invoiceImage ? "Yes" : "No",
+            "Login Date": displayDateTime(r.dateApplied, r.timeApplied),
+            "Login Day": r.appliedDay || '',
+            "Approved By": r.approverName || '',
+            "Approval Date": displayDateTime(r.approvalDate, r.approvalTime),
+            "Approval Day": r.approvalDay || '',
+            "Billing Date": r.billingDate || '',
+            "Report Name": r.reportName || '',
+            "Total Amount": r.originalAmount || 0,
+            "Discount Amount": r.discountAmount || 0,
+            "Final Paid Amount": r.finalAmount || 0,
+            "Close Date": displayDateTime(r.labClosedDate, r.labClosedTime),
+            "Close Day": r.labClosedDay || '',
+            "Status": r.status || ''
         }));
 
         exportToCSV(exportData, fileNameInput);
@@ -2653,12 +2682,21 @@
 
     function exportToCSV(data, fileName) {
         try {
-            if (!data || data.length === 0) { showToast("No data available", "error"); return; }
+            if (!data || data.length === 0) {
+                showToast("No data available", "error");
+                return;
+            }
+
             const headers = Object.keys(data[0]);
             let csv = "";
+
             csv += headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(",") + "\n";
+
             data.forEach(row => {
-                csv += headers.map(h => { let val = row[h] ?? ""; return `"${String(val).replace(/"/g, '""')}"`; }).join(",") + "\n";
+                csv += headers.map(h => {
+                    let val = row[h] ?? "";
+                    return `"${String(val).replace(/"/g, '""')}"`;
+                }).join(",") + "\n";
             });
 
             const csvContent = "\uFEFF" + csv;
@@ -2667,16 +2705,37 @@
             if (navigator.share && navigator.canShare) {
                 const file = new File([blob], fileName + ".csv", { type: "text/csv" });
                 if (navigator.canShare({ files: [file] })) {
-                    navigator.share({ files: [file], title: "Export CSV", text: "Medical Report Export" }).then(() => { showToast("CSV Exported via Share!"); }).catch((err) => { console.log(err); }); return;
+                    navigator.share({
+                        files: [file],
+                        title: "Export CSV",
+                        text: "Medical Report Export"
+                    }).then(() => {
+                        showToast("CSV Exported via Share!");
+                    }).catch((err) => {
+                        console.log("Share cancelled or failed:", err);
+                    });
+                    return;
                 }
             }
+
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.href = url; link.download = fileName + ".csv";
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            setTimeout(() => { window.location.href = url; }, 500);
+            link.href = url;
+            link.download = fileName + ".csv";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => {
+                window.location.href = url;
+            }, 500);
+
             showToast("CSV Download Triggered!");
-        } catch(e) { console.error(e); showToast("CSV export failed", "error"); }
+        } catch(e) {
+            console.error(e);
+            showToast("CSV export failed", "error");
+        }
     }
 
     function executeNewExport(type) {
@@ -2685,7 +2744,11 @@
         const filterYear = document.getElementById('admin-filter-year') ? document.getElementById('admin-filter-year').value : 'All';
 
         let reqs = requests;
-        if(filterStatus !== 'All') reqs = reqs.filter(r => r.status === filterStatus);
+
+        if(filterStatus !== 'All') {
+            reqs = reqs.filter(r => r.status === filterStatus);
+        }
+
         if(filterMonth !== 'All' || filterYear !== 'All') {
             reqs = reqs.filter(r => {
                 const dateToUse = r.status === 'Completed' ? (r.labClosedDate || r.dateApplied) : r.dateApplied;
@@ -2696,7 +2759,10 @@
                 return (filterMonth === 'All' || parts[1] === filterMonth) && (filterYear === 'All' || parts[2] === filterYear);
             });
         }
-        if(reqs.length === 0) return showToast("No data to export", "error");
+
+        if(reqs.length === 0) {
+            return showToast("No data to export", "error");
+        }
 
         let fileName = "Medical_Report";
         if (filterMonth !== 'All') {
@@ -2706,42 +2772,62 @@
         fileName += `_${filterYear !== 'All' ? filterYear : 'All'}`;
 
         const exportData = reqs.map(r => ({
-            "Token": r.token || '-', "Status": r.status || '-', "Patient Name": r.patientName || '-', "Patient Age": r.patientAge || '-',
-            "Relationship": r.relation || '-', "Member Name": r.memberName || '-', "Member Number": r.memberId || '-', "Address": r.address || '-',
-            "Native Name": r.native || '-', "Mobile Number": r.mobile || '-', "Laboratory Name": r.lab || '-', "Doctor Name": r.doctorName || '-',
-            "Report Name": r.reportName || '-', "Has Prescription": r.prescriptionImage ? "Yes" : "No", "Has Invoice": r.invoiceImage ? "Yes" : "No",
-            "Original Amount": r.originalAmount || 0, "Discount Amount": r.discountAmount || 0, "Final Amount": r.finalAmount || 0,
-            "Billing Date": r.billingDate || '-', "Login Date": displayDateTime(r.dateApplied, r.timeApplied) || '-', "Approved By": r.approverName || '-',
-            "Approval Date": displayDateTime(r.approvalDate, r.approvalTime) || '-', "Close Date": displayDateTime(r.labClosedDate, r.labClosedTime) || '-'
+            "Token": r.token || '-',
+            "Status": r.status || '-',
+            "Patient Name": r.patientName || '-',
+            "Patient Age": r.patientAge || '-',
+            "Relationship": r.relation || '-',
+            "Member Name": r.memberName || '-',
+            "Member Number": r.memberId || '-',
+            "Address": r.address || '-',
+            "Native Name": r.native || '-',
+            "Mobile Number": r.mobile || '-',
+            "Laboratory Name": r.lab || '-',
+            "Doctor Name": r.doctorName || '-',
+            "Report Name": r.reportName || '-',
+            "Has Prescription": r.prescriptionImage ? "Yes" : "No",
+            "Has Invoice": r.invoiceImage ? "Yes" : "No",
+            "Original Amount": r.originalAmount || 0,
+            "Discount Amount": r.discountAmount || 0,
+            "Final Amount": r.finalAmount || 0,
+            "Billing Date": r.billingDate || '-',
+            "Login Date": displayDateTime(r.dateApplied, r.timeApplied) || '-',
+            "Approved By": r.approverName || '-',
+            "Approval Date": displayDateTime(r.approvalDate, r.approvalTime) || '-',
+            "Close Date": displayDateTime(r.labClosedDate, r.labClosedTime) || '-'
         }));
 
-        if (type === 'csv') { exportToCSV(exportData, fileName); } 
-        else if (type === 'excel') {
+        if (type === 'csv') {
+            exportToCSV(exportData, fileName);
+        } else if (type === 'excel') {
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Reports");
             XLSX.writeFile(wb, fileName + ".xlsx");
             showToast("Excel Exported!");
         } else if (type === 'pdf') {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
             doc.text("Medical Reports - " + fileName, 14, 15);
+            
             const columns = Object.keys(exportData[0]).map(k => ({ header: k, dataKey: k }));
-            doc.autoTable({ columns: columns, body: exportData, startY: 20, styles: { fontSize: 6, cellPadding: 1, overflow: 'linebreak' }, headStyles: { fillColor: [0, 149, 246] }, margin: { top: 20, left: 5, right: 5 }, theme: 'grid' });
+            
+            doc.autoTable({
+                columns: columns,
+                body: exportData,
+                startY: 20,
+                styles: { fontSize: 6, cellPadding: 1, overflow: 'linebreak' },
+                headStyles: { fillColor: [0, 149, 246] },
+                margin: { top: 20, left: 5, right: 5 },
+                theme: 'grid'
+            });
+
             doc.save(fileName + ".pdf");
             showToast("PDF Exported!");
         }
     }
 
-</script>
-<!-- ✅ PWA SERVICE WORKER REGISTER -->
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./firebase-messaging-sw.js")
-      .then((reg) => { console.log("Service Worker Registered:", reg.scope); })
-      .catch((err) => { console.error("Registration Failed:", err); });
-  });
-}
 </script>
 </body>
 </html>
