@@ -1418,7 +1418,7 @@
         try {
             if (role === 'Member') {
                 const { data, error } = await _sb
-                    .from('members')
+                    .from('Members')
                     .select('*')
                     .eq('Member_Number', id.trim())
                     .single();
