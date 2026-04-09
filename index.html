@@ -15,9 +15,9 @@
 
     <style>
         :root {
-            --primary: #ea580c; /* Saffron */
+            --primary: #ea580c; 
             --primary-dark: #c2410c;
-            --secondary: #fbbf24; /* Gold */
+            --secondary: #fbbf24; 
             --dark: #0f172a;
             --darker: #1e293b;
             --light: #f8fafc;
@@ -47,7 +47,6 @@
         .btn-legacy { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--white) !important; padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 14px; letter-spacing: 0.5px; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3), inset 0 -3px 0 rgba(0,0,0,0.3); transition: all 0.2s ease; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
         .btn-legacy:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4), inset 0 -3px 0 rgba(0,0,0,0.3); }
         .btn-saffron { background: linear-gradient(135deg, #f97316, #ea580c) !important; box-shadow: 0 6px 15px rgba(234, 88, 12, 0.3), inset 0 -3px 0 rgba(0,0,0,0.2) !important; }
-        .btn-saffron:hover { box-shadow: 0 8px 20px rgba(234, 88, 12, 0.4), inset 0 -3px 0 rgba(0,0,0,0.2) !important; }
 
         @media (max-width: 1250px) { .nav-brand-text .subtitle { display: none; } .nav-actions { margin-left: 10px; padding-left: 10px; gap: 10px; } .btn-legacy { padding: 8px 16px; font-size: 13px; } .nav-links { gap: 15px; } }
         @media (max-width: 992px) { .navbar { flex-direction: column; padding: 10px 4%; gap: 10px; } .nav-right { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; } .nav-actions { border-left: none; padding-left: 0; } }
@@ -72,12 +71,10 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
         .grid-landscape { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 30px; }
 
-        /* CARDS */
         .card { background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f1f5f9; }
         .card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); }
         .card-img { width: 100%; height: 220px; object-fit: cover; }
         .card-body { padding: 25px; }
-        .card-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: var(--dark); }
 
         .event-card { display: flex; flex-direction: row; background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f1f5f9; height: 100%; }
         .event-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); }
@@ -91,7 +88,10 @@
         @media (max-width: 768px) { .grid-landscape { grid-template-columns: 1fr; } .event-card { flex-direction: column; } .event-img-wrap { width: 100%; height: 220px; position: relative; } .event-body { width: 100%; } }
         
         .committee-card { text-align: center; padding: 40px 20px; background: linear-gradient(to bottom, #ffffff, #f8fafc); }
-        .committee-img { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid var(--secondary); margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        
+        /* CIRCLE TO SQUARE CSS CHANGED HERE */
+        .committee-img { width: 160px; height: 180px; border-radius: 12px; object-fit: cover; border: 4px solid var(--secondary); margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        
         .pos-badge { display: inline-block; background: var(--primary); color: var(--white); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(234,88,12,0.2); }
 
         /* MODALS */
@@ -161,20 +161,27 @@
         </div>
     </div>
 
-    <!-- OTHER VIEWS -->
+    <!-- ABOUT SECTION DYNAMIC -->
     <div id="view-about" class="page-view">
         <div class="container">
             <h2 class="section-title">About <span>Us</span></h2>
             <div class="card" style="padding: 40px; text-align: center; max-width: 900px; margin: 0 auto; line-height: 1.8; font-size: 18px;">
                 <img src="./logo.png" alt="Logo" style="height: 70px; width: 70px; margin-bottom: 15px; object-fit: contain;">
-                <h3 style="color: var(--dark); font-size: 24px; margin-bottom: 15px; font-weight: 800;">Shree Batrisi Jain Co-Op. Education Society Ltd.</h3>
-                <p>Established on <b style="color:var(--primary);">10/10/1944</b>. For decades, we have aimed to uplift our community through educational grants, comprehensive medical assistance, and cultural unity.</p>
+                
+                <!-- Dynamic Content Here -->
+                <div id="about-content" style="margin-bottom: 20px;">
+                    <!-- Firebase se data yaha aayega -->
+                    <h3 style="color: var(--dark); font-size: 24px; margin-bottom: 15px; font-weight: 800;">Shree Batrisi Jain Co-Op. Education Society Ltd.</h3>
+                    <p>Established on <b style="color:var(--primary);">10/10/1944</b>. For decades, we have aimed to uplift our community through educational grants, comprehensive medical assistance, and cultural unity.</p>
+                </div>
+
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 15px; color: #64748b;">
                     <b>Reg No:</b> GH/230 &nbsp;|&nbsp; <b>GSTIN:</b> 24AAATS6070J1ZE
                 </div>
             </div>
         </div>
     </div>
+    
     <div id="view-events" class="page-view"><div class="container"><h2 class="section-title">Upcoming <span>Events</span></h2><div class="grid-landscape" id="events-grid"></div></div></div>
     <div id="view-media" class="page-view"><div class="container"><h2 class="section-title">Media <span>Coverage</span></h2><div class="grid" id="media-grid"></div></div></div>
     <div id="view-gallery" class="page-view"><div class="container"><h2 class="section-title">Photo <span>Gallery</span></h2><div class="grid" id="gallery-grid"></div></div></div>
@@ -246,6 +253,20 @@
         function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
         function fetchAllData() {
+            
+            // ABOUT US DATA
+            db.collection('about').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                if(!snap.empty) {
+                    let html = '';
+                    snap.forEach(doc => { 
+                        let d = doc.data(); 
+                        html += `<h3 style="color: var(--dark); font-size: 24px; margin-bottom: 15px; font-weight: 800;">${d.title}</h3>
+                                 <p style="white-space: pre-wrap;">${d.desc}</p><br>`; 
+                    });
+                    document.getElementById('about-content').innerHTML = html;
+                }
+            });
+
             db.collection('events').orderBy('timestamp', 'desc').onSnapshot(snap => {
                 let html = ''; let count = 0; let homeHtml = '';
                 snap.forEach(doc => {
@@ -272,7 +293,7 @@
             });
             db.collection('committee').orderBy('timestamp', 'asc').onSnapshot(snap => {
                 let html = '';
-                snap.forEach(doc => { let d = doc.data(); html += `<div class="card committee-card"><img src="${d.photo}" class="committee-img"><span class="pos-badge">${d.position}</span><h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3><p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p><p style="color:#64748b; font-size:14px; font-weight:500;"><i class="fa-solid fa-phone"></i> ${d.phone}</p></div>`; });
+                snap.forEach(doc => { let d = doc.data(); html += `<div class="card committee-card"><img src="${d.photo}" class="committee-img"><br><span class="pos-badge">${d.position}</span><h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3><p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p><p style="color:#64748b; font-size:14px; font-weight:500;"><i class="fa-solid fa-phone"></i> ${d.phone}</p></div>`; });
                 document.getElementById('committee-grid').innerHTML = html;
             });
         }
