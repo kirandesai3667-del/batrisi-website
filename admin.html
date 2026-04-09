@@ -66,6 +66,7 @@
     <div class="sidebar">
         <div style="padding:25px; border-bottom:1px solid rgba(255,255,255,0.1); text-align:center;"><h2>Batrisi CMS</h2></div>
         <button class="nav-btn active" onclick="initCMS('events', 'Events')">Manage Events</button>
+        <button class="nav-btn" onclick="initCMS('about', 'About Us')">Manage About Us</button> <!-- NEW ABOUT BUTTON -->
         <button class="nav-btn" onclick="initCMS('gallery', 'Gallery')">Manage Gallery</button>
         <button class="nav-btn" onclick="initCMS('committee', 'Committee')">Manage Committee</button>
         <button class="nav-btn" onclick="initCMS('downloads', 'Downloads')">Manage Downloads</button>
@@ -75,7 +76,7 @@
     <div class="main-content">
         <div class="toolbar">
             <h1 id="cms-title">Manage Events</h1>
-            <button class="btn-add" onclick="openCMSModal()">+ Add New Record</button>
+            <button class="btn-add" onclick="openAddModal()">+ Add New Record</button>
         </div>
         <div class="table-container">
             <table>
@@ -88,7 +89,7 @@
     <!-- MODAL -->
     <div class="modal" id="cmsModal">
         <div class="modal-content">
-            <h2 id="modalTitle" style="margin-bottom:20px;">Add New Record</h2>
+            <h2 id="modalTitle" style="margin-bottom:20px;">Add/Edit Record</h2>
             
             <div id="dynamicFields">
                 <!-- Fields generate here -->
@@ -116,6 +117,7 @@
 
         const schemas = {
             'events': [ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
+            'about': [ {key:'title', label:'Heading Title (e.g. Shree Batrisi Jain...)'}, {key:'desc', label:'Full About Description', isArea:true} ], // NEW ABOUT SCHEMA
             'gallery': [ {key:'title', label:'Caption'}, {key:'image', label:'Image', isFile:true} ],
             'committee': [ {key:'name', label:'Full Name'}, {key:'position', label:'Position'}, {key:'native', label:'Native Village'}, {key:'phone', label:'Mobile Number'}, {key:'photo', label:'Passport Photo', isFile:true} ],
             'downloads': [ {key:'title', label:'Document Title'}, {key:'file', label:'PDF Link (Google Drive)'} ]
@@ -123,6 +125,8 @@
 
         let currentCol = 'events';
         let uploadedUrl = "";
+        let currentEditId = null; // Variable for EDIT functionality
+        window.tableData = {}; // Store data for easy editing
 
         function adminLogin() {
             if(document.getElementById('adminUser').value==='Batrisi' && document.getElementById('adminPwd').value==='Bat@3232')
@@ -142,21 +146,56 @@
             const body = document.getElementById('tableBody');
             db.collection(currentCol).orderBy('timestamp', 'desc').onSnapshot(snap => {
                 body.innerHTML = "";
+                window.tableData = {}; // clear old data
                 snap.forEach(doc => {
                     const d = doc.data();
+                    window.tableData[doc.id] = d; // save data locally for edit
                     body.innerHTML += `<tr>
                         <td><b>${d.title || d.name || 'No Name'}</b></td>
                         <td><img src="${d.image || d.photo || ''}" onerror="this.src='https://via.placeholder.com/40'"></td>
-                        <td><button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;">Delete</button></td>
+                        <td>
+                            <button onclick="editDoc('${doc.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer; font-weight:bold; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                            <button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </td>
                     </tr>`;
                 });
             });
         }
 
-        function openCMSModal() {
+        // ADD NEW RECORD
+        function openAddModal() {
+            currentEditId = null; // Clear edit ID
+            document.getElementById('modalTitle').innerText = "Add New Record";
+            generateModalFields();
+        }
+
+        // EDIT EXISTING RECORD
+        function editDoc(id) {
+            currentEditId = id;
+            document.getElementById('modalTitle').innerText = "Edit Record";
+            generateModalFields();
+            
+            const data = window.tableData[id];
+            
+            // Wait slightly for DOM to render the fields, then fill data
+            setTimeout(() => {
+                schemas[currentCol].forEach(f => {
+                    if(f.isFile) {
+                        uploadedUrl = data[f.key] || "";
+                        document.getElementById('manual_link').value = uploadedUrl;
+                        updatePreview(uploadedUrl);
+                    } else if(document.getElementById('f_'+f.key)) {
+                        document.getElementById('f_'+f.key).value = data[f.key] || "";
+                    }
+                });
+            }, 50);
+        }
+
+        // GENERATE HTML FIELDS
+        function generateModalFields() {
             const fields = schemas[currentCol];
             let html = "";
-            uploadedUrl = ""; // Reset
+            uploadedUrl = ""; // Reset URL
             
             fields.forEach(f => {
                 if(f.isFile) {
@@ -168,7 +207,7 @@
                         <img id="modal_prev" class="preview-img">
                     </div>`;
                 } else if(f.isArea) {
-                    html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="3"></textarea></div>`;
+                    html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="5"></textarea></div>`;
                 } else {
                     html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`;
                 }
@@ -204,7 +243,7 @@
             btn.innerText = "SAVING..."; btn.disabled = true;
 
             const fields = schemas[currentCol];
-            let dataObj = { timestamp: Date.now() };
+            let dataObj = {};
 
             fields.forEach(f => {
                 if(f.isFile) {
@@ -216,21 +255,28 @@
             });
 
             try {
-                await db.collection(currentCol).add(dataObj);
+                if (currentEditId) {
+                    // Update existing document
+                    await db.collection(currentCol).doc(currentEditId).update(dataObj);
+                } else {
+                    // Add new document
+                    dataObj.timestamp = Date.now(); // only add timestamp on creation
+                    await db.collection(currentCol).add(dataObj);
+                }
                 closeCMSModal();
                 showToast();
             } catch(e) {
-                alert("Database Error: Rules check karo!");
+                alert("Database Error! Please check your connection.");
             }
 
             btn.innerText = "SAVE RECORD"; btn.disabled = false;
         }
 
-        function deleteDoc(id) { if(confirm("Delete this?")) db.collection(currentCol).doc(id).delete(); }
+        function deleteDoc(id) { if(confirm("Are you sure you want to delete this record?")) db.collection(currentCol).doc(id).delete(); }
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; }
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
-        // Start
+        // Start App
         initCMS('events', 'Events');
     </script>
 </body>
