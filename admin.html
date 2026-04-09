@@ -64,9 +64,9 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #475569; text-transform: uppercase; }
         .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
-        .file-upload-wrapper { border: 2px dashed var(--border); padding: 20px; text-align: center; border-radius: 8px; background: #f8fafc; position: relative; }
-        .file-upload-wrapper input[type="file"] { opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer; }
-        .preview-img { max-height: 120px; border-radius: 8px; margin-top: 10px; display: none; }
+        .file-upload-wrapper { border: 2px dashed var(--border); padding: 20px; text-align: center; border-radius: 8px; background: #f8fafc; position: relative; overflow:hidden;}
+        .file-upload-wrapper input[type="file"] { opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer; z-index:10; }
+        .preview-img { max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid #ccc; }
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
 
         /* Toast & Spinner */
@@ -159,7 +159,7 @@
     <!-- TOAST -->
     <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Success!</span></div>
 
-    <!-- FIREBASE LOGIC WITH IMAGE COMPRESSION -->
+    <!-- FIREBASE LOGIC WITH FAST IMAGE UPLOAD -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
@@ -167,8 +167,7 @@
             projectId: "batrisi-latest-app",
             storageBucket: "batrisi-latest-app.firebasestorage.app",
             messagingSenderId: "175592360155",
-            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe",
-            measurementId: "G-5N91PLG8LB"
+            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -184,6 +183,7 @@
 
         let activeCollection = ''; let currentRecords = []; let filteredRecords = []; let editingId = null; let uploadedFiles = {}; 
         let currentPage = 1; const itemsPerPage = 10;
+        let isUploading = false; // Prevents saving while photo is uploading
 
         function adminLogin() {
             if(document.getElementById('adminUser').value === 'Batrisi' && document.getElementById('adminPwd').value === 'Bat@3232') {
@@ -250,13 +250,14 @@
 
         function openCMSModal() {
             document.getElementById('modalTitle').innerText = editingId ? "Edit Record" : "Add New Record";
-            document.getElementById('cmsForm').reset(); uploadedFiles = {}; 
+            document.getElementById('cmsForm').reset(); uploadedFiles = {}; isUploading = false; document.getElementById('saveBtn').disabled = false;
+            
             const schemaFields = schemas[activeCollection].fields; let fieldsHTML = '';
             schemaFields.forEach(f => {
                 if (f.type === 'textarea') fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4" required></textarea></div>`;
                 else if (f.type === 'image' || f.type === 'pdf') {
                     let accept = f.type === 'image' ? 'image/*, .png, .jpg, .jpeg' : 'application/pdf';
-                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><div class="file-upload-wrapper"><i class="fa-solid ${f.type==='image'?'fa-image':'fa-file-pdf'} fa-2x" style="color:#94a3b8; display:block; margin-bottom:10px;"></i><span style="font-size:13px; font-weight:600; color:#64748b;">Click to Upload Fast</span><input type="file" id="field_${f.key}" accept="${accept}" onchange="uploadFileFast(event, '${f.key}', '${f.type}')" ${editingId ? '' : 'required'}><div id="previewWrap_${f.key}" style="display:none; margin-top:10px;"><img id="previewImg_${f.key}" class="preview-img"></div></div></div>`;
+                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><div class="file-upload-wrapper"><i class="fa-solid ${f.type==='image'?'fa-image':'fa-file-pdf'} fa-2x" style="color:#94a3b8; display:block; margin-bottom:10px;"></i><span style="font-size:13px; font-weight:600; color:#64748b;">Click to Select File</span><input type="file" id="field_${f.key}" accept="${accept}" onchange="uploadFileFast(event, '${f.key}', '${f.type}')" ${editingId ? '' : 'required'}><div id="previewWrap_${f.key}" style="display:none; margin-top:10px;"><img id="previewImg_${f.key}" class="preview-img"></div></div></div>`;
                 } else fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}" required></div>`;
             });
             document.getElementById('dynamicFields').innerHTML = fieldsHTML;
@@ -276,7 +277,7 @@
         }
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; editingId = null; }
 
-        // --- FAST IMAGE COMPRESSION LOGIC BEFORE UPLOAD ---
+        // --- SUPER FAST UPLOAD (Instant Preview + Compression) ---
         function compressImage(file, callback) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -285,7 +286,7 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1200; const MAX_HEIGHT = 1200; // Landscape friendly limits
+                    const MAX_WIDTH = 1200; const MAX_HEIGHT = 1200; 
                     let width = img.width; let height = img.height;
 
                     if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
@@ -295,7 +296,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress to 70% quality JPEG (Reduces 5MB -> ~150KB)
+                    // Compress JPEG
                     canvas.toBlob(blob => { callback(blob); }, 'image/jpeg', 0.7);
                 };
             };
@@ -303,32 +304,55 @@
 
         async function uploadFileFast(e, key, type) {
             const file = e.target.files[0]; if(!file) return;
-            const wrap = document.getElementById(`previewWrap_${key}`); wrap.style.display = 'block';
-            wrap.innerHTML = `<span class="spinner" style="display:inline-block; border-top-color:var(--primary);"></span> <span style="font-size:12px; font-weight:bold; color:var(--primary);">Compressing & Uploading...</span>`;
+            const wrap = document.getElementById(`previewWrap_${key}`); 
+            const btn = document.getElementById('saveBtn');
             
-            try {
-                if (type === 'image') {
-                    compressImage(file, async (compressedBlob) => {
+            // Show instant local preview & Disable Save button to prevent saving before upload finishes
+            isUploading = true;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner" style="display:inline-block;"></span> Uploading Photo...`;
+
+            if(type === 'image') {
+                const localUrl = URL.createObjectURL(file);
+                wrap.style.display = 'block';
+                wrap.innerHTML = `<img src="${localUrl}" class="preview-img" style="display:inline-block;"><br><span style="font-size:12px; color:var(--primary); font-weight:bold;">Compressing & Uploading to Cloud...</span>`;
+                
+                compressImage(file, async (compressedBlob) => {
+                    try {
                         const storageRef = storage.ref(`cms_uploads/${Date.now()}.jpg`);
                         await storageRef.put(compressedBlob);
                         uploadedFiles[key] = await storageRef.getDownloadURL();
-                        wrap.innerHTML = `<span style="font-size:12px; color:#10b981; font-weight:bold;"><i class="fa-solid fa-check"></i> Image Uploaded Fast!</span><img src="${uploadedFiles[key]}" class="preview-img" style="display:inline-block;">`;
-                    });
-                } else {
-                    // PDFs don't need compression
+                        wrap.innerHTML = `<img src="${localUrl}" class="preview-img" style="display:inline-block;"><br><span style="font-size:12px; color:#10b981; font-weight:bold;"><i class="fa-solid fa-check"></i> Image Uploaded & Ready!</span>`;
+                    } catch(err) {
+                        showToast("Image Upload Failed", true);
+                    } finally {
+                        isUploading = false;
+                        btn.disabled = false;
+                        btn.innerHTML = `Save Record`;
+                    }
+                });
+            } else {
+                wrap.style.display = 'block';
+                wrap.innerHTML = `<span style="font-size:12px; color:var(--primary); font-weight:bold;">Uploading PDF...</span>`;
+                try {
                     const storageRef = storage.ref(`cms_uploads/${Date.now()}_${file.name}`);
                     await storageRef.put(file);
                     uploadedFiles[key] = await storageRef.getDownloadURL();
                     wrap.innerHTML = `<span style="font-size:12px; color:#10b981; font-weight:bold;"><i class="fa-solid fa-check"></i> PDF Uploaded Successfully!</span>`;
+                } catch(err) {
+                    showToast("PDF Upload Failed", true);
+                } finally {
+                    isUploading = false;
+                    btn.disabled = false;
+                    btn.innerHTML = `Save Record`;
                 }
-            } catch (error) {
-                console.error(error); showToast("Upload failed!", true);
-                wrap.innerHTML = `<span style="font-size:12px; color:#ef4444; font-weight:bold;"><i class="fa-solid fa-xmark"></i> Upload Error</span>`;
             }
         }
 
         document.getElementById('cmsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if(isUploading) return alert("Please wait for the image/file to finish uploading before saving.");
+            
             document.getElementById('saveSpinner').style.display = 'inline-block'; document.getElementById('saveBtn').disabled = true;
 
             const schemaFields = schemas[activeCollection].fields; let finalData = {};
