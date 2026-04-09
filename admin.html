@@ -42,32 +42,46 @@
         .stat-info h3 { margin: 0; font-size: 24px; color: var(--dark); font-weight: 800; }
         .stat-info p { margin: 0; font-size: 13px; color: #64748b; font-weight: 500; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); flex-wrap: wrap; gap:15px; }
         .search-box { display: flex; align-items: center; background: var(--bg); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border); width: 300px; }
         .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
-        .btn-add { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .btn-add { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;}
+        .btn-add:hover { background: #c2410c; }
+        
+        .btn-bulk { background: #10b981; }
+        .btn-bulk:hover { background: #059669; }
 
         .table-container { background: white; border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
         th { background: #f8fafc; font-weight: 600; color: #475569; }
         td img { height: 40px; width: 40px; border-radius: 6px; object-fit: cover; }
-        .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; border-radius: 4px; }
-        .btn-edit { color: #3b82f6; } .btn-del { color: #ef4444; }
+        .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; border-radius: 4px; transition: 0.2s;}
+        .btn-edit { color: #3b82f6; } .btn-edit:hover { background: #eff6ff; }
+        .btn-del { color: #ef4444; } .btn-del:hover { background: #fef2f2; }
         .pagination { display: flex; justify-content: center; align-items: center; padding: 20px; gap: 15px; font-size: 14px; font-weight: 500; }
         .page-btn { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Modal */
+        /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 5000; }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #475569; text-transform: uppercase; }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
-        .file-upload-wrapper { border: 2px dashed var(--border); padding: 20px; text-align: center; border-radius: 8px; background: #f8fafc; position: relative; overflow:hidden;}
-        .file-upload-wrapper input[type="file"] { opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer; z-index:10; }
-        .preview-img { max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid #ccc; }
+        .form-group input[type="text"], .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
+        
+        .upload-section { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .upload-section input[type="file"] { background: white; padding: 10px; border-radius: 6px; width: 100%; border: 1px solid #ccc; cursor: pointer; }
+        
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
+
+        /* Bulk Upload Progress */
+        .progress-box { display: none; margin-top: 15px; text-align: center; }
+        .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s; }
+        .progress-text { font-size: 14px; font-weight: 700; color: var(--primary); }
 
         /* Toast & Spinner */
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; transform: translateY(100px); opacity: 0; transition: 0.4s ease; z-index: 9999; }
@@ -79,18 +93,18 @@
 </head>
 <body>
 
-    <!-- 1. SECURE LOGIN -->
+    <!-- SECURE LOGIN -->
     <div id="login-overlay">
         <div class="login-box">
             <h2>System Security</h2>
             <input type="text" id="adminUser" placeholder="Username">
             <input type="password" id="adminPwd" placeholder="Password">
             <button onclick="adminLogin()">Login to Dashboard</button>
-            <p id="loginError" style="color:#ef4444; display:none; font-size:13px; margin-top:10px; font-weight:600;">Invalid Credentials. Access Denied.</p>
+            <p id="loginError" style="color:#ef4444; display:none; font-size:13px; margin-top:10px; font-weight:600;">Invalid Credentials.</p>
         </div>
     </div>
 
-    <!-- 2. SIDEBAR -->
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-header">
             <h2><i class="fa-solid fa-shield-halved"></i> Batrisi</h2>
@@ -110,7 +124,7 @@
         <button class="nav-btn" style="margin-top:auto; color:#ef4444;" onclick="window.location.reload()"><i class="fa-solid fa-power-off"></i> Logout</button>
     </div>
 
-    <!-- 3. MAIN DASHBOARD -->
+    <!-- MAIN DASHBOARD -->
     <div class="main-content">
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div><div class="stat-info"><h3 id="stat-events">0</h3><p>Total Events</p></div></div>
@@ -125,6 +139,10 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" id="searchInput" placeholder="Search records..." onkeyup="handleSearch()">
                 </div>
+                <!-- Bulk Upload Button (Only shows for Gallery) -->
+                <button class="btn-add btn-bulk" id="btnBulkUpload" style="display:none;" onclick="openBulkModal()">
+                    <i class="fa-solid fa-images"></i> Bulk Upload (100+ Photos)
+                </button>
                 <button class="btn-add" onclick="openCMSModal()"><i class="fa-solid fa-plus"></i> Add Record</button>
             </div>
         </div>
@@ -139,27 +157,57 @@
         </div>
     </div>
 
-    <!-- 4. DYNAMIC MODAL -->
+    <!-- SINGLE RECORD DYNAMIC MODAL -->
     <div class="modal" id="cmsModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Add Record</h2>
-                <button class="btn-close" onclick="closeCMSModal()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-close" onclick="closeCMSModal()" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="cmsForm">
                 <div id="dynamicFields"></div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" onclick="closeCMSModal()" style="padding:10px 20px; background:white; border:1px solid #e2e8f0; border-radius:8px;">Cancel</button>
+                    <button type="button" onclick="closeCMSModal()" style="padding:10px 20px; background:white; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer;">Cancel</button>
                     <button type="submit" class="btn-add" id="saveBtn"><span class="spinner" id="saveSpinner"></span> Save Record</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- BULK UPLOAD MODAL (NEW) -->
+    <div class="modal" id="bulkModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0; color:var(--dark);">Bulk Upload Gallery</h2>
+                <button class="btn-close" onclick="closeBulkModal()" id="bulkCloseBtn" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="upload-section">
+                <label style="font-weight:bold; font-size:14px; color:var(--primary); margin-bottom:10px; display:block;">Select Multiple Photos (Max 200)</label>
+                <!-- "multiple" attribute allows selecting many files at once -->
+                <input type="file" id="bulkFileInput" accept="image/*" multiple>
+                <p style="font-size:12px; color:#64748b; margin-top:8px;">* The file names will automatically become the Image Captions.</p>
+            </div>
+            
+            <div class="progress-box" id="bulkProgressBox">
+                <div class="progress-text" id="bulkProgressText">Uploading: 0 / 0</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="bulkProgressBar"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" onclick="closeBulkModal()" id="bulkCancelBtn" style="padding:10px 20px; background:white; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer;">Cancel</button>
+                <button type="button" class="btn-add btn-bulk" id="startBulkBtn" onclick="startBulkUpload()">
+                    <span class="spinner" id="bulkSpinner"></span> Start Bulk Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST -->
     <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Success!</span></div>
 
-    <!-- FIREBASE LOGIC WITH FAST IMAGE UPLOAD -->
+    <!-- FIREBASE & LOGIC -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
@@ -167,7 +215,8 @@
             projectId: "batrisi-latest-app",
             storageBucket: "batrisi-latest-app.firebasestorage.app",
             messagingSenderId: "175592360155",
-            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe"
+            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe",
+            measurementId: "G-5N91PLG8LB"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -183,7 +232,7 @@
 
         let activeCollection = ''; let currentRecords = []; let filteredRecords = []; let editingId = null; let uploadedFiles = {}; 
         let currentPage = 1; const itemsPerPage = 10;
-        let isUploading = false; // Prevents saving while photo is uploading
+        let isUploading = false; 
 
         function adminLogin() {
             if(document.getElementById('adminUser').value === 'Batrisi' && document.getElementById('adminPwd').value === 'Bat@3232') {
@@ -204,6 +253,9 @@
             document.getElementById('searchInput').value = '';
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.currentTarget.classList.add('active');
+
+            // TOGGLE BULK UPLOAD BUTTON (Only for Gallery)
+            document.getElementById('btnBulkUpload').style.display = (collectionKey === 'gallery') ? 'flex' : 'none';
 
             const schemaFields = schemas[activeCollection].fields;
             let thHTML = '';
@@ -248,27 +300,45 @@
         }
         function changePage(dir) { currentPage += dir; renderTable(); }
 
+        // --- SINGLE RECORD MODAL ---
         function openCMSModal() {
             document.getElementById('modalTitle').innerText = editingId ? "Edit Record" : "Add New Record";
-            document.getElementById('cmsForm').reset(); uploadedFiles = {}; isUploading = false; document.getElementById('saveBtn').disabled = false;
+            document.getElementById('cmsForm').reset(); uploadedFiles = {}; isUploading = false; document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').innerHTML = 'Save Record';
             
             const schemaFields = schemas[activeCollection].fields; let fieldsHTML = '';
+            
             schemaFields.forEach(f => {
-                if (f.type === 'textarea') fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4" required></textarea></div>`;
+                if (f.type === 'textarea') {
+                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4" required></textarea></div>`;
+                } 
                 else if (f.type === 'image' || f.type === 'pdf') {
-                    let accept = f.type === 'image' ? 'image/*, .png, .jpg, .jpeg' : 'application/pdf';
-                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><div class="file-upload-wrapper"><i class="fa-solid ${f.type==='image'?'fa-image':'fa-file-pdf'} fa-2x" style="color:#94a3b8; display:block; margin-bottom:10px;"></i><span style="font-size:13px; font-weight:600; color:#64748b;">Click to Select File</span><input type="file" id="field_${f.key}" accept="${accept}" onchange="uploadFileFast(event, '${f.key}', '${f.type}')" ${editingId ? '' : 'required'}><div id="previewWrap_${f.key}" style="display:none; margin-top:10px;"><img id="previewImg_${f.key}" class="preview-img"></div></div></div>`;
-                } else fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}" required></div>`;
+                    let accept = f.type === 'image' ? 'image/*' : 'application/pdf';
+                    fieldsHTML += `
+                        <div class="form-group upload-section">
+                            <label style="color:var(--primary);">${f.label}</label>
+                            <input type="file" id="file_${f.key}" accept="${accept}" onchange="uploadToStorage(event, '${f.key}', '${f.type}')">
+                            <p style="text-align:center; font-size:12px; margin:10px 0; font-weight:bold; color:#64748b;">--- OR PASTE LINK ---</p>
+                            <input type="text" id="url_${f.key}" placeholder="Paste Direct Image/PDF URL here" oninput="useDirectUrl('${f.key}', '${f.type}')">
+                            <div id="previewWrap_${f.key}" style="display:none; margin-top:10px; text-align:center;">
+                                <img id="previewImg_${f.key}" class="preview-img">
+                                <span id="previewMsg_${f.key}" style="font-size:13px; font-weight:bold; display:block; margin-top:8px;"></span>
+                            </div>
+                        </div>`;
+                } 
+                else { fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}" required></div>`; }
             });
             document.getElementById('dynamicFields').innerHTML = fieldsHTML;
 
             if (editingId) {
                 const rec = currentRecords.find(r => r.id === editingId);
                 schemaFields.forEach(f => {
-                    if (f.type !== 'image' && f.type !== 'pdf') document.getElementById(`field_${f.key}`).value = rec[f.key] || '';
-                    else if (rec[f.key]) {
-                        uploadedFiles[f.key] = rec[f.key]; document.getElementById(`field_${f.key}`).removeAttribute('required');
+                    if (f.type !== 'image' && f.type !== 'pdf') {
+                        document.getElementById(`field_${f.key}`).value = rec[f.key] || '';
+                    } else if (rec[f.key]) {
+                        uploadedFiles[f.key] = rec[f.key]; document.getElementById(`url_${f.key}`).value = rec[f.key];
                         document.getElementById(`previewWrap_${f.key}`).style.display = 'block';
+                        document.getElementById(`previewMsg_${f.key}`).innerText = 'Current File Loaded';
+                        document.getElementById(`previewMsg_${f.key}`).style.color = '#3b82f6';
                         if(f.type === 'image') { document.getElementById(`previewImg_${f.key}`).src = rec[f.key]; document.getElementById(`previewImg_${f.key}`).style.display = 'inline-block'; }
                     }
                 });
@@ -277,82 +347,35 @@
         }
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; editingId = null; }
 
-        // --- SUPER FAST UPLOAD (Instant Preview + Compression) ---
-        function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = event => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1200; const MAX_HEIGHT = 1200; 
-                    let width = img.width; let height = img.height;
-
-                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
-                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                    
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Compress JPEG
-                    canvas.toBlob(blob => { callback(blob); }, 'image/jpeg', 0.7);
-                };
-            };
-        }
-
-        async function uploadFileFast(e, key, type) {
+        // --- SINGLE UPLOAD LOGIC ---
+        async function uploadToStorage(e, key, type) {
             const file = e.target.files[0]; if(!file) return;
-            const wrap = document.getElementById(`previewWrap_${key}`); 
-            const btn = document.getElementById('saveBtn');
-            
-            // Show instant local preview & Disable Save button to prevent saving before upload finishes
-            isUploading = true;
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner" style="display:inline-block;"></span> Uploading Photo...`;
-
-            if(type === 'image') {
-                const localUrl = URL.createObjectURL(file);
-                wrap.style.display = 'block';
-                wrap.innerHTML = `<img src="${localUrl}" class="preview-img" style="display:inline-block;"><br><span style="font-size:12px; color:var(--primary); font-weight:bold;">Compressing & Uploading to Cloud...</span>`;
-                
-                compressImage(file, async (compressedBlob) => {
-                    try {
-                        const storageRef = storage.ref(`cms_uploads/${Date.now()}.jpg`);
-                        await storageRef.put(compressedBlob);
-                        uploadedFiles[key] = await storageRef.getDownloadURL();
-                        wrap.innerHTML = `<img src="${localUrl}" class="preview-img" style="display:inline-block;"><br><span style="font-size:12px; color:#10b981; font-weight:bold;"><i class="fa-solid fa-check"></i> Image Uploaded & Ready!</span>`;
-                    } catch(err) {
-                        showToast("Image Upload Failed", true);
-                    } finally {
-                        isUploading = false;
-                        btn.disabled = false;
-                        btn.innerHTML = `Save Record`;
-                    }
-                });
-            } else {
-                wrap.style.display = 'block';
-                wrap.innerHTML = `<span style="font-size:12px; color:var(--primary); font-weight:bold;">Uploading PDF...</span>`;
-                try {
-                    const storageRef = storage.ref(`cms_uploads/${Date.now()}_${file.name}`);
-                    await storageRef.put(file);
-                    uploadedFiles[key] = await storageRef.getDownloadURL();
-                    wrap.innerHTML = `<span style="font-size:12px; color:#10b981; font-weight:bold;"><i class="fa-solid fa-check"></i> PDF Uploaded Successfully!</span>`;
-                } catch(err) {
-                    showToast("PDF Upload Failed", true);
-                } finally {
-                    isUploading = false;
-                    btn.disabled = false;
-                    btn.innerHTML = `Save Record`;
-                }
-            }
+            const wrap = document.getElementById(`previewWrap_${key}`); const img = document.getElementById(`previewImg_${key}`); const msg = document.getElementById(`previewMsg_${key}`); const btn = document.getElementById('saveBtn');
+            isUploading = true; btn.disabled = true; btn.innerHTML = `<span class="spinner" style="display:inline-block;"></span> Uploading...`;
+            wrap.style.display = 'block'; msg.style.color = '#ea580c'; msg.innerHTML = 'Uploading to Server... Please wait.'; img.style.display = 'none';
+            if(type === 'image') { const reader = new FileReader(); reader.onload = (re) => { img.src = re.target.result; img.style.display = 'inline-block'; }; reader.readAsDataURL(file); }
+            try {
+                const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+                const storageRef = storage.ref(`cms_uploads/${fileName}`);
+                await storageRef.put(file);
+                uploadedFiles[key] = await storageRef.getDownloadURL();
+                document.getElementById(`url_${key}`).value = '';
+                msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-check"></i> Upload Successful!';
+            } catch (error) { msg.style.color = '#ef4444'; msg.innerHTML = '<i class="fa-solid fa-xmark"></i> Upload Failed!'; } 
+            finally { isUploading = false; btn.disabled = false; btn.innerHTML = `Save Record`; }
+        }
+        function useDirectUrl(key, type) {
+            const url = document.getElementById(`url_${key}`).value.trim(); if(!url) return;
+            uploadedFiles[key] = url;
+            const wrap = document.getElementById(`previewWrap_${key}`); const img = document.getElementById(`previewImg_${key}`); const msg = document.getElementById(`previewMsg_${key}`);
+            wrap.style.display = 'block'; msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-link"></i> URL Linked!';
+            if(type === 'image') { img.src = url; img.style.display = 'inline-block'; } else { img.style.display = 'none'; }
         }
 
+        // --- SUBMIT SINGLE RECORD ---
         document.getElementById('cmsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if(isUploading) return alert("Please wait for the image/file to finish uploading before saving.");
-            
+            if(isUploading) return alert("Please wait for the file to finish uploading before saving.");
             document.getElementById('saveSpinner').style.display = 'inline-block'; document.getElementById('saveBtn').disabled = true;
 
             const schemaFields = schemas[activeCollection].fields; let finalData = {};
@@ -369,6 +392,89 @@
             finally { document.getElementById('saveSpinner').style.display = 'none'; document.getElementById('saveBtn').disabled = false; }
         });
 
+        // ==========================================
+        // NEW BULK UPLOAD SYSTEM (SPECIFIC FOR GALLERY)
+        // ==========================================
+        function openBulkModal() {
+            document.getElementById('bulkFileInput').value = '';
+            document.getElementById('bulkProgressBox').style.display = 'none';
+            document.getElementById('bulkProgressBar').style.width = '0%';
+            document.getElementById('bulkProgressText').innerText = 'Uploading: 0 / 0';
+            document.getElementById('bulkModal').style.display = 'flex';
+        }
+
+        function closeBulkModal() {
+            if(isUploading) return alert("Upload is running! Please wait.");
+            document.getElementById('bulkModal').style.display = 'none';
+        }
+
+        async function startBulkUpload() {
+            const files = document.getElementById('bulkFileInput').files;
+            if(files.length === 0) return alert("Please select at least 1 image!");
+            
+            const btnStart = document.getElementById('startBulkBtn');
+            const btnCancel = document.getElementById('bulkCancelBtn');
+            const btnClose = document.getElementById('bulkCloseBtn');
+            const progressBox = document.getElementById('bulkProgressBox');
+            const progressBar = document.getElementById('bulkProgressBar');
+            const progressText = document.getElementById('bulkProgressText');
+
+            isUploading = true;
+            btnStart.disabled = true;
+            btnCancel.disabled = true;
+            btnClose.style.display = 'none';
+            document.getElementById('bulkSpinner').style.display = 'inline-block';
+            progressBox.style.display = 'block';
+
+            let successCount = 0;
+            let total = files.length;
+
+            try {
+                // Loop through all selected files ONE BY ONE to ensure safety and prevent crashes
+                for(let i = 0; i < total; i++) {
+                    let file = files[i];
+                    
+                    // 1. Upload to Firebase Storage
+                    let safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                    let storageRef = storage.ref(`cms_uploads/${safeName}`);
+                    await storageRef.put(file);
+                    let downloadUrl = await storageRef.getDownloadURL();
+
+                    // 2. Remove file extension to use as Title (.jpg, .png etc)
+                    let titleName = file.name.split('.').slice(0, -1).join('.') || file.name;
+
+                    // 3. Save to Firestore Gallery Collection
+                    await db.collection('gallery').add({
+                        title: titleName,
+                        image: downloadUrl,
+                        timestamp: Date.now() + i // adding 'i' to preserve exact order
+                    });
+
+                    // 4. Update UI Progress
+                    successCount++;
+                    let percentage = (successCount / total) * 100;
+                    progressBar.style.width = `${percentage}%`;
+                    progressText.innerText = `Uploading: ${successCount} / ${total} Successful`;
+                }
+
+                showToast(`Perfect! ${successCount} Images Bulk Uploaded!`);
+                isUploading = false;
+                closeBulkModal();
+
+            } catch (error) {
+                console.error(error);
+                alert("An error occurred during bulk upload. Progress stopped.");
+                isUploading = false;
+            } finally {
+                // Reset UI
+                btnStart.disabled = false;
+                btnCancel.disabled = false;
+                btnClose.style.display = 'block';
+                document.getElementById('bulkSpinner').style.display = 'none';
+            }
+        }
+
+        // Action Utilities
         function editRecord(id) { editingId = id; openCMSModal(); }
         function deleteRecord(id) { if(confirm("Permanently delete this record?")) db.collection(activeCollection).doc(id).delete().then(() => showToast("Deleted!")); }
         function showToast(msg, isError = false) { const toast = document.getElementById('toast'); toast.innerHTML = isError ? `<i class="fa-solid fa-xmark"></i> ${msg}` : `<i class="fa-solid fa-check"></i> ${msg}`; toast.className = isError ? 'error show' : 'show'; setTimeout(() => toast.classList.remove('show'), 3000); }
