@@ -8,24 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDK (Only Firestore, No Storage needed!) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
     <style>
         :root { --primary: #ea580c; --dark: #0f172a; --sidebar: #1e293b; --bg: #f1f5f9; --border: #e2e8f0; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: var(--bg); color: var(--dark); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Login Overlay */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--sidebar); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .login-box { background: white; padding: 40px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
         .login-box h2 { color: var(--sidebar); margin-bottom: 20px; font-weight: 800; }
         .login-box input { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
         .login-box button { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; transition: 0.3s; }
         
-        /* Sidebar */
         .sidebar { width: 280px; background: var(--sidebar); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 800; }
@@ -34,7 +31,6 @@
         .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.05); color: white; border-left-color: var(--primary); }
         .nav-btn i { width: 20px; text-align: center; }
 
-        /* Main Content */
         .main-content { flex: 1; overflow-y: auto; padding: 30px 40px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 20px; border: 1px solid var(--border); }
@@ -47,9 +43,7 @@
         .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
         .btn-add { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;}
         .btn-add:hover { background: #c2410c; }
-        
-        .btn-bulk { background: #10b981; }
-        .btn-bulk:hover { background: #059669; }
+        .btn-bulk { background: #10b981; } .btn-bulk:hover { background: #059669; }
 
         .table-container { background: white; border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
@@ -63,7 +57,6 @@
         .page-btn { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; }
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 5000; }
         .modal-content { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
@@ -74,16 +67,13 @@
         
         .upload-section { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; }
         .upload-section input[type="file"] { background: white; padding: 10px; border-radius: 6px; width: 100%; border: 1px solid #ccc; cursor: pointer; }
-        
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
 
-        /* Bulk Upload Progress */
         .progress-box { display: none; margin-top: 15px; text-align: center; }
         .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin-top: 8px; }
         .progress-bar-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s; }
         .progress-text { font-size: 14px; font-weight: 700; color: var(--primary); }
 
-        /* Toast & Spinner */
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; transform: translateY(100px); opacity: 0; transition: 0.4s ease; z-index: 9999; }
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.error { background: #ef4444; }
@@ -93,7 +83,7 @@
 </head>
 <body>
 
-    <!-- SECURE LOGIN -->
+    <!-- LOGIN -->
     <div id="login-overlay">
         <div class="login-box">
             <h2>System Security</h2>
@@ -101,6 +91,13 @@
             <input type="password" id="adminPwd" placeholder="Password">
             <button onclick="adminLogin()">Login to Dashboard</button>
             <p id="loginError" style="color:#ef4444; display:none; font-size:13px; margin-top:10px; font-weight:600;">Invalid Credentials.</p>
+            
+            <!-- REMINDER ALERTS FOR ADMIN -->
+            <div style="margin-top:20px; padding:15px; background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; font-size:12px; color:#c2410c; text-align:left; font-weight:500;">
+                <b style="display:block; margin-bottom:5px;"><i class="fa-solid fa-triangle-exclamation"></i> IMPORTANT REMINDERS:</b>
+                1. Make sure your Firestore Database Rules are set to: <code>allow read, write: if true;</code><br>
+                2. Put your ImgBB API Key in line 163 of the code.
+            </div>
         </div>
     </div>
 
@@ -112,11 +109,11 @@
         </div>
         
         <div class="nav-section">Web Content</div>
-        <button class="nav-btn active" onclick="initCMS('events', 'Events', 'fa-calendar-days')"><i class="fa-solid fa-calendar-days"></i> Events</button>
-        <button class="nav-btn" onclick="initCMS('media', 'Media Coverage', 'fa-newspaper')"><i class="fa-solid fa-newspaper"></i> Media</button>
-        <button class="nav-btn" onclick="initCMS('gallery', 'Gallery', 'fa-images')"><i class="fa-solid fa-images"></i> Gallery</button>
-        <button class="nav-btn" onclick="initCMS('committee', 'Committee', 'fa-users')"><i class="fa-solid fa-users"></i> Committee</button>
-        <button class="nav-btn" onclick="initCMS('downloads', 'Downloads', 'fa-file-pdf')"><i class="fa-solid fa-file-pdf"></i> Downloads</button>
+        <button class="nav-btn active" onclick="initCMS('events', 'Events')"><i class="fa-solid fa-calendar-days"></i> Events</button>
+        <button class="nav-btn" onclick="initCMS('media', 'Media Coverage')"><i class="fa-solid fa-newspaper"></i> Media</button>
+        <button class="nav-btn" onclick="initCMS('gallery', 'Gallery')"><i class="fa-solid fa-images"></i> Gallery</button>
+        <button class="nav-btn" onclick="initCMS('committee', 'Committee')"><i class="fa-solid fa-users"></i> Committee</button>
+        <button class="nav-btn" onclick="initCMS('downloads', 'Downloads')"><i class="fa-solid fa-file-pdf"></i> Downloads</button>
         
         <div class="nav-section">Legacy Apps</div>
         <button class="nav-btn" onclick="window.open('id_card_app.html', '_blank')"><i class="fa-solid fa-id-card"></i> ID Card System</button>
@@ -133,13 +130,12 @@
         </div>
 
         <div class="toolbar">
-            <h1 id="cms-title">Manage Events</h1>
+            <h1 id="cms-title">Manage Content</h1>
             <div style="display:flex; gap:15px; flex-wrap:wrap;">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" id="searchInput" placeholder="Search records..." onkeyup="handleSearch()">
                 </div>
-                <!-- Bulk Upload Button (Only shows for Gallery) -->
                 <button class="btn-add btn-bulk" id="btnBulkUpload" style="display:none;" onclick="openBulkModal()">
                     <i class="fa-solid fa-images"></i> Bulk Upload (100+ Photos)
                 </button>
@@ -157,7 +153,7 @@
         </div>
     </div>
 
-    <!-- SINGLE RECORD DYNAMIC MODAL -->
+    <!-- SINGLE RECORD MODAL -->
     <div class="modal" id="cmsModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -174,65 +170,62 @@
         </div>
     </div>
 
-    <!-- BULK UPLOAD MODAL (NEW) -->
+    <!-- BULK UPLOAD MODAL -->
     <div class="modal" id="bulkModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 style="margin:0; color:var(--dark);">Bulk Upload Gallery</h2>
+                <h2 style="margin:0; color:var(--dark);">Safe Bulk Upload (ImgBB)</h2>
                 <button class="btn-close" onclick="closeBulkModal()" id="bulkCloseBtn" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="upload-section">
-                <label style="font-weight:bold; font-size:14px; color:var(--primary); margin-bottom:10px; display:block;">Select Multiple Photos (Max 200)</label>
-                <!-- "multiple" attribute allows selecting many files at once -->
+                <label style="font-weight:bold; font-size:14px; color:var(--primary); margin-bottom:10px; display:block;">Select Multiple Photos</label>
                 <input type="file" id="bulkFileInput" accept="image/*" multiple>
-                <p style="font-size:12px; color:#64748b; margin-top:8px;">* The file names will automatically become the Image Captions.</p>
+                <p style="font-size:12px; color:#64748b; margin-top:8px;">* Files automatically compress. Takes ~1 second per image.</p>
             </div>
             
             <div class="progress-box" id="bulkProgressBox">
-                <div class="progress-text" id="bulkProgressText">Uploading: 0 / 0</div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="bulkProgressBar"></div>
-                </div>
+                <div class="progress-text" id="bulkProgressText">Processing: 0 / 0</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bulkProgressBar"></div></div>
             </div>
 
             <div class="modal-footer">
                 <button type="button" onclick="closeBulkModal()" id="bulkCancelBtn" style="padding:10px 20px; background:white; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer;">Cancel</button>
                 <button type="button" class="btn-add btn-bulk" id="startBulkBtn" onclick="startBulkUpload()">
-                    <span class="spinner" id="bulkSpinner"></span> Start Bulk Upload
+                    <span class="spinner" id="bulkSpinner"></span> Start Upload
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- TOAST -->
     <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Success!</span></div>
 
     <!-- FIREBASE & LOGIC -->
     <script>
+        // 1. FIREBASE CONFIGURATION (FIRESTORE ONLY)
         const firebaseConfig = {
             apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
             authDomain: "batrisi-latest-app.firebaseapp.com",
             projectId: "batrisi-latest-app",
-            storageBucket: "batrisi-latest-app.firebasestorage.app",
             messagingSenderId: "175592360155",
-            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe",
-            measurementId: "G-5N91PLG8LB"
+            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe"
         };
-        firebase.initializeApp(firebaseConfig);
+        if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
-        const storage = firebase.storage();
 
+        // 2. 🔴 PUT YOUR IMGBB API KEY HERE 🔴
+        const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
+
+        // 3. SCHEMAS (Notice PDF is now just a text link field)
         const schemas = {
             'events': { fields: [ { key: 'title', label: 'Event Title', type: 'text' }, { key: 'date', label: 'Event Date', type: 'text' }, { key: 'desc', label: 'Description', type: 'textarea' }, { key: 'image', label: 'Event Image', type: 'image' } ] },
             'media': { fields: [ { key: 'title', label: 'News Headline', type: 'text' }, { key: 'date', label: 'Published Date', type: 'text' }, { key: 'link', label: 'Article Link (Optional)', type: 'text' }, { key: 'image', label: 'Newspaper Cutting Image', type: 'image' } ] },
             'gallery': { fields: [ { key: 'title', label: 'Image Caption', type: 'text' }, { key: 'image', label: 'Upload Photo', type: 'image' } ] },
-            'downloads': { fields: [ { key: 'title', label: 'Document Title', type: 'text' }, { key: 'file', label: 'Upload PDF', type: 'pdf' } ] },
+            'downloads': { fields: [ { key: 'title', label: 'Document Title', type: 'text' }, { key: 'file', label: 'Paste PDF URL (Google Drive/Dropbox link)', type: 'text' } ] },
             'committee': { fields: [ { key: 'name', label: 'Full Name', type: 'text' }, { key: 'position', label: 'Position', type: 'text' }, { key: 'native', label: 'Native Village', type: 'text' }, { key: 'phone', label: 'Mobile Number', type: 'text' }, { key: 'photo', label: 'Passport Size Photo', type: 'image' } ] }
         };
 
         let activeCollection = ''; let currentRecords = []; let filteredRecords = []; let editingId = null; let uploadedFiles = {}; 
-        let currentPage = 1; const itemsPerPage = 10;
-        let isUploading = false; 
+        let currentPage = 1; const itemsPerPage = 10; let isUploading = false; 
 
         function adminLogin() {
             if(document.getElementById('adminUser').value === 'Batrisi' && document.getElementById('adminPwd').value === 'Bat@3232') {
@@ -254,12 +247,11 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
-            // TOGGLE BULK UPLOAD BUTTON (Only for Gallery)
             document.getElementById('btnBulkUpload').style.display = (collectionKey === 'gallery') ? 'flex' : 'none';
 
             const schemaFields = schemas[activeCollection].fields;
             let thHTML = '';
-            schemaFields.forEach(f => { if(f.type !== 'image' && f.type !== 'pdf') thHTML += `<th>${f.label}</th>`; });
+            schemaFields.forEach(f => { if(f.type !== 'image') thHTML += `<th>${f.label}</th>`; });
             thHTML += `<th>Media</th><th>Actions</th>`;
             document.getElementById('tableHead').innerHTML = `<tr>${thHTML}</tr>`;
 
@@ -289,10 +281,9 @@
             paginatedItems.forEach(rec => {
                 let trHTML = ''; let mediaHTML = '-';
                 schemaFields.forEach(f => {
-                    if (f.type !== 'image' && f.type !== 'pdf') {
+                    if (f.type !== 'image') {
                         let text = rec[f.key] || '-'; if(text.length > 50) text = text.substring(0, 50) + '...'; trHTML += `<td>${text}</td>`;
                     } else if (f.type === 'image' && rec[f.key]) mediaHTML = `<img src="${rec[f.key]}">`;
-                    else if (f.type === 'pdf' && rec[f.key]) mediaHTML = `<a href="${rec[f.key]}" target="_blank" style="color:#ef4444;"><i class="fa-solid fa-file-pdf fa-2x"></i></a>`;
                 });
                 trHTML += `<td>${mediaHTML}</td><td class="action-btns"><button class="btn-icon btn-edit" onclick='editRecord("${rec.id}")'><i class="fa-solid fa-pen"></i></button><button class="btn-icon btn-del" onclick='deleteRecord("${rec.id}")'><i class="fa-solid fa-trash"></i></button></td>`;
                 tbody.innerHTML += `<tr>${trHTML}</tr>`;
@@ -300,46 +291,53 @@
         }
         function changePage(dir) { currentPage += dir; renderTable(); }
 
-        // --- SINGLE RECORD MODAL ---
+        // COMPRESSION ENGINE
+        function compressImageFile(file, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height; const MAX_WIDTH = 1200;
+                        if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => { resolve(new File([blob], file.name, { type: 'image/jpeg' })); }, 'image/jpeg', quality);
+                    };
+                }; reader.onerror = error => reject(error);
+            });
+        }
+
+        // SINGLE UPLOAD UI
         function openCMSModal() {
             document.getElementById('modalTitle').innerText = editingId ? "Edit Record" : "Add New Record";
             document.getElementById('cmsForm').reset(); uploadedFiles = {}; isUploading = false; document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').innerHTML = 'Save Record';
             
             const schemaFields = schemas[activeCollection].fields; let fieldsHTML = '';
-            
             schemaFields.forEach(f => {
-                if (f.type === 'textarea') {
-                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4" required></textarea></div>`;
-                } 
-                else if (f.type === 'image' || f.type === 'pdf') {
-                    let accept = f.type === 'image' ? 'image/*' : 'application/pdf';
+                if (f.type === 'textarea') { fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4" required></textarea></div>`; } 
+                else if (f.type === 'image') {
                     fieldsHTML += `
                         <div class="form-group upload-section">
                             <label style="color:var(--primary);">${f.label}</label>
-                            <input type="file" id="file_${f.key}" accept="${accept}" onchange="uploadToStorage(event, '${f.key}', '${f.type}')">
+                            <input type="file" id="file_${f.key}" accept="image/*" onchange="uploadToImgBB(event, '${f.key}')">
                             <p style="text-align:center; font-size:12px; margin:10px 0; font-weight:bold; color:#64748b;">--- OR PASTE LINK ---</p>
-                            <input type="text" id="url_${f.key}" placeholder="Paste Direct Image/PDF URL here" oninput="useDirectUrl('${f.key}', '${f.type}')">
-                            <div id="previewWrap_${f.key}" style="display:none; margin-top:10px; text-align:center;">
-                                <img id="previewImg_${f.key}" class="preview-img">
-                                <span id="previewMsg_${f.key}" style="font-size:13px; font-weight:bold; display:block; margin-top:8px;"></span>
-                            </div>
+                            <input type="text" id="url_${f.key}" placeholder="Paste Direct Image URL here" oninput="useDirectUrl('${f.key}')">
+                            <div id="previewWrap_${f.key}" style="display:none; margin-top:10px; text-align:center;"><img id="previewImg_${f.key}" class="preview-img"><span id="previewMsg_${f.key}" style="font-size:13px; font-weight:bold; display:block; margin-top:8px;"></span></div>
                         </div>`;
-                } 
-                else { fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}" required></div>`; }
+                } else { fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}" required></div>`; }
             });
             document.getElementById('dynamicFields').innerHTML = fieldsHTML;
 
             if (editingId) {
                 const rec = currentRecords.find(r => r.id === editingId);
                 schemaFields.forEach(f => {
-                    if (f.type !== 'image' && f.type !== 'pdf') {
-                        document.getElementById(`field_${f.key}`).value = rec[f.key] || '';
-                    } else if (rec[f.key]) {
+                    if (f.type !== 'image') { document.getElementById(`field_${f.key}`).value = rec[f.key] || ''; } 
+                    else if (rec[f.key]) {
                         uploadedFiles[f.key] = rec[f.key]; document.getElementById(`url_${f.key}`).value = rec[f.key];
-                        document.getElementById(`previewWrap_${f.key}`).style.display = 'block';
-                        document.getElementById(`previewMsg_${f.key}`).innerText = 'Current File Loaded';
-                        document.getElementById(`previewMsg_${f.key}`).style.color = '#3b82f6';
-                        if(f.type === 'image') { document.getElementById(`previewImg_${f.key}`).src = rec[f.key]; document.getElementById(`previewImg_${f.key}`).style.display = 'inline-block'; }
+                        document.getElementById(`previewWrap_${f.key}`).style.display = 'block'; document.getElementById(`previewMsg_${f.key}`).innerText = 'Current Image Loaded'; document.getElementById(`previewMsg_${f.key}`).style.color = '#3b82f6';
+                        document.getElementById(`previewImg_${f.key}`).src = rec[f.key]; document.getElementById(`previewImg_${f.key}`).style.display = 'inline-block';
                     }
                 });
             }
@@ -347,32 +345,38 @@
         }
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; editingId = null; }
 
-        // --- SINGLE UPLOAD LOGIC ---
-        async function uploadToStorage(e, key, type) {
-            const file = e.target.files[0]; if(!file) return;
+        // SINGLE IMGBB API UPLOAD
+        async function uploadToImgBB(e, key) {
+            let file = e.target.files[0]; if(!file) return;
             const wrap = document.getElementById(`previewWrap_${key}`); const img = document.getElementById(`previewImg_${key}`); const msg = document.getElementById(`previewMsg_${key}`); const btn = document.getElementById('saveBtn');
+            
             isUploading = true; btn.disabled = true; btn.innerHTML = `<span class="spinner" style="display:inline-block;"></span> Uploading...`;
             wrap.style.display = 'block'; msg.style.color = '#ea580c'; msg.innerHTML = 'Uploading to Server... Please wait.'; img.style.display = 'none';
-            if(type === 'image') { const reader = new FileReader(); reader.onload = (re) => { img.src = re.target.result; img.style.display = 'inline-block'; }; reader.readAsDataURL(file); }
+            
             try {
-                const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-                const storageRef = storage.ref(`cms_uploads/${fileName}`);
-                await storageRef.put(file);
-                uploadedFiles[key] = await storageRef.getDownloadURL();
-                document.getElementById(`url_${key}`).value = '';
-                msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-check"></i> Upload Successful!';
-            } catch (error) { msg.style.color = '#ef4444'; msg.innerHTML = '<i class="fa-solid fa-xmark"></i> Upload Failed!'; } 
-            finally { isUploading = false; btn.disabled = false; btn.innerHTML = `Save Record`; }
-        }
-        function useDirectUrl(key, type) {
-            const url = document.getElementById(`url_${key}`).value.trim(); if(!url) return;
-            uploadedFiles[key] = url;
-            const wrap = document.getElementById(`previewWrap_${key}`); const img = document.getElementById(`previewImg_${key}`); const msg = document.getElementById(`previewMsg_${key}`);
-            wrap.style.display = 'block'; msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-link"></i> URL Linked!';
-            if(type === 'image') { img.src = url; img.style.display = 'inline-block'; } else { img.style.display = 'none'; }
+                if(file.size > 500000) { file = await compressImageFile(file); }
+                const reader = new FileReader(); reader.onload = (re) => { img.src = re.target.result; img.style.display = 'inline-block'; }; reader.readAsDataURL(file);
+
+                const formData = new FormData(); formData.append("image", file);
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+                const data = await response.json();
+                
+                if(data.success) {
+                    uploadedFiles[key] = data.data.url; document.getElementById(`url_${key}`).value = '';
+                    msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-check"></i> Free Upload Successful!';
+                } else { throw new Error("Upload Failed"); }
+            } catch (error) { msg.style.color = '#ef4444'; msg.innerHTML = '<i class="fa-solid fa-xmark"></i> Upload Failed! Did you put the API Key?'; 
+            } finally { isUploading = false; btn.disabled = false; btn.innerHTML = `Save Record`; }
         }
 
-        // --- SUBMIT SINGLE RECORD ---
+        function useDirectUrl(key) {
+            const url = document.getElementById(`url_${key}`).value.trim(); if(!url) return;
+            uploadedFiles[key] = url; const wrap = document.getElementById(`previewWrap_${key}`); const img = document.getElementById(`previewImg_${key}`); const msg = document.getElementById(`previewMsg_${key}`);
+            wrap.style.display = 'block'; msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-link"></i> URL Linked!';
+            img.src = url; img.style.display = 'inline-block';
+        }
+
+        // SAVE DATA TO FIRESTORE
         document.getElementById('cmsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if(isUploading) return alert("Please wait for the file to finish uploading before saving.");
@@ -380,7 +384,7 @@
 
             const schemaFields = schemas[activeCollection].fields; let finalData = {};
             schemaFields.forEach(f => {
-                if (f.type !== 'image' && f.type !== 'pdf') finalData[f.key] = document.getElementById(`field_${f.key}`).value;
+                if (f.type !== 'image') finalData[f.key] = document.getElementById(`field_${f.key}`).value;
                 else if(uploadedFiles[f.key]) finalData[f.key] = uploadedFiles[f.key];
             });
 
@@ -388,93 +392,71 @@
                 if(editingId) { await db.collection(activeCollection).doc(editingId).update(finalData); showToast("Record Updated!"); } 
                 else { finalData.timestamp = Date.now(); await db.collection(activeCollection).add(finalData); showToast("Record Added!"); }
                 closeCMSModal();
-            } catch(error) { showToast("Database Error!", true); } 
+            } catch(error) { showToast("Database Error! Did you fix rules?", true); } 
             finally { document.getElementById('saveSpinner').style.display = 'none'; document.getElementById('saveBtn').disabled = false; }
         });
 
-        // ==========================================
-        // NEW BULK UPLOAD SYSTEM (SPECIFIC FOR GALLERY)
-        // ==========================================
+        // 🔴 ADVANCED BULK UPLOAD WITH SAFEMODE & DELAY 🔴
         function openBulkModal() {
-            document.getElementById('bulkFileInput').value = '';
-            document.getElementById('bulkProgressBox').style.display = 'none';
-            document.getElementById('bulkProgressBar').style.width = '0%';
-            document.getElementById('bulkProgressText').innerText = 'Uploading: 0 / 0';
+            document.getElementById('bulkFileInput').value = ''; document.getElementById('bulkProgressBox').style.display = 'none';
+            document.getElementById('bulkProgressBar').style.width = '0%'; document.getElementById('bulkProgressText').innerText = 'Processing: 0 / 0';
             document.getElementById('bulkModal').style.display = 'flex';
         }
-
-        function closeBulkModal() {
-            if(isUploading) return alert("Upload is running! Please wait.");
-            document.getElementById('bulkModal').style.display = 'none';
-        }
+        function closeBulkModal() { if(isUploading) return alert("Upload is running! Please wait."); document.getElementById('bulkModal').style.display = 'none'; }
 
         async function startBulkUpload() {
             const files = document.getElementById('bulkFileInput').files;
-            if(files.length === 0) return alert("Please select at least 1 image!");
-            
-            const btnStart = document.getElementById('startBulkBtn');
-            const btnCancel = document.getElementById('bulkCancelBtn');
-            const btnClose = document.getElementById('bulkCloseBtn');
-            const progressBox = document.getElementById('bulkProgressBox');
-            const progressBar = document.getElementById('bulkProgressBar');
-            const progressText = document.getElementById('bulkProgressText');
-
-            isUploading = true;
-            btnStart.disabled = true;
-            btnCancel.disabled = true;
-            btnClose.style.display = 'none';
-            document.getElementById('bulkSpinner').style.display = 'inline-block';
-            progressBox.style.display = 'block';
-
-            let successCount = 0;
             let total = files.length;
+            if(total === 0) return alert("Please select images first!");
+            
+            const btnStart = document.getElementById('startBulkBtn'); const btnCancel = document.getElementById('bulkCancelBtn');
+            const btnClose = document.getElementById('bulkCloseBtn'); const progressBox = document.getElementById('bulkProgressBox');
+            const progressBar = document.getElementById('bulkProgressBar'); const progressText = document.getElementById('bulkProgressText');
 
-            try {
-                // Loop through all selected files ONE BY ONE to ensure safety and prevent crashes
-                for(let i = 0; i < total; i++) {
-                    let file = files[i];
+            isUploading = true; btnStart.disabled = true; btnCancel.disabled = true; btnClose.style.display = 'none';
+            document.getElementById('bulkSpinner').style.display = 'inline-block'; progressBox.style.display = 'block';
+
+            let successCount = 0; let failCount = 0;
+
+            for(let i = 0; i < total; i++) {
+                let file = files[i];
+                progressText.innerText = `Processing: ${i + 1} / ${total} (Success: ${successCount}, Failed: ${failCount})`;
+
+                try {
+                    let uploadFile = file;
+                    if(file.size > 500000) { uploadFile = await compressImageFile(file); }
                     
-                    // 1. Upload to Firebase Storage
-                    let safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                    let storageRef = storage.ref(`cms_uploads/${safeName}`);
-                    await storageRef.put(file);
-                    let downloadUrl = await storageRef.getDownloadURL();
+                    const formData = new FormData(); formData.append("image", uploadFile);
+                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+                    const data = await response.json();
 
-                    // 2. Remove file extension to use as Title (.jpg, .png etc)
-                    let titleName = file.name.split('.').slice(0, -1).join('.') || file.name;
+                    if(data.success) {
+                        let downloadUrl = data.data.url;
+                        let titleName = file.name.split('.').slice(0, -1).join('.') || file.name;
+                        await db.collection('gallery').add({ title: titleName, image: downloadUrl, timestamp: Date.now() + i });
+                        successCount++;
+                    } else { failCount++; }
+                } catch (error) { failCount++; }
 
-                    // 3. Save to Firestore Gallery Collection
-                    await db.collection('gallery').add({
-                        title: titleName,
-                        image: downloadUrl,
-                        timestamp: Date.now() + i // adding 'i' to preserve exact order
-                    });
+                let percentage = ((i + 1) / total) * 100;
+                progressBar.style.width = `${percentage}%`;
 
-                    // 4. Update UI Progress
-                    successCount++;
-                    let percentage = (successCount / total) * 100;
-                    progressBar.style.width = `${percentage}%`;
-                    progressText.innerText = `Uploading: ${successCount} / ${total} Successful`;
-                }
+                // TRICK: 1 Second Delay so API doesn't block you!
+                await new Promise(resolve => setTimeout(resolve, 1000)); 
+            }
 
-                showToast(`Perfect! ${successCount} Images Bulk Uploaded!`);
-                isUploading = false;
+            isUploading = false; btnStart.disabled = false; btnCancel.disabled = false; btnClose.style.display = 'block'; document.getElementById('bulkSpinner').style.display = 'none';
+            
+            if(failCount > 0) {
+                alert(`Upload Finished!\n\nSuccess: ${successCount}\nFailed: ${failCount}\n\nTip: Please check your API key or internet connection.`);
+                showToast(`Finished with errors`, true);
+            } else {
+                alert(`Perfect! All ${successCount} images uploaded!`);
+                showToast(`100% Success!`);
                 closeBulkModal();
-
-            } catch (error) {
-                console.error(error);
-                alert("An error occurred during bulk upload. Progress stopped.");
-                isUploading = false;
-            } finally {
-                // Reset UI
-                btnStart.disabled = false;
-                btnCancel.disabled = false;
-                btnClose.style.display = 'block';
-                document.getElementById('bulkSpinner').style.display = 'none';
             }
         }
 
-        // Action Utilities
         function editRecord(id) { editingId = id; openCMSModal(); }
         function deleteRecord(id) { if(confirm("Permanently delete this record?")) db.collection(activeCollection).doc(id).delete().then(() => showToast("Deleted!")); }
         function showToast(msg, isError = false) { const toast = document.getElementById('toast'); toast.innerHTML = isError ? `<i class="fa-solid fa-xmark"></i> ${msg}` : `<i class="fa-solid fa-check"></i> ${msg}`; toast.className = isError ? 'error show' : 'show'; setTimeout(() => toast.classList.remove('show'), 3000); }
