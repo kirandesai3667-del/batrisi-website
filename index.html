@@ -6,7 +6,7 @@
     <title>Shree Batrisi Jain Co-Op. Education Society Ltd.</title>
     
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Firebase SDKs -->
@@ -27,35 +27,31 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
         body { background: var(--light); color: var(--dark); overflow-x: hidden; }
 
-        /* Navbar */
-        .navbar { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 1000; transition: var(--transition); }
+        /* Navbar - Fixed to One Line */
+        .navbar { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); padding: 12px 3%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 1000; transition: var(--transition); }
         .logo { text-decoration: none; display: flex; align-items: center; gap: 12px; }
-        .nav-links { display: flex; gap: 25px; align-items: center; }
-        .nav-links a { text-decoration: none; color: var(--dark); font-weight: 500; transition: var(--transition); cursor: pointer; }
+        
+        .brand-logo-img { height: 45px; width: 45px; object-fit: contain; color: transparent; font-size: 10px; }
+        .nav-brand-text { display: flex; flex-direction: row; align-items: baseline; gap: 6px; }
+        .nav-brand-text .title { font-size: 22px; font-weight: 800; color: var(--dark); white-space: nowrap; }
+        .nav-brand-text .title span { color: var(--primary); }
+        .nav-brand-text .subtitle { font-size: 16px; font-weight: 600; color: #64748b; white-space: nowrap; }
+
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--dark); font-weight: 500; font-size: 15px; transition: var(--transition); cursor: pointer; }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
-        .btn-legacy { background: var(--dark); color: var(--white) !important; padding: 8px 20px; border-radius: 25px; font-weight: 600; font-size: 14px; }
+        .btn-legacy { background: var(--dark); color: var(--white) !important; padding: 8px 18px; border-radius: 25px; font-weight: 600; font-size: 14px; }
         .btn-legacy:hover { background: var(--primary); transform: translateY(-2px); }
 
-        /* Custom Logo Styling (Fixed to prevent layout break) */
-        .brand-logo-img { 
-            height: 45px; 
-            width: 45px; 
-            object-fit: contain; 
-            font-size: 10px; /* Hides huge alt text if broken */
-            line-height: 45px;
-            text-align: center;
-            color: transparent; 
+        /* Responsive Navbar */
+        @media (max-width: 1200px) {
+            .nav-brand-text { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.2; }
+            .nav-brand-text .subtitle { font-size: 12px; }
         }
-        .nav-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
-        .nav-brand-text .title { font-size: 22px; font-weight: 800; color: var(--dark); }
-        .nav-brand-text .title span { color: var(--primary); }
-        .nav-brand-text .subtitle { font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; }
-
-        @media (max-width: 900px) {
+        @media (max-width: 992px) {
             .nav-brand-text .subtitle { display: none; }
-            .brand-logo-img { height: 35px; width: 35px; }
-            .nav-brand-text .title { font-size: 18px; }
-            .nav-links { gap: 15px; font-size: 14px; }
+            .nav-links { gap: 10px; font-size: 13px; }
+            .btn-legacy { padding: 6px 12px; font-size: 12px; }
         }
 
         /* SPA View Logic */
@@ -65,7 +61,7 @@
 
         /* Hero Section */
         .hero { height: 80vh; background: linear-gradient(rgba(30,41,59,0.8), rgba(234,88,12,0.7)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--white); padding: 0 20px; margin-top: -80px; }
-        .hero h1 { font-size: 56px; font-weight: 800; margin-bottom: 15px; letter-spacing: -1px; }
+        .hero h1 { font-size: 50px; font-weight: 800; margin-bottom: 15px; letter-spacing: -1px; }
         .hero p { font-size: 18px; max-width: 700px; margin-bottom: 30px; font-weight: 300; line-height: 1.6; }
         .hero-btn { background: var(--secondary); color: var(--dark); padding: 12px 35px; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 16px; transition: var(--transition); }
         .hero-btn:hover { background: var(--primary); color: var(--white); box-shadow: 0 10px 20px rgba(234,88,12,0.4); }
@@ -75,6 +71,9 @@
         .section-title { text-align: center; font-size: 36px; font-weight: 800; margin-bottom: 40px; color: var(--dark); }
         .section-title span { color: var(--primary); }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        
+        /* Landscape Events Grid */
+        .grid-landscape { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 30px; }
 
         /* Premium Cards */
         .card { background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); position: relative; border: 1px solid #f1f5f9; }
@@ -82,6 +81,23 @@
         .card-img { width: 100%; height: 220px; object-fit: cover; }
         .card-body { padding: 25px; }
         .card-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: var(--dark); }
+
+        /* Landscape Event Card - Fixed */
+        .event-card { display: flex; flex-direction: row; background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f1f5f9; }
+        .event-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .event-img-wrap { width: 40%; flex-shrink: 0; background: #e2e8f0; }
+        .event-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .event-body { padding: 25px; width: 60%; display: flex; flex-direction: column; }
+        .event-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--dark); font-family: 'Noto Sans Gujarati', sans-serif; }
+        /* Text Limit for long descriptions */
+        .event-desc { color: #64748b; font-size: 14px; line-height: 1.6; font-family: 'Noto Sans Gujarati', sans-serif; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
+        
+        @media (max-width: 768px) {
+            .grid-landscape { grid-template-columns: 1fr; }
+            .event-card { flex-direction: column; }
+            .event-img-wrap { width: 100%; height: 200px; }
+            .event-body { width: 100%; }
+        }
         
         /* Committee Card */
         .committee-card { text-align: center; padding: 40px 20px; }
@@ -105,10 +121,9 @@
 </head>
 <body>
 
-    <!-- NAVIGATION -->
+    <!-- NAVIGATION (Fixed Line) -->
     <nav class="navbar">
         <a href="#home" class="logo">
-            <!-- Added onerror fallback to prevent layout breaking if logo.png is missing -->
             <img src="./logo.png" alt="Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/45x45.png?text=Logo';">
             <div class="nav-brand-text">
                 <div class="title">Shree <span>Batrisi</span></div>
@@ -124,7 +139,6 @@
             <a href="#downloads">Downloads</a>
             <a href="#committee">Committee</a>
             <a href="#contact">Contact</a>
-            <!-- Links to legacy standalone apps -->
             <a href="id_card_app.html" class="btn-legacy" target="_blank"><i class="fa-solid fa-id-card"></i> Get ID Card</a>
             <a href="medical_app_standalone.html" class="btn-legacy" style="background:var(--primary);" target="_blank"><i class="fa-solid fa-notes-medical"></i> Medical Relief</a>
         </div>
@@ -135,15 +149,14 @@
     <!-- 1. HOME -->
     <div id="view-home" class="page-view active">
         <div class="hero">
-            <!-- Added onerror fallback -->
-            <img src="./logo.png" alt="Logo" style="height: 90px; width: 90px; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));" onerror="this.onerror=null; this.src='https://via.placeholder.com/90x90.png?text=Logo';">
+            <img src="./logo.png" alt="Logo" style="height: 100px; width: 100px; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));" onerror="this.onerror=null; this.src='https://via.placeholder.com/100x100.png?text=Logo';">
             <h1>Empowering the Community</h1>
             <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong> Dedicated to education, medical relief, and cultural unity since 1944.</p>
             <a href="#about" class="hero-btn">Discover Our Legacy</a>
         </div>
         <div class="container">
             <h2 class="section-title">Latest <span>Updates</span></h2>
-            <div class="grid" id="home-events-grid"></div>
+            <div class="grid-landscape" id="home-events-grid"></div>
         </div>
     </div>
 
@@ -152,7 +165,6 @@
         <div class="container">
             <h2 class="section-title">About <span>Us</span></h2>
             <div class="card" style="padding: 40px; text-align: center; max-width: 900px; margin: 0 auto; line-height: 1.8; font-size: 18px;">
-                <!-- Added onerror fallback -->
                 <img src="./logo.png" alt="Logo" style="height: 70px; width: 70px; margin-bottom: 15px; object-fit: contain;" onerror="this.onerror=null; this.src='https://via.placeholder.com/70x70.png?text=Logo';">
                 <h3 style="color: var(--dark); font-size: 22px; margin-bottom: 15px;">Shree Batrisi Jain Co-Op. Education Society Ltd.</h3>
                 <p>Established on <b>10/10/1944</b>. For decades, we have aimed to uplift our community through educational grants, comprehensive medical assistance, and cultural unity.</p>
@@ -167,7 +179,7 @@
     <div id="view-events" class="page-view">
         <div class="container">
             <h2 class="section-title">Upcoming <span>Events</span></h2>
-            <div class="grid" id="events-grid"></div>
+            <div class="grid-landscape" id="events-grid"></div>
         </div>
     </div>
 
@@ -234,7 +246,6 @@
         <div class="footer-grid">
             <div>
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-                    <!-- Added onerror fallback -->
                     <img src="./logo.png" alt="Logo" style="height: 55px; width: 55px; object-fit: contain; background: var(--white); padding: 5px; border-radius: 8px;" onerror="this.onerror=null; this.src='https://via.placeholder.com/55x55.png?text=Logo';">
                     <h3 style="color:var(--secondary); margin: 0; line-height: 1.3; font-size: 20px;">
                         Shree Batrisi<br>
@@ -270,28 +281,21 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 1. ROUTING SYSTEM
+        // ROUTING SYSTEM
         function handleRoute() {
             let hash = window.location.hash || '#home';
-            
-            // Hide all views & remove active nav classes
             document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
-            
-            // Show targeted view
             let targetView = document.getElementById('view-' + hash.substring(1));
             if(targetView) targetView.classList.add('active');
-            
-            // Highlight nav link
             let activeLink = document.querySelector(`.nav-links a[href="${hash}"]`);
             if(activeLink) activeLink.classList.add('active');
-
             window.scrollTo(0,0);
         }
         window.addEventListener('hashchange', handleRoute);
         window.addEventListener('load', () => { handleRoute(); fetchAllData(); });
 
-        // 2. LIGHTBOX LOGIC
+        // LIGHTBOX LOGIC
         function openLightbox(imgSrc, caption) {
             document.getElementById('lightbox-img').src = imgSrc;
             document.getElementById('lightbox-caption').innerText = caption || '';
@@ -299,9 +303,9 @@
         }
         function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
-        // 3. FETCH DATA FROM FIREBASE
+        // FETCH DATA FROM FIREBASE (With Landscape Event Cards)
         function fetchAllData() {
-            // Events
+            // Events (Now Landscape)
             db.collection('events').orderBy('timestamp', 'desc').onSnapshot(snap => {
                 let html = '';
                 let count = 0;
@@ -309,16 +313,18 @@
                 snap.forEach(doc => {
                     let d = doc.data();
                     let card = `
-                        <div class="card">
-                            <img src="${d.image || 'https://via.placeholder.com/400x250'}" class="card-img" alt="Event">
-                            <div class="card-body">
-                                <span style="color:var(--primary); font-weight:700; font-size:13px; display:block; margin-bottom:5px;"><i class="fa-regular fa-calendar"></i> ${d.date}</span>
-                                <h3 class="card-title">${d.title}</h3>
-                                <p style="color:#64748b; font-size:14px; line-height:1.6;">${d.desc}</p>
+                        <div class="event-card">
+                            <div class="event-img-wrap">
+                                <img src="${d.image || 'https://via.placeholder.com/400x250'}" alt="Event">
+                            </div>
+                            <div class="event-body">
+                                <span style="color:var(--primary); font-weight:700; font-size:13px; margin-bottom:8px;"><i class="fa-regular fa-calendar"></i> ${d.date}</span>
+                                <h3 class="event-title">${d.title}</h3>
+                                <p class="event-desc">${d.desc}</p>
                             </div>
                         </div>`;
                     html += card;
-                    if(count < 3) homeHtml += card;
+                    if(count < 4) homeHtml += card; // Showing 4 on home since it's a 2-column grid
                     count++;
                 });
                 document.getElementById('events-grid').innerHTML = html;
@@ -332,7 +338,7 @@
                     let d = doc.data();
                     html += `
                         <div class="card">
-                            <img src="${d.image}" class="card-img" alt="Media">
+                            <img src="${d.image}" class="card-img" alt="Media" onerror="this.src='https://via.placeholder.com/400x250'">
                             <div class="card-body">
                                 <span style="color:var(--primary); font-weight:700; font-size:13px;"><i class="fa-regular fa-newspaper"></i> ${d.date}</span>
                                 <h3 class="card-title" style="margin-top:5px;">${d.title}</h3>
@@ -350,7 +356,7 @@
                     let d = doc.data();
                     html += `
                         <div class="card" style="cursor:pointer;" onclick="openLightbox('${d.image}', '${d.title}')">
-                            <img src="${d.image}" class="card-img" style="height:250px;" alt="Gallery">
+                            <img src="${d.image}" class="card-img" style="height:250px;" alt="Gallery" onerror="this.src='https://via.placeholder.com/400x250'">
                             <div class="card-body" style="padding:15px; text-align:center;">
                                 <p style="font-weight:600; margin:0; color:var(--dark);">${d.title}</p>
                             </div>
@@ -383,7 +389,7 @@
                     let d = doc.data();
                     html += `
                         <div class="card committee-card">
-                            <img src="${d.photo || 'https://via.placeholder.com/150'}" class="committee-img" alt="Member">
+                            <img src="${d.photo || 'https://via.placeholder.com/150'}" class="committee-img" alt="Member" onerror="this.src='https://via.placeholder.com/150'">
                             <span class="pos-badge">${d.position}</span>
                             <h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3>
                             <p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p>
