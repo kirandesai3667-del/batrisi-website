@@ -63,6 +63,8 @@
         
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #475569; text-transform: uppercase; }
+        
+        /* FIX applied here: removed 'required' logic */
         .form-group input[type="text"], .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
         
         .upload-section { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; }
@@ -95,8 +97,7 @@
             <!-- REMINDER ALERTS FOR ADMIN -->
             <div style="margin-top:20px; padding:15px; background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; font-size:12px; color:#c2410c; text-align:left; font-weight:500;">
                 <b style="display:block; margin-bottom:5px;"><i class="fa-solid fa-triangle-exclamation"></i> IMPORTANT REMINDERS:</b>
-                1. Make sure your Firestore Database Rules are set to: <code>allow read, write: if true;</code><br>
-                2. Put your ImgBB API Key in line 163 of the code.
+                Make sure your Firestore Database Rules are set to: <code>allow read, write: if true;</code>
             </div>
         </div>
     </div>
@@ -158,9 +159,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Add Record</h2>
-                <button class="btn-close" onclick="closeCMSModal()" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="btn-close" onclick="closeCMSModal()" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="cmsForm">
+            <!-- FIX applied here: removed strict form validation block -->
+            <form id="cmsForm" novalidate>
                 <div id="dynamicFields"></div>
                 <div class="modal-footer">
                     <button type="button" onclick="closeCMSModal()" style="padding:10px 20px; background:white; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer;">Cancel</button>
@@ -175,7 +177,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 style="margin:0; color:var(--dark);">Safe Bulk Upload (ImgBB)</h2>
-                <button class="btn-close" onclick="closeBulkModal()" id="bulkCloseBtn" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="btn-close" onclick="closeBulkModal()" id="bulkCloseBtn" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="upload-section">
                 <label style="font-weight:bold; font-size:14px; color:var(--primary); margin-bottom:10px; display:block;">Select Multiple Photos</label>
@@ -212,10 +214,10 @@
         if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
-        // 2. 🔴 PUT YOUR IMGBB API KEY HERE 🔴
+        // 2. 🔴 IMGBB API KEY (Aapki Key already daal di hai) 🔴
         const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
 
-        // 3. SCHEMAS (Notice PDF is now just a text link field)
+        // 3. SCHEMAS
         const schemas = {
             'events': { fields: [ { key: 'title', label: 'Event Title', type: 'text' }, { key: 'date', label: 'Event Date', type: 'text' }, { key: 'desc', label: 'Description', type: 'textarea' }, { key: 'image', label: 'Event Image', type: 'image' } ] },
             'media': { fields: [ { key: 'title', label: 'News Headline', type: 'text' }, { key: 'date', label: 'Published Date', type: 'text' }, { key: 'link', label: 'Article Link (Optional)', type: 'text' }, { key: 'image', label: 'Newspaper Cutting Image', type: 'image' } ] },
@@ -309,14 +311,16 @@
             });
         }
 
-        // SINGLE UPLOAD UI
+        // SINGLE UPLOAD UI (Fixed the "Required" blocking issue)
         function openCMSModal() {
             document.getElementById('modalTitle').innerText = editingId ? "Edit Record" : "Add New Record";
             document.getElementById('cmsForm').reset(); uploadedFiles = {}; isUploading = false; document.getElementById('saveBtn').disabled = false; document.getElementById('saveBtn').innerHTML = 'Save Record';
             
             const schemaFields = schemas[activeCollection].fields; let fieldsHTML = '';
             schemaFields.forEach(f => {
-                if (f.type === 'textarea') { fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4" required></textarea></div>`; } 
+                if (f.type === 'textarea') { 
+                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><textarea id="field_${f.key}" rows="4"></textarea></div>`; 
+                } 
                 else if (f.type === 'image') {
                     fieldsHTML += `
                         <div class="form-group upload-section">
@@ -326,7 +330,9 @@
                             <input type="text" id="url_${f.key}" placeholder="Paste Direct Image URL here" oninput="useDirectUrl('${f.key}')">
                             <div id="previewWrap_${f.key}" style="display:none; margin-top:10px; text-align:center;"><img id="previewImg_${f.key}" class="preview-img"><span id="previewMsg_${f.key}" style="font-size:13px; font-weight:bold; display:block; margin-top:8px;"></span></div>
                         </div>`;
-                } else { fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}" required></div>`; }
+                } else { 
+                    fieldsHTML += `<div class="form-group"><label>${f.label}</label><input type="${f.type}" id="field_${f.key}"></div>`; 
+                }
             });
             document.getElementById('dynamicFields').innerHTML = fieldsHTML;
 
@@ -362,7 +368,7 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    uploadedFiles[key] = data.data.url; document.getElementById(`url_${key}`).value = '';
+                    uploadedFiles[key] = data.data.url; document.getElementById(`url_${key}`).value = data.data.url;
                     msg.style.color = '#10b981'; msg.innerHTML = '<i class="fa-solid fa-check"></i> Free Upload Successful!';
                 } else { throw new Error("Upload Failed"); }
             } catch (error) { msg.style.color = '#ef4444'; msg.innerHTML = '<i class="fa-solid fa-xmark"></i> Upload Failed! Did you put the API Key?'; 
@@ -376,16 +382,27 @@
             img.src = url; img.style.display = 'inline-block';
         }
 
-        // SAVE DATA TO FIRESTORE
+        // SAVE DATA TO FIRESTORE (FOOLPROOF FIX APPLIED)
         document.getElementById('cmsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if(isUploading) return alert("Please wait for the file to finish uploading before saving.");
             document.getElementById('saveSpinner').style.display = 'inline-block'; document.getElementById('saveBtn').disabled = true;
 
             const schemaFields = schemas[activeCollection].fields; let finalData = {};
+            
             schemaFields.forEach(f => {
-                if (f.type !== 'image') finalData[f.key] = document.getElementById(`field_${f.key}`).value;
-                else if(uploadedFiles[f.key]) finalData[f.key] = uploadedFiles[f.key];
+                if (f.type !== 'image') {
+                    finalData[f.key] = document.getElementById(`field_${f.key}`).value || "";
+                } else {
+                    let directUrlInput = document.getElementById(`url_${f.key}`);
+                    if(uploadedFiles[f.key]) {
+                        finalData[f.key] = uploadedFiles[f.key];
+                    } else if(directUrlInput && directUrlInput.value.trim() !== "") {
+                        finalData[f.key] = directUrlInput.value.trim();
+                    } else {
+                        finalData[f.key] = "";
+                    }
+                }
             });
 
             try {
