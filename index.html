@@ -29,13 +29,26 @@
 
         /* Navbar */
         .navbar { position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 1000; transition: var(--transition); }
-        .logo { font-size: 24px; font-weight: 800; color: var(--dark); text-decoration: none; display: flex; align-items: center; gap: 10px; }
-        .logo span { color: var(--primary); }
+        .logo { text-decoration: none; display: flex; align-items: center; }
         .nav-links { display: flex; gap: 25px; align-items: center; }
         .nav-links a { text-decoration: none; color: var(--dark); font-weight: 500; transition: var(--transition); cursor: pointer; }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
         .btn-legacy { background: var(--dark); color: var(--white) !important; padding: 8px 20px; border-radius: 25px; font-weight: 600; font-size: 14px; }
         .btn-legacy:hover { background: var(--primary); transform: translateY(-2px); }
+
+        /* Custom Logo Styling */
+        .brand-logo-img { height: 45px; width: auto; object-fit: contain; }
+        .nav-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .nav-brand-text .title { font-size: 22px; font-weight: 800; color: var(--dark); }
+        .nav-brand-text .title span { color: var(--primary); }
+        .nav-brand-text .subtitle { font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; }
+
+        @media (max-width: 900px) {
+            .nav-brand-text .subtitle { display: none; } /* Hides long text on small screens */
+            .brand-logo-img { height: 35px; }
+            .nav-brand-text .title { font-size: 18px; }
+            .nav-links { gap: 15px; font-size: 14px; }
+        }
 
         /* SPA View Logic */
         .page-view { display: none; padding-top: 80px; min-height: 100vh; animation: fadeIn 0.5s ease-in-out; }
@@ -86,7 +99,13 @@
 
     <!-- NAVIGATION -->
     <nav class="navbar">
-        <a href="#home" class="logo"><i class="fa-solid fa-om"></i> Shree <span>Batrisi</span></a>
+        <a href="#home" class="logo" style="gap: 12px;">
+            <img src="logo.png" alt="Shree Batrisi Logo" class="brand-logo-img">
+            <div class="nav-brand-text">
+                <div class="title">Shree <span>Batrisi</span></div>
+                <div class="subtitle">Jain Co-Op. Education Society Ltd.</div>
+            </div>
+        </a>
         <div class="nav-links">
             <a href="#home" class="active">Home</a>
             <a href="#about">About</a>
@@ -107,8 +126,9 @@
     <!-- 1. HOME -->
     <div id="view-home" class="page-view active">
         <div class="hero">
+            <img src="logo.png" alt="Shree Batrisi Logo" style="height: 90px; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
             <h1>Empowering the Community</h1>
-            <p>Welcome to Shree Batrisi Jain Co-Op. Education Society Ltd. Dedicated to education, medical relief, and cultural unity since 1944.</p>
+            <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong> Dedicated to education, medical relief, and cultural unity since 1944.</p>
             <a href="#about" class="hero-btn">Discover Our Legacy</a>
         </div>
         <div class="container">
@@ -122,8 +142,9 @@
         <div class="container">
             <h2 class="section-title">About <span>Us</span></h2>
             <div class="card" style="padding: 40px; text-align: center; max-width: 900px; margin: 0 auto; line-height: 1.8; font-size: 18px;">
-                <i class="fa-solid fa-hands-holding-circle" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
-                <p>Shree Batrisi Jain Co-Op. Education Society Limited was established on <b>10/10/1944</b>. For decades, we have aimed to uplift our community through educational grants, comprehensive medical assistance, and cultural unity.</p>
+                <img src="logo.png" alt="Shree Batrisi Logo" style="height: 70px; margin-bottom: 15px; object-fit: contain;">
+                <h3 style="color: var(--dark); font-size: 22px; margin-bottom: 15px;">Shree Batrisi Jain Co-Op. Education Society Ltd.</h3>
+                <p>Established on <b>10/10/1944</b>. For decades, we have aimed to uplift our community through educational grants, comprehensive medical assistance, and cultural unity.</p>
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 15px; color: #64748b;">
                     <b>Reg No:</b> GH/230 &nbsp;|&nbsp; <b>GSTIN:</b> 24AAATS6070J1ZE
                 </div>
@@ -201,7 +222,13 @@
     <footer>
         <div class="footer-grid">
             <div>
-                <h3 style="color:var(--secondary); margin-bottom: 20px;"><i class="fa-solid fa-om"></i> Shree Batrisi</h3>
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <img src="logo.png" alt="Shree Batrisi Logo" style="height: 55px; background: var(--white); padding: 5px; border-radius: 8px;">
+                    <h3 style="color:var(--secondary); margin: 0; line-height: 1.3; font-size: 20px;">
+                        Shree Batrisi<br>
+                        <span style="font-size: 12px; color: #cbd5e1; font-weight: 500;">Jain Co-Op. Education Society Ltd.</span>
+                    </h3>
+                </div>
                 <p style="color:#cbd5e1; font-size:14px; line-height:1.6;">Dedicated to education, medical relief, and community welfare since 1944. Empowering our society for a better tomorrow.</p>
             </div>
             <div>
