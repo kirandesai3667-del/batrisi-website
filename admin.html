@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced CMS Panel - Batrisi</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+    <style>
+        :root { --primary: #ea580c; --dark: #0f172a; --sidebar: #1e293b; --bg: #f1f5f9; --border: #e2e8f0; }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); color: var(--dark); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Login Overlay */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--sidebar); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .login-box { background: white; padding: 40px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .login-box h2 { color: var(--sidebar); margin-bottom: 20px; font-weight: 800; }
+        .login-box input { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
+        .login-box input:focus { border-color: var(--primary); }
+        .login-box button { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .login-box button:hover { background: #c2410c; }
+        
+        /* Sidebar */
+        .sidebar { width: 280px; background: var(--sidebar); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 800; }
+        .sidebar-header p { font-size: 12px; color: #94a3b8; margin-top: 5px; }
+        
+        .nav-section { padding: 15px 20px 5px; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-btn { background: none; border: none; color: #cbd5e1; padding: 12px 20px; text-align: left; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; border-left: 4px solid transparent; width: 100%; }
+        .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.05); color: white; border-left-color: var(--primary); }
+        .nav-btn i { width: 20px; text-align: center; }
+
+        /* Main Content */
+        .main-content { flex: 1; overflow-y: auto; padding: 30px 40px; }
+        
+        /* Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; border: 1px solid var(--border); }
+        .stat-icon { width: 50px; height: 50px; border-radius: 12px; background: #fff7ed; color: var(--primary); display: flex; justify-content: center; align-items: center; font-size: 24px; }
+        .stat-info h3 { margin: 0; font-size: 24px; color: var(--dark); font-weight: 800; }
+        .stat-info p { margin: 0; font-size: 13px; color: #64748b; font-weight: 500; }
+
+        /* Top Bar (Title + Search + Add) */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); flex-wrap: wrap; gap: 15px;}
+        .toolbar h1 { margin: 0; font-size: 22px; color: var(--dark); font-weight: 700; }
+        .search-box { display: flex; align-items: center; background: var(--bg); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border); width: 300px; }
+        .search-box i { color: #64748b; margin-right: 10px; }
+        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; font-family: inherit; }
+        .btn-add { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: 0.2s; }
+        .btn-add:hover { background: #c2410c; }
+
+        /* Table Area */
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: #f8fafc; font-weight: 600; color: #475569; white-space: nowrap; }
+        td img { height: 40px; width: 40px; border-radius: 6px; object-fit: cover; }
+        .action-btns { display: flex; gap: 10px; }
+        .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; padding: 5px; border-radius: 4px; transition: 0.2s; }
+        .btn-edit { color: #3b82f6; background: #eff6ff; } .btn-edit:hover { background: #dbeafe; }
+        .btn-del { color: #ef4444; background: #fef2f2; } .btn-del:hover { background: #fee2e2; }
+
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; align-items: center; padding: 20px; gap: 15px; font-size: 14px; font-weight: 500; }
+        .page-btn { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Modal CMS Form */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 5000; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .modal-header h2 { margin: 0; font-size: 20px; color: var(--dark); }
+        .btn-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: 0.2s; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1); }
+        
+        .file-upload-wrapper { border: 2px dashed var(--border); padding: 20px; text-align: center; border-radius: 8px; background: #f8fafc; position: relative; }
+        .file-upload-wrapper input[type="file"] { opacity: 0; position: absolute; top:0; left:0; width:100%; height:100%; cursor: pointer; }
+        .preview-img { max-height: 120px; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .btn-cancel { background: white; border: 1px solid var(--border); color: #475569; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+        /* Toast & Spinner */
+        #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; font-weight: 600; box-shadow: 0 10px 15px rgba(0,0,0,0.1); transform: translateY(100px); opacity: 0; transition: 0.4s ease; z-index: 9999; display: flex; align-items: center; gap: 10px; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.error { background: #ef4444; }
+        
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; margin-right: 8px; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SECURE LOGIN -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>System Security</h2>
+            <input type="text" id="adminUser" placeholder="Username">
+            <input type="password" id="adminPwd" placeholder="Password">
+            <button onclick="adminLogin()">Login to Dashboard</button>
+            <p id="loginError" style="color:#ef4444; display:none; font-size:13px; margin-top:10px; font-weight:600;">Invalid Credentials. Access Denied.</p>
+        </div>
+    </div>
+
+    <!-- 2. SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fa-solid fa-shield-halved"></i> Batrisi</h2>
+            <p>Admin CMS Panel</p>
+        </div>
+        
+        <div class="nav-section">Web Content Management</div>
+        <button class="nav-btn active" onclick="initCMS('events', 'Events', 'fa-calendar-days')"><i class="fa-solid fa-calendar-days"></i> Events</button>
+        <button class="nav-btn" onclick="initCMS('media', 'Media Coverage', 'fa-newspaper')"><i class="fa-solid fa-newspaper"></i> Media</button>
+        <button class="nav-btn" onclick="initCMS('gallery', 'Gallery', 'fa-images')"><i class="fa-solid fa-images"></i> Gallery</button>
+        <button class="nav-btn" onclick="initCMS('committee', 'Committee', 'fa-users')"><i class="fa-solid fa-users"></i> Committee</button>
+        <button class="nav-btn" onclick="initCMS('downloads', 'Downloads', 'fa-file-pdf')"><i class="fa-solid fa-file-pdf"></i> Downloads</button>
+        
+        <div class="nav-section">Legacy Applications</div>
+        <button class="nav-btn" onclick="window.open('id_card_app.html', '_blank')"><i class="fa-solid fa-id-card"></i> ID Card System</button>
+        <button class="nav-btn" onclick="window.open('medical_app_standalone.html', '_blank')"><i class="fa-solid fa-notes-medical"></i> Medical Portal</button>
+        
+        <button class="nav-btn" style="margin-top:auto; color:#ef4444;" onclick="window.location.reload()"><i class="fa-solid fa-power-off"></i> Logout</button>
+    </div>
+
+    <!-- 3. MAIN DASHBOARD -->
+    <div class="main-content">
+        
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                <div class="stat-info"><h3 id="stat-events">0</h3><p>Total Events</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-images"></i></div>
+                <div class="stat-info"><h3 id="stat-gallery">0</h3><p>Gallery Images</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-info"><h3 id="stat-committee">0</h3><p>Committee Members</p></div>
+            </div>
+        </div>
+
+        <!-- CMS Toolbar -->
+        <div class="toolbar">
+            <h1 id="cms-title">Manage Events</h1>
+            <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search records..." onkeyup="handleSearch()">
+                </div>
+                <button class="btn-add" onclick="openCMSModal()"><i class="fa-solid fa-plus"></i> Add Record</button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <table id="dataTable">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <!-- Pagination Controls -->
+            <div class="pagination" id="paginationControls">
+                <button class="page-btn" id="btnPrev" onclick="changePage(-1)">Previous</button>
+                <span id="pageInfo">Page 1</span>
+                <button class="page-btn" id="btnNext" onclick="changePage(1)">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. DYNAMIC MODAL (CMS FORM GENERATOR) -->
+    <div class="modal" id="cmsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Record</h2>
+                <button class="btn-close" onclick="closeCMSModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="cmsForm">
+                <div id="dynamicFields"></div> <!-- Fields injected via JS Schema -->
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeCMSModal()">Cancel</button>
+                    <button type="submit" class="btn-add" id="saveBtn"><span class="spinner" id="saveSpinner"></span> Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. TOAST NOTIFICATION -->
+    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Success!</span></div>
+
+    <!-- FIREBASE & CMS AUTOMATION LOGIC -->
+    <script>
+        // FIREBASE SETUP (Strictly using provided config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
+            authDomain: "batrisi-latest-app.firebaseapp.com",
+            projectId: "batrisi-latest-app",
+            storageBucket: "batrisi-latest-app.firebasestorage.app",
+            messagingSenderId: "175592360155",
+            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe",
+            measurementId: "G-5N91PLG8LB"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // CMS ARCHITECTURE / SCHEMAS (Automation engine)
+        const schemas = {
+            'events': {
+                fields: [
+                    { key: 'title', label: 'Event Title', type: 'text', placeholder: 'Annual General Meeting' },
+                    { key: 'date', label: 'Event Date', type: 'text', placeholder: '15 Aug 2026' },
+                    { key: 'desc', label: 'Description', type: 'textarea', placeholder: 'Write a short description...' },
+                    { key: 'image', label: 'Event Image', type: 'image' }
+                ]
+            },
+            'media': {
+                fields: [
+                    { key: 'title', label: 'News Headline', type: 'text', placeholder: 'Times of India Feature' },
+                    { key: 'date', label: 'Published Date', type: 'text', placeholder: '12 Jan 2026' },
+                    { key: 'link', label: 'Article Link (Optional)', type: 'text', placeholder: 'https://...' },
+                    { key: 'image', label: 'Newspaper Cutting Image', type: 'image' }
+                ]
+            },
+            'gallery': {
+                fields: [
+                    { key: 'title', label: 'Image Caption', type: 'text', placeholder: 'Medical Camp 2025' },
+                    { key: 'image', label: 'Upload Photo', type: 'image' }
+                ]
+            },
+            'downloads': {
+                fields: [
+                    { key: 'title', label: 'Document Title', type: 'text', placeholder: 'Annual Report 2025' },
+                    { key: 'file', label: 'Upload PDF', type: 'pdf' }
+                ]
+            },
+            'committee': {
+                fields: [
+                    { key: 'name', label: 'Full Name (Surname First)', type: 'text', placeholder: 'Shah Mayank R.' },
+                    { key: 'position', label: 'Position', type: 'text', placeholder: 'President / Member' },
+                    { key: 'native', label: 'Native Village', type: 'text', placeholder: 'Adalaj' },
+                    { key: 'phone', label: 'Mobile Number', type: 'text', placeholder: '9876543210' },
+                    { key: 'photo', label: 'Passport Size Photo', type: 'image' }
+                ]
+            }
+        };
+
+        // GLOBAL STATE
+        let activeCollection = '';
+        let currentRecords = [];
+        let filteredRecords = [];
+        let editingId = null;
+        let uploadedFiles = {}; // Stores URLs returned from Firebase Storage
+        
+        // Pagination State
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        // 1. SECURE LOGIN
+        function adminLogin() {
+            if(document.getElementById('adminUser').value === 'Batrisi' && document.getElementById('adminPwd').value === 'Bat@3232') {
+                document.getElementById('login-overlay').style.display = 'none';
+                loadStats();
+                initCMS('events', 'Events'); // Default load
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // 2. LOAD STATS
+        function loadStats() {
+            db.collection('events').onSnapshot(s => document.getElementById('stat-events').innerText = s.size);
+            db.collection('gallery').onSnapshot(s => document.getElementById('stat-gallery').innerText = s.size);
+            db.collection('committee').onSnapshot(s => document.getElementById('stat-committee').innerText = s.size);
+        }
+
+        // 3. INITIALIZE ACTIVE CMS
+        function initCMS(collectionKey, title) {
+            activeCollection = collectionKey;
+            editingId = null;
+            document.getElementById('cms-title').innerText = `Manage ${title}`;
+            document.getElementById('searchInput').value = '';
+            
+            // Sidebar active state
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Build Table Headers dynamically
+            const schemaFields = schemas[activeCollection].fields;
+            let thHTML = '';
+            schemaFields.forEach(f => { if(f.type !== 'image' && f.type !== 'pdf') thHTML += `<th>${f.label}</th>`; });
+            thHTML += `<th>Media</th><th>Actions</th>`;
+            document.getElementById('tableHead').innerHTML = `<tr>${thHTML}</tr>`;
+
+            // Fetch Real-time Data
+            db.collection(activeCollection).orderBy('timestamp', 'desc').onSnapshot(snap => {
+                currentRecords = [];
+                snap.forEach(doc => currentRecords.push({ id: doc.id, ...doc.data() }));
+                filteredRecords = currentRecords;
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
+        // 4. RENDER TABLE WITH PAGINATION & SEARCH
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            filteredRecords = currentRecords.filter(rec => {
+                return Object.values(rec).some(val => String(val).toLowerCase().includes(query));
+            });
+            currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const schemaFields = schemas[activeCollection].fields;
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            // Calculate Pagination
+            const totalPages = Math.ceil(filteredRecords.length / itemsPerPage) || 1;
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const paginatedItems = filteredRecords.slice(startIdx, startIdx + itemsPerPage);
+
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('btnPrev').disabled = currentPage === 1;
+            document.getElementById('btnNext').disabled = currentPage === totalPages;
+
+            if(paginatedItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${schemaFields.length + 1}" style="text-align:center; color:#94a3b8;">No records found.</td></tr>`;
+                return;
+            }
+
+            paginatedItems.forEach(rec => {
+                let trHTML = '';
+                let mediaHTML = '-';
+
+                schemaFields.forEach(f => {
+                    if (f.type !== 'image' && f.type !== 'pdf') {
+                        let text = rec[f.key] || '-';
+                        if(text.length > 50) text = text.substring(0, 50) + '...';
+                        trHTML += `<td>${text}</td>`;
+                    } else if (f.type === 'image' && rec[f.key]) {
+                        mediaHTML = `<img src="${rec[f.key]}">`;
+                    } else if (f.type === 'pdf' && rec[f.key]) {
+                        mediaHTML = `<a href="${rec[f.key]}" target="_blank" style="color:#ef4444;"><i class="fa-solid fa-file-pdf fa-2x"></i></a>`;
+                    }
+                });
+
+                trHTML += `<td>${mediaHTML}</td>`;
+                trHTML += `
+                    <td class="action-btns">
+                        <button class="btn-icon btn-edit" onclick='editRecord("${rec.id}")'><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-icon btn-del" onclick='deleteRecord("${rec.id}")'><i class="fa-solid fa-trash"></i></button>
+                    </td>`;
+                tbody.innerHTML += `<tr>${trHTML}</tr>`;
+            });
+        }
+
+        function changePage(dir) {
+            currentPage += dir;
+            renderTable();
+        }
+
+        // 5. MODAL FORM GENERATOR (CMS AUTOMATION)
+        function openCMSModal() {
+            document.getElementById('modalTitle').innerText = editingId ? "Edit Record" : "Add New Record";
+            document.getElementById('cmsForm').reset();
+            uploadedFiles = {}; // clear uploads
+            
+            const schemaFields = schemas[activeCollection].fields;
+            let fieldsHTML = '';
+
+            schemaFields.forEach(f => {
+                if (f.type === 'textarea') {
+                    fieldsHTML += `
+                        <div class="form-group">
+                            <label>${f.label}</label>
+                            <textarea id="field_${f.key}" rows="3" placeholder="${f.placeholder}" required></textarea>
+                        </div>`;
+                } else if (f.type === 'image' || f.type === 'pdf') {
+                    let accept = f.type === 'image' ? 'image/*, .png, .jpg, .jpeg' : 'application/pdf';
+                    let icon = f.type === 'image' ? 'fa-image' : 'fa-file-pdf';
+                    fieldsHTML += `
+                        <div class="form-group">
+                            <label>${f.label}</label>
+                            <div class="file-upload-wrapper">
+                                <i class="fa-solid ${icon} fa-2x" style="color:#94a3b8; margin-bottom:10px; display:block;"></i>
+                                <span style="font-size:13px; color:#64748b; font-weight:600;">Click or Drag file to upload</span>
+                                <input type="file" id="field_${f.key}" accept="${accept}" onchange="uploadFileToFirebase(event, '${f.key}', '${f.type}')" ${editingId ? '' : 'required'}>
+                                <div id="previewWrap_${f.key}" style="display:none; margin-top:10px;">
+                                    <span style="font-size:12px; color:#10b981; font-weight:bold; display:block; margin-bottom:5px;">File Attached Successfully!</span>
+                                    <img id="previewImg_${f.key}" class="preview-img">
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                    fieldsHTML += `
+                        <div class="form-group">
+                            <label>${f.label}</label>
+                            <input type="${f.type}" id="field_${f.key}" placeholder="${f.placeholder}" required>
+                        </div>`;
+                }
+            });
+
+            document.getElementById('dynamicFields').innerHTML = fieldsHTML;
+
+            // Auto-fill logic for Edit Mode
+            if (editingId) {
+                const rec = currentRecords.find(r => r.id === editingId);
+                schemaFields.forEach(f => {
+                    if (f.type !== 'image' && f.type !== 'pdf') {
+                        document.getElementById(`field_${f.key}`).value = rec[f.key] || '';
+                    } else if (rec[f.key]) {
+                        // Restore old file internally if they don't upload a new one
+                        uploadedFiles[f.key] = rec[f.key];
+                        // Disable strict required validation on edit
+                        document.getElementById(`field_${f.key}`).removeAttribute('required');
+                        
+                        // Show visual preview of old file
+                        document.getElementById(`previewWrap_${f.key}`).style.display = 'block';
+                        if(f.type === 'image') {
+                            document.getElementById(`previewImg_${f.key}`).src = rec[f.key];
+                            document.getElementById(`previewImg_${f.key}`).style.display = 'inline-block';
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('cmsModal').style.display = 'flex';
+        }
+
+        function closeCMSModal() { 
+            document.getElementById('cmsModal').style.display = 'none'; 
+            editingId = null;
+        }
+
+        // 6. FIREBASE STORAGE UPLOAD
+        async function uploadFileToFirebase(e, key, type) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            // UI Spinner Feedback
+            const wrap = document.getElementById(`previewWrap_${key}`);
+            wrap.style.display = 'block';
+            wrap.innerHTML = `<span class="spinner" style="display:inline-block; border-top-color:var(--primary);"></span> <span style="font-size:12px; font-weight:bold;">Uploading... Please wait.</span>`;
+
+            try {
+                // Upload directly to Firebase Storage
+                const storageRef = storage.ref(`cms_uploads/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                const downloadURL = await storageRef.getDownloadURL();
+                
+                // Save URL to state
+                uploadedFiles[key] = downloadURL;
+
+                // Update Preview UI
+                if(type === 'image') {
+                    // Show image thumbnail using FileReader to be fast, but URL is securely in Firebase
+                    const reader = new FileReader();
+                    reader.onload = (re) => {
+                        wrap.innerHTML = `<span style="font-size:12px; color:#10b981; font-weight:bold; display:block; margin-bottom:5px;"><i class="fa-solid fa-check"></i> Upload Complete!</span>
+                                          <img src="${re.target.result}" class="preview-img" style="display:inline-block;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    wrap.innerHTML = `<span style="font-size:12px; color:#10b981; font-weight:bold;"><i class="fa-solid fa-check"></i> PDF Uploaded Successfully!</span>`;
+                }
+
+            } catch (error) {
+                console.error("Upload Error:", error);
+                showToast("File upload failed!", true);
+                wrap.innerHTML = `<span style="font-size:12px; color:#ef4444; font-weight:bold;"><i class="fa-solid fa-xmark"></i> Upload Error</span>`;
+            }
+        }
+
+        // 7. SUBMIT FORM (CREATE / UPDATE)
+        document.getElementById('cmsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show Spinner
+            document.getElementById('saveSpinner').style.display = 'inline-block';
+            document.getElementById('saveBtn').disabled = true;
+
+            const schemaFields = schemas[activeCollection].fields;
+            let finalData = {};
+
+            // Compile Data Object based on Schema
+            schemaFields.forEach(f => {
+                if (f.type !== 'image' && f.type !== 'pdf') {
+                    finalData[f.key] = document.getElementById(`field_${f.key}`).value.trim();
+                } else {
+                    // Use new upload URL or fallback to existing URL (stored in uploadedFiles state)
+                    if(uploadedFiles[f.key]) finalData[f.key] = uploadedFiles[f.key];
+                }
+            });
+
+            try {
+                if(editingId) {
+                    await db.collection(activeCollection).doc(editingId).update(finalData);
+                    showToast("Record Updated Successfully!");
+                } else {
+                    finalData.timestamp = Date.now(); // Add timestamp for sorting new items
+                    await db.collection(activeCollection).add(finalData);
+                    showToast("Record Added Successfully!");
+                }
+                closeCMSModal();
+            } catch(error) {
+                console.error(error);
+                showToast("Database Error!", true);
+            } finally {
+                document.getElementById('saveSpinner').style.display = 'none';
+                document.getElementById('saveBtn').disabled = false;
+            }
+        });
+
+        // 8. ACTIONS: EDIT & DELETE
+        function editRecord(id) {
+            editingId = id;
+            openCMSModal();
+        }
+
+        function deleteRecord(id) {
+            if(confirm("⚠ DANGER: Are you sure you want to permanently delete this record? This action cannot be undone.")) {
+                db.collection(activeCollection).doc(id).delete()
+                    .then(() => showToast("Record Deleted Successfully!"))
+                    .catch(() => showToast("Failed to delete record.", true));
+            }
+        }
+
+        // 9. TOAST NOTIFICATION UTILITY
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const icon = isError ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-circle-check"></i>';
+            toast.innerHTML = `${icon} <span>${msg}</span>`;
+            toast.className = isError ? 'error show' : 'show';
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+    </script>
+</body>
+</html>
