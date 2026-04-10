@@ -66,6 +66,8 @@
     <div class="sidebar">
         <div style="padding:25px; border-bottom:1px solid rgba(255,255,255,0.1); text-align:center;"><h2>Batrisi CMS</h2></div>
         <button class="nav-btn active" onclick="initCMS('events', 'Events')">Manage Events</button>
+        <!-- NEW MEDIA BUTTON ADDED HERE -->
+        <button class="nav-btn" onclick="initCMS('media', 'Media Coverage')">Manage Media</button> 
         <button class="nav-btn" onclick="initCMS('about', 'About Us')">Manage About Us</button>
         <button class="nav-btn" onclick="initCMS('gallery', 'Gallery')">Manage Gallery</button>
         <button class="nav-btn" onclick="initCMS('committee', 'Committee')">Manage Committee</button>
@@ -115,9 +117,11 @@
         const db = firebase.firestore();
         const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
 
-        // SCHEMA UPDATED FOR DOWNLOADS (Added 'desc' field)
+        // SCHEMA UPDATED WITH MEDIA SECTION
         const schemas = {
             'events': [ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
+            // MEDIA SCHEMA ADDED
+            'media': [ {key:'title', label:'Media / News Title'}, {key:'date', label:'Date (e.g. 15 Aug 2026)'}, {key:'link', label:'Read More Link (Optional, keep blank if none)'}, {key:'image', label:'Newspaper Image', isFile:true} ],
             'about': [ {key:'title', label:'Heading Title (e.g. Shree Batrisi Jain...)'}, {key:'desc', label:'Full About Description', isArea:true} ], 
             'gallery': [ {key:'title', label:'Caption'}, {key:'image', label:'Image', isFile:true} ],
             'committee': [ {key:'name', label:'Full Name'}, {key:'position', label:'Position'}, {key:'native', label:'Native Village'}, {key:'phone', label:'Mobile Number'}, {key:'photo', label:'Passport Photo', isFile:true} ],
@@ -159,7 +163,7 @@
                     else mediaHtml = `<i class="fa-solid fa-file-lines" style="font-size:30px; color:gray;"></i>`;
 
                     body.innerHTML += `<tr>
-                        <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || '').substring(0,40)}...</small></td>
+                        <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || d.date || '').substring(0,40)}</small></td>
                         <td>${mediaHtml}</td>
                         <td>
                             <button onclick="editDoc('${doc.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer; font-weight:bold; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
@@ -210,7 +214,7 @@
                         <label>${f.label}</label>
                         <input type="file" id="file_input" onchange="handleImgUpload(this)">
                         <p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p>
-                        <input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)">
+                        <input type="text" id="manual_link" placeholder="Paste Direct Image / File URL here" oninput="updatePreview(this.value)">
                         <img id="modal_prev" class="preview-img">
                     </div>`;
                 } else if(f.isArea) {
@@ -241,7 +245,7 @@
 
         function updatePreview(url) {
             const img = document.getElementById('modal_prev');
-            if(url) { img.src = url; img.style.display = 'block'; }
+            if(url && !url.includes('.pdf')) { img.src = url; img.style.display = 'block'; }
             else { img.style.display = 'none'; }
         }
 
