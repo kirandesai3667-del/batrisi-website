@@ -8,6 +8,9 @@
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Swiper CSS (For 3D Slider) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -57,13 +60,21 @@
         @media (max-width: 992px) { .page-view { padding-top: 120px; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        .hero { height: 80vh; background: linear-gradient(rgba(15,23,42,0.85), rgba(234,88,12,0.8)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--white); padding: 0 20px; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
-        .hero-logo { height: 120px; width: 120px; object-fit: contain; margin-bottom: 25px; background: rgba(255,255,255,0.95); border-radius: 50%; padding: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 15px rgba(234,88,12,0.2); animation: float 3s ease-in-out infinite; }
+        /* HERO & SWIPER 3D SLIDER STYLES */
+        .hero { min-height: 100vh; background: linear-gradient(rgba(15,23,42,0.9), rgba(234,88,12,0.85)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--white); padding: 120px 20px 60px; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; overflow: hidden; }
+        .hero-top-text { text-align: center; margin-bottom: 30px; z-index: 10; }
+        .hero-logo { height: 90px; width: 90px; object-fit: contain; margin-bottom: 15px; background: rgba(255,255,255,0.95); border-radius: 50%; padding: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); animation: float 3s ease-in-out infinite; }
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-        .hero h1 { font-size: 50px; font-weight: 800; margin-bottom: 15px; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .hero p { font-size: 18px; max-width: 700px; margin-bottom: 35px; font-weight: 400; line-height: 1.6; color: #f8fafc; }
-        .hero-btn { background: var(--secondary); color: var(--dark); padding: 14px 40px; border-radius: 30px; text-decoration: none; font-weight: 800; font-size: 16px; transition: var(--transition); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .hero-btn:hover { background: var(--primary); color: var(--white); transform: translateY(-3px); box-shadow: 0 15px 25px rgba(234,88,12,0.4); }
+        .hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .hero p { font-size: 16px; max-width: 600px; margin: 0 auto; color: #cbd5e1; }
+        
+        .swiper { width: 100%; max-width: 1000px; padding-top: 20px; padding-bottom: 50px; }
+        .swiper-slide { background-position: center; background-size: cover; width: 300px; height: 380px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); overflow: hidden; position: relative; border: 3px solid rgba(255,255,255,0.1); }
+        .slide-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 25px 20px; background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.5), transparent); color: white; text-align: left; }
+        .slide-badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; display: inline-block; margin-bottom: 8px; letter-spacing: 1px;}
+        .slide-title { font-size: 18px; font-weight: 700; line-height: 1.3; font-family: 'Noto Sans Gujarati', sans-serif;}
+        .swiper-pagination-bullet { background: #fff !important; opacity: 0.5; }
+        .swiper-pagination-bullet-active { background: var(--secondary) !important; opacity: 1; transform: scale(1.3); }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
         .section-title { text-align: center; font-size: 36px; font-weight: 800; margin-bottom: 40px; color: var(--dark); }
@@ -88,10 +99,7 @@
         @media (max-width: 768px) { .grid-landscape { grid-template-columns: 1fr; } .event-card { flex-direction: column; } .event-img-wrap { width: 100%; height: 220px; position: relative; } .event-body { width: 100%; } }
         
         .committee-card { text-align: center; padding: 40px 20px; background: linear-gradient(to bottom, #ffffff, #f8fafc); }
-        
-        /* CIRCLE TO SQUARE CSS CHANGED HERE */
         .committee-img { width: 160px; height: 180px; border-radius: 12px; object-fit: cover; border: 4px solid var(--secondary); margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-        
         .pos-badge { display: inline-block; background: var(--primary); color: var(--white); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(234,88,12,0.2); }
 
         /* MODALS */
@@ -149,28 +157,38 @@
 
     <!-- SPA VIEWS -->
     <div id="view-home" class="page-view active">
+        
+        <!-- NEW 3D HERO SECTION WITH SLIDER -->
         <div class="hero">
-            <img src="./logo.png" alt="Logo" class="hero-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120.png?text=Logo';">
-            <h1>Empowering the Community</h1>
-            <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong> Dedicated to education, medical relief, and cultural unity since 1944.</p>
-            <a href="#about" class="hero-btn">Discover Our Legacy</a>
+            <div class="hero-top-text">
+                <img src="./logo.png" alt="Logo" class="hero-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120.png?text=Logo';">
+                <h1>Empowering the Community</h1>
+                <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong> Dedicated to education, medical relief, and cultural unity since 1944.</p>
+            </div>
+            
+            <!-- Swiper Slider Container -->
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper" id="hero-slider-wrapper">
+                    <!-- Slides will be injected here automatically by JS -->
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
         </div>
+
         <div class="container">
             <h2 class="section-title">Latest <span>Updates</span></h2>
             <div class="grid-landscape" id="home-events-grid"></div>
         </div>
     </div>
 
-    <!-- ABOUT SECTION DYNAMIC -->
+    <!-- ABOUT SECTION -->
     <div id="view-about" class="page-view">
         <div class="container">
             <h2 class="section-title">About <span>Us</span></h2>
             <div class="card" style="padding: 40px; text-align: center; max-width: 900px; margin: 0 auto; line-height: 1.8; font-size: 18px;">
                 <img src="./logo.png" alt="Logo" style="height: 70px; width: 70px; margin-bottom: 15px; object-fit: contain;">
                 
-                <!-- Dynamic Content Here -->
                 <div id="about-content" style="margin-bottom: 20px;">
-                    <!-- Firebase se data yaha aayega -->
                     <h3 style="color: var(--dark); font-size: 24px; margin-bottom: 15px; font-weight: 800;">Shree Batrisi Jain Co-Op. Education Society Ltd.</h3>
                     <p>Established on <b style="color:var(--primary);">10/10/1944</b>. For decades, we have aimed to uplift our community through educational grants, comprehensive medical assistance, and cultural unity.</p>
                 </div>
@@ -232,25 +250,75 @@
         <div class="footer-bottom">&copy; 2026 Shree Batrisi Jain Co-Op. Education Society Ltd. All Rights Reserved.</div>
     </footer>
 
+    <!-- Swiper JS Script -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
     <!-- LOGIC -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
             authDomain: "batrisi-latest-app.firebaseapp.com",
-            projectId: "batrisi-latest-app",
-            messagingSenderId: "175592360155",
-            appId: "1:175592360155:web:ba95f9aba4558fda9d64fe"
+            projectId: "batrisi-latest-app"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         window.allEventsData = {};
         function handleRoute() { let hash = window.location.hash || '#home'; document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active')); let targetView = document.getElementById('view-' + hash.substring(1)); if(targetView) targetView.classList.add('active'); let activeLink = document.querySelector(`.nav-links a[href="${hash}"]`); if(activeLink) activeLink.classList.add('active'); window.scrollTo(0,0); }
-        window.addEventListener('hashchange', handleRoute); window.addEventListener('load', () => { handleRoute(); fetchAllData(); });
+        window.addEventListener('hashchange', handleRoute); window.addEventListener('load', () => { handleRoute(); fetchAllData(); fetchHeroSliderData(); });
         function openReadMoreModal(docId) { const d = window.allEventsData[docId]; if(!d) return; document.getElementById('rm-img').src = d.image || 'https://via.placeholder.com/800x400'; document.getElementById('rm-date').innerHTML = `<i class="fa-regular fa-calendar"></i> ${d.date}`; document.getElementById('rm-title').innerText = d.title; document.getElementById('rm-desc').innerText = d.desc; document.getElementById('readMoreModal').style.display = 'flex'; }
         function closeReadMoreModal() { document.getElementById('readMoreModal').style.display = 'none'; }
         function openLightbox(imgSrc, caption) { document.getElementById('lightbox-img').src = imgSrc; document.getElementById('lightbox-caption').innerText = caption || ''; document.getElementById('lightbox').style.display = 'flex'; }
         function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+        // NEW LOGIC FOR 3D HERO SLIDER
+        async function fetchHeroSliderData() {
+            try {
+                // Fetching latest 3 items from Events, Media, and Gallery
+                const [eventsSnap, mediaSnap, gallerySnap] = await Promise.all([
+                    db.collection('events').orderBy('timestamp', 'desc').limit(3).get(),
+                    db.collection('media').orderBy('timestamp', 'desc').limit(3).get(),
+                    db.collection('gallery').orderBy('timestamp', 'desc').limit(3).get()
+                ]);
+
+                let slides = [];
+                eventsSnap.forEach(doc => slides.push({...doc.data(), type: 'Event'}));
+                mediaSnap.forEach(doc => slides.push({...doc.data(), type: 'Media'}));
+                gallerySnap.forEach(doc => slides.push({...doc.data(), type: 'Gallery'}));
+
+                // Sort everything by timestamp mixed
+                slides.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                let sliderHtml = '';
+                // Display top 6 mixed latest items
+                slides.slice(0, 6).forEach(item => {
+                    let img = item.image || 'https://via.placeholder.com/400x500';
+                    sliderHtml += `
+                        <div class="swiper-slide" style="background-image: url('${img}')">
+                            <div class="slide-overlay">
+                                <span class="slide-badge">${item.type}</span>
+                                <div class="slide-title">${item.title}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('hero-slider-wrapper').innerHTML = sliderHtml;
+
+                // Initialize Swiper with 3D Coverflow Effect
+                new Swiper(".mySwiper", {
+                    effect: "coverflow",
+                    grabCursor: true,
+                    centeredSlides: true,
+                    slidesPerView: "auto",
+                    loop: true,
+                    autoplay: { delay: 2500, disableOnInteraction: false },
+                    coverflowEffect: {
+                        rotate: 30, stretch: 0, depth: 250, modifier: 1, slideShadows: true,
+                    },
+                    pagination: { el: ".swiper-pagination", clickable: true },
+                });
+            } catch(e) { console.log("Slider Error:", e); }
+        }
 
         function fetchAllData() {
             
@@ -286,11 +354,28 @@
                 snap.forEach(doc => { let d = doc.data(); html += `<div class="card" style="cursor:pointer;" onclick="openLightbox('${d.image}', '${d.title}')"><img src="${d.image}" class="card-img" style="height:250px;"><div class="card-body" style="padding:15px; text-align:center;"><p style="font-weight:700; margin:0; color:var(--dark);">${d.title}</p></div></div>`; });
                 document.getElementById('gallery-grid').innerHTML = html;
             });
+            
+            // DOWNLOADS UPDATED LOGIC (NOW SUPPORTS DESCRIPTION)
             db.collection('downloads').orderBy('timestamp', 'desc').onSnapshot(snap => {
                 let html = '';
-                snap.forEach(doc => { let d = doc.data(); html += `<div class="card dl-card" style="padding: 20px; display:flex; align-items:center; gap:20px;"><i class="fa-solid fa-file-pdf" style="font-size:40px; color:#ef4444;"></i><div><h3 class="card-title" style="margin:0 0 8px; font-size:18px;">${d.title}</h3><a href="${d.file}" target="_blank" class="btn-legacy btn-saffron" style="padding:6px 16px; font-size:12px;"><i class="fa-solid fa-download"></i> View / Download</a></div></div>`; });
+                snap.forEach(doc => { 
+                    let d = doc.data(); 
+                    let descHtml = d.desc ? `<p style="font-size:13px; color:#64748b; margin-bottom:15px; line-height:1.6;">${d.desc}</p>` : '';
+                    html += `
+                    <div class="card dl-card" style="padding: 25px; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="display:flex; align-items:flex-start; gap:15px; margin-bottom:12px;">
+                                <i class="fa-solid fa-file-pdf" style="font-size:35px; color:#ef4444; margin-top:3px;"></i>
+                                <h3 class="card-title" style="margin:0; font-size:18px; color:var(--dark); line-height:1.3;">${d.title}</h3>
+                            </div>
+                            ${descHtml}
+                        </div>
+                        <a href="${d.file}" target="_blank" class="btn-legacy btn-saffron" style="padding:8px 20px; font-size:13px; width:fit-content; margin-top:10px;"><i class="fa-solid fa-download"></i> View / Download PDF</a>
+                    </div>`; 
+                });
                 document.getElementById('downloads-grid').innerHTML = html;
             });
+
             db.collection('committee').orderBy('timestamp', 'asc').onSnapshot(snap => {
                 let html = '';
                 snap.forEach(doc => { let d = doc.data(); html += `<div class="card committee-card"><img src="${d.photo}" class="committee-img"><br><span class="pos-badge">${d.position}</span><h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3><p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p><p style="color:#64748b; font-size:14px; font-weight:500;"><i class="fa-solid fa-phone"></i> ${d.phone}</p></div>`; });
