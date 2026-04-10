@@ -66,7 +66,7 @@
     <div class="sidebar">
         <div style="padding:25px; border-bottom:1px solid rgba(255,255,255,0.1); text-align:center;"><h2>Batrisi CMS</h2></div>
         <button class="nav-btn active" onclick="initCMS('events', 'Events')">Manage Events</button>
-        <button class="nav-btn" onclick="initCMS('about', 'About Us')">Manage About Us</button> <!-- NEW ABOUT BUTTON -->
+        <button class="nav-btn" onclick="initCMS('about', 'About Us')">Manage About Us</button>
         <button class="nav-btn" onclick="initCMS('gallery', 'Gallery')">Manage Gallery</button>
         <button class="nav-btn" onclick="initCMS('committee', 'Committee')">Manage Committee</button>
         <button class="nav-btn" onclick="initCMS('downloads', 'Downloads')">Manage Downloads</button>
@@ -115,18 +115,19 @@
         const db = firebase.firestore();
         const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
 
+        // SCHEMA UPDATED FOR DOWNLOADS (Added 'desc' field)
         const schemas = {
             'events': [ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
-            'about': [ {key:'title', label:'Heading Title (e.g. Shree Batrisi Jain...)'}, {key:'desc', label:'Full About Description', isArea:true} ], // NEW ABOUT SCHEMA
+            'about': [ {key:'title', label:'Heading Title (e.g. Shree Batrisi Jain...)'}, {key:'desc', label:'Full About Description', isArea:true} ], 
             'gallery': [ {key:'title', label:'Caption'}, {key:'image', label:'Image', isFile:true} ],
             'committee': [ {key:'name', label:'Full Name'}, {key:'position', label:'Position'}, {key:'native', label:'Native Village'}, {key:'phone', label:'Mobile Number'}, {key:'photo', label:'Passport Photo', isFile:true} ],
-            'downloads': [ {key:'title', label:'Document Title'}, {key:'file', label:'PDF Link (Google Drive)'} ]
+            'downloads': [ {key:'title', label:'Document Title'}, {key:'desc', label:'Form Description (Details about PDF)', isArea:true}, {key:'file', label:'PDF Link (Google Drive)'} ]
         };
 
         let currentCol = 'events';
         let uploadedUrl = "";
-        let currentEditId = null; // Variable for EDIT functionality
-        window.tableData = {}; // Store data for easy editing
+        let currentEditId = null; 
+        window.tableData = {}; 
 
         function adminLogin() {
             if(document.getElementById('adminUser').value==='Batrisi' && document.getElementById('adminPwd').value==='Bat@3232')
@@ -146,13 +147,20 @@
             const body = document.getElementById('tableBody');
             db.collection(currentCol).orderBy('timestamp', 'desc').onSnapshot(snap => {
                 body.innerHTML = "";
-                window.tableData = {}; // clear old data
+                window.tableData = {}; 
                 snap.forEach(doc => {
                     const d = doc.data();
-                    window.tableData[doc.id] = d; // save data locally for edit
+                    window.tableData[doc.id] = d; 
+                    
+                    // Fixed Image Display for Documents
+                    let mediaHtml = '';
+                    if(d.image || d.photo) mediaHtml = `<img src="${d.image || d.photo}" onerror="this.src='https://via.placeholder.com/40'">`;
+                    else if(d.file) mediaHtml = `<i class="fa-solid fa-file-pdf" style="font-size:30px; color:#ef4444;"></i>`;
+                    else mediaHtml = `<i class="fa-solid fa-file-lines" style="font-size:30px; color:gray;"></i>`;
+
                     body.innerHTML += `<tr>
-                        <td><b>${d.title || d.name || 'No Name'}</b></td>
-                        <td><img src="${d.image || d.photo || ''}" onerror="this.src='https://via.placeholder.com/40'"></td>
+                        <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || '').substring(0,40)}...</small></td>
+                        <td>${mediaHtml}</td>
                         <td>
                             <button onclick="editDoc('${doc.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer; font-weight:bold; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                             <button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -164,7 +172,7 @@
 
         // ADD NEW RECORD
         function openAddModal() {
-            currentEditId = null; // Clear edit ID
+            currentEditId = null; 
             document.getElementById('modalTitle').innerText = "Add New Record";
             generateModalFields();
         }
@@ -177,7 +185,6 @@
             
             const data = window.tableData[id];
             
-            // Wait slightly for DOM to render the fields, then fill data
             setTimeout(() => {
                 schemas[currentCol].forEach(f => {
                     if(f.isFile) {
@@ -195,7 +202,7 @@
         function generateModalFields() {
             const fields = schemas[currentCol];
             let html = "";
-            uploadedUrl = ""; // Reset URL
+            uploadedUrl = ""; 
             
             fields.forEach(f => {
                 if(f.isFile) {
@@ -207,7 +214,7 @@
                         <img id="modal_prev" class="preview-img">
                     </div>`;
                 } else if(f.isArea) {
-                    html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="5"></textarea></div>`;
+                    html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`;
                 } else {
                     html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`;
                 }
@@ -256,11 +263,9 @@
 
             try {
                 if (currentEditId) {
-                    // Update existing document
                     await db.collection(currentCol).doc(currentEditId).update(dataObj);
                 } else {
-                    // Add new document
-                    dataObj.timestamp = Date.now(); // only add timestamp on creation
+                    dataObj.timestamp = Date.now(); 
                     await db.collection(currentCol).add(dataObj);
                 }
                 closeCMSModal();
