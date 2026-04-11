@@ -36,9 +36,10 @@
         .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
         .btn-add { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;}
         
-        .table-container { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
+        .table-container { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: #f8fafc; font-weight: 700; color: #475569; }
         td img { height: 50px; width: 70px; border-radius: 6px; object-fit: cover; }
 
         /* Modal */
@@ -52,9 +53,8 @@
         
         /* Upload Progress Box */
         .progress-box { display:none; background:#e0f2fe; border:1px solid #bae6fd; padding:15px; border-radius:8px; text-align:center; margin-top:10px; font-weight:bold; color:#0369a1; }
-        .drive-note { font-size: 12px; color: #ef4444; margin-top: 8px; font-weight: bold; text-align: center;}
 
-        #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; }
+        #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 600;}
         #toast.show { opacity: 1; }
     </style>
 </head>
@@ -90,14 +90,14 @@
         <div class="toolbar" id="topToolbar">
             <div>
                 <h1 id="cms-title">Manage Events</h1>
-                <p id="csvFormatNote" style="display:none; color:#64748b; font-size:12px; margin-top:5px;"><b>Format required in CSV:</b> Member Number | Member Name | Address | Native Name | Mobile Number</p>
             </div>
             
             <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
             
             <!-- CSV Upload Container (Delete All & Upload buttons) -->
-            <div id="csvUploadBtnContainer" style="display:none; gap: 10px;">
+            <div id="csvUploadBtnContainer" style="display:none; gap: 15px; align-items: center;">
                 <button class="btn-add" style="background:#ef4444;" onclick="deleteAllMembers()"><i class="fa-solid fa-trash-can"></i> Delete All Data</button>
+                
                 <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCSVUpload(this)">
                 <button class="btn-add" style="background:#10b981;" onclick="document.getElementById('csvFileInput').click()"><i class="fa-solid fa-file-csv"></i> Upload CSV DB</button>
             </div>
@@ -162,15 +162,12 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             
-            // Adjust Toolbar for CSV Upload vs Standard Add
             if(col === 'members') {
                 document.getElementById('standardAddBtn').style.display = 'none';
                 document.getElementById('csvUploadBtnContainer').style.display = 'flex';
-                document.getElementById('csvFormatNote').style.display = 'block';
             } else {
-                document.getElementById('standardAddBtn').style.display = 'block';
+                document.getElementById('standardAddBtn').style.display = 'flex';
                 document.getElementById('csvUploadBtnContainer').style.display = 'none';
-                document.getElementById('csvFormatNote').style.display = 'none';
             }
 
             fetchTableData();
@@ -180,33 +177,43 @@
             const body = document.getElementById('tableBody');
             const thead = document.getElementById('tableHeaders');
 
+            // Set Headers
             if(currentCol === 'members') {
-                thead.innerHTML = '<th>Member No & Name</th><th>Contact Info</th><th>Actions</th>';
+                thead.innerHTML = '<th>Member No.</th><th>Member Name</th><th>Address</th><th>Native Name</th><th>Mobile Number</th><th>Action</th>';
             } else {
                 thead.innerHTML = '<th>Record Info</th><th>Media</th><th>Actions</th>';
             }
 
-            db.collection(currentCol).orderBy('timestamp', 'desc').onSnapshot(snap => {
-                body.innerHTML = "";
+            // To prevent browser hang, limit members to 200 items in CMS display
+            let query = db.collection(currentCol).orderBy('timestamp', 'desc');
+            if(currentCol === 'members') { query = query.limit(200); }
+
+            query.onSnapshot(snap => {
+                let tempHtml = ""; // Use string building to prevent DOM freezing
                 window.tableData = {}; 
+                
                 snap.forEach(doc => {
                     const d = doc.data();
                     window.tableData[doc.id] = d; 
                     
                     if(currentCol === 'members') {
-                        body.innerHTML += `<tr>
-                            <td><b>No: ${d.memberNumber || '-'}</b><br><span style="color:var(--primary); font-weight:600; font-size:15px;">${d.memberName || 'No Name'}</span></td>
-                            <td><i class="fa-solid fa-phone" style="color:#64748b;"></i> ${d.mobileNumber || '-'}<br><small style="color:gray;">Native: ${d.nativeName || '-'}</small></td>
-                            <td><button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button></td>
+                        tempHtml += `<tr>
+                            <td><b>${d.memberNumber || '-'}</b></td>
+                            <td style="color:var(--primary); font-weight:600;">${d.memberName || '-'}</td>
+                            <td><small style="color:#64748b;">${d.address || '-'}</small></td>
+                            <td>${d.nativeName || '-'}</td>
+                            <td><i class="fa-solid fa-phone" style="color:#64748b; font-size:12px;"></i> ${d.mobileNumber || '-'}</td>
+                            <td><button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:16px;" title="Delete Member"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>`;
-                    } else {
+                    } 
+                    else {
                         let mediaHtml = '';
                         if(d.images && d.images.length > 0) { mediaHtml = `<img src="${d.images[0]}"><br><small>+${d.images.length-1} more</small>`; } 
                         else if(d.image || d.photo) { mediaHtml = `<img src="${d.image || d.photo}" onerror="this.src='https://via.placeholder.com/40'">`; } 
                         else if(d.file) { mediaHtml = `<i class="fa-solid fa-file-pdf" style="font-size:30px; color:#ef4444;"></i>`; } 
                         else { mediaHtml = `<i class="fa-solid fa-file-lines" style="font-size:30px; color:gray;"></i>`; }
 
-                        body.innerHTML += `<tr>
+                        tempHtml += `<tr>
                             <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || d.date || '').substring(0,40)}</small></td>
                             <td>${mediaHtml}</td>
                             <td>
@@ -216,17 +223,24 @@
                         </tr>`;
                     }
                 });
+
+                // Inform user if limit is reached
+                if(currentCol === 'members' && snap.size >= 200) {
+                    tempHtml += `<tr><td colspan="6" style="text-align:center; padding: 20px; color:#64748b; background:#f1f5f9; font-weight:bold;"><i class="fa-solid fa-circle-info"></i> Showing latest 200 records to keep Admin Panel fast. (All ${snap.size}+ records are safe in Database).</td></tr>`;
+                }
+
+                body.innerHTML = tempHtml; // Inject to DOM exactly once (Fast!)
             });
         }
 
         // ==========================================
-        // NEW: DELETE ALL MEMBERS AT ONCE
+        // DELETE ALL MEMBERS (SAFE MODE)
         // ==========================================
         async function deleteAllMembers() {
             if(!confirm("⚠️ WARNING: This will delete ALL members from the database!\nAre you absolutely sure you want to clear the entire database?")) return;
             
             const t = document.getElementById('toast');
-            t.innerText = "Deleting all members... Please wait.";
+            t.innerText = "Deleting all data... Please wait (Do not close page).";
             t.style.background = "#ef4444"; 
             t.classList.add('show');
             
@@ -253,7 +267,6 @@
                 });
                 
                 if(currentCount > 0) batches.push(currentBatch.commit());
-                
                 await Promise.all(batches);
                 
                 t.innerText = "All members deleted successfully!";
@@ -267,7 +280,7 @@
         }
 
         // ==========================================
-        // BULK CSV UPLOAD LOGIC (SMART COLUMN READER)
+        // BULK CSV UPLOAD LOGIC
         // ==========================================
         async function handleCSVUpload(el) {
             const file = el.files[0];
@@ -276,8 +289,6 @@
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                // Smart feature: Automatically converts all headers to lowercase with underscores
-                // So "Member Name" and "member_name" both become "member_name"
                 transformHeader: function(header) {
                     return header.trim().toLowerCase().replace(/\s+/g, '_');
                 },
@@ -285,7 +296,7 @@
                     const rows = results.data;
                     if(rows.length === 0) { alert("Empty CSV or invalid format!"); return; }
 
-                    if(!confirm(`Found ${rows.length} records in CSV.\nUploading will add this data to the database.\nDo you want to proceed?`)) { el.value = ""; return; }
+                    if(!confirm(`Found ${rows.length} records in CSV.\nDo you want to upload this data?`)) { el.value = ""; return; }
 
                     const t = document.getElementById('toast');
                     t.innerText = `Uploading ${rows.length} members... Please wait.`;
@@ -299,7 +310,6 @@
                             const row = rows[i];
                             const docRef = db.collection('members').doc();
                             
-                            // Perfect mapping regardless of uppercase/lowercase in Excel header
                             let dataObj = {
                                 memberNumber: row['member_number'] || row['member_no'] || '',
                                 memberName: row['member_name'] || '',
@@ -334,7 +344,7 @@
 
         function openAddModal() { currentEditId = null; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Add New Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
         function editDoc(id) { currentEditId = id; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(f.isMultiFile) { uploadedUrlsArray = data[f.key] || []; if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; } else if(f.isFile) { uploadedUrlsArray = [data[f.key] || ""]; document.getElementById('manual_link').value = uploadedUrlsArray[0]; updatePreview(uploadedUrlsArray[0]); } else if(document.getElementById('f_'+f.key)) { document.getElementById('f_'+f.key).value = data[f.key] || ""; } }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
-        function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p class="drive-note">--- OR Paste Google Drive Link Here ---<br>(We will auto-fix image cracking issue)</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
+        function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
         function convertDriveLink(url) { if(!url) return ""; if(url.includes("drive.google.com/file/d/")) { let id = url.split("/d/")[1].split("/")[0]; return `https://drive.google.com/uc?export=view&id=${id}`; } return url; }
         async function handleBulkUpload(el) { const files = el.files; if(!files.length) return; const btn = document.getElementById('saveBtn'); btn.disabled = true; const prog = document.getElementById('uploadProgress'); prog.style.display = 'block'; uploadedUrlsArray = []; let successCount = 0; for(let i=0; i<files.length; i++) { prog.innerText = `Uploading: ${i+1} of ${files.length} Files... Please Wait!`; const fd = new FormData(); fd.append("image", files[i]); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); if(data.data && data.data.url) { uploadedUrlsArray.push(data.data.url); successCount++; } } catch(e) { console.log("Failed", i); } } prog.innerText = `Upload Complete! (${successCount} Images Ready to Save)`; prog.style.color = "green"; btn.disabled = false; }
         async function handleSingleUpload(el) { const file = el.files[0]; if(!file) return; const btn = document.getElementById('saveBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; const fd = new FormData(); fd.append("image", file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); uploadedUrlsArray = [data.data.url]; updatePreview(data.data.url); } catch(e) { alert("Upload Failed!"); } btn.innerText = "SAVE RECORD"; btn.disabled = false; }
