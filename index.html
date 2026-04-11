@@ -32,48 +32,60 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
         body { background: var(--light); color: var(--dark); overflow-x: hidden; }
 
-        /* NAVBAR - FULL NAME VISIBLE ALWAYS & BUTTONS FIXED */
-        .navbar { position: fixed; top: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(15px); padding: 10px 1.5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.06); z-index: 1000; }
-        .nav-left { display: flex; align-items: center; flex-shrink: 0;}
-        .logo { text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .brand-logo-img { height: 40px; width: 40px; object-fit: contain; }
+        /* =======================================================
+           NAVBAR - PERFECTLY BALANCED SPACING (NO EMPTY GAPS) 
+           ======================================================= */
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(15px); padding: 12px 2%; display: flex; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.06); z-index: 1000; }
+        
+        /* Logo Section on the Left */
+        .nav-left { display: flex; align-items: center; flex-shrink: 0; margin-right: 2.5%; } 
+        .logo { text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .brand-logo-img { height: 42px; width: 42px; object-fit: contain; }
         .nav-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
         .nav-brand-text .title { font-size: 19px; font-weight: 800; color: var(--dark); white-space: nowrap; letter-spacing: -0.5px; }
         .nav-brand-text .title span { color: var(--primary); }
         .nav-brand-text .subtitle { font-size: 10.5px; font-weight: 600; color: #64748b; white-space: nowrap; display: block !important; }
         
-        .nav-right { display: flex; align-items: center; justify-content: flex-end;}
-        .nav-links { display: flex; gap: 12px; align-items: center; }
-        .nav-links a { text-decoration: none; color: var(--darker); font-weight: 600; font-size: 13px; transition: var(--transition); cursor: pointer; white-space: nowrap;}
+        /* Right Section takes remaining space to distribute items evenly */
+        .nav-right { display: flex; align-items: center; flex-grow: 1; }
+        
+        /* Links moved towards the Logo */
+        .nav-links { display: flex; gap: 16px; align-items: center; }
+        .nav-links a { text-decoration: none; color: var(--darker); font-weight: 600; font-size: 14px; transition: var(--transition); cursor: pointer; white-space: nowrap;}
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
         
-        .nav-actions { display: flex; gap: 6px; margin-left: 10px; padding-left: 10px; border-left: 2px solid #e2e8f0; align-items: center;}
-        .btn-legacy { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--white) !important; padding: 7px 12px; border-radius: 50px; font-weight: 600; font-size: 12px; letter-spacing: 0.2px; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3); transition: all 0.2s ease; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; cursor: pointer; }
+        /* Buttons pushed to the far Right */
+        .nav-actions { display: flex; gap: 8px; margin-left: auto; padding-left: 15px; border-left: 2px solid #e2e8f0; align-items: center;}
+        
+        /* Button Styles */
+        .btn-legacy { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--white) !important; padding: 8px 16px; border-radius: 50px; font-weight: 600; font-size: 13px; letter-spacing: 0.2px; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3); transition: all 0.2s ease; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; }
         .btn-legacy:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4); }
         .btn-saffron { background: linear-gradient(135deg, #f97316, #ea580c) !important; box-shadow: 0 6px 15px rgba(234, 88, 12, 0.3) !important; }
 
-        /* Scales down nicely for laptops without hiding the society name */
-        @media (max-width: 1400px) { 
+        /* Scale down nicely for smaller laptops */
+        @media (max-width: 1350px) { 
             .nav-brand-text .title { font-size: 16px; }
             .nav-brand-text .subtitle { font-size: 9px; } 
-            .nav-links { gap: 8px; } 
-            .nav-links a { font-size: 12px;} 
-            .nav-actions { margin-left: 6px; padding-left: 6px; gap: 4px;} 
-            .btn-legacy { padding: 6px 10px; font-size: 11px;} 
+            .nav-left { margin-right: 1.5%; }
+            .nav-links { gap: 12px; } 
+            .nav-links a { font-size: 13px;} 
+            .nav-actions { padding-left: 10px; gap: 6px;} 
+            .btn-legacy { padding: 7px 12px; font-size: 12px;} 
             .brand-logo-img { height: 35px; width: 35px; }
         }
         
-        /* For Mobile / Tablet */
+        /* Mobile / Tablet Layout */
         @media (max-width: 992px) { 
-            .navbar { flex-direction: column; padding: 10px 4%; gap: 10px; } 
+            .navbar { flex-direction: column; padding: 12px 4%; gap: 12px; } 
+            .nav-left { margin-right: 0; width: 100%; justify-content: center; }
             .nav-right { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; } 
-            .nav-actions { border-left: none; padding-left: 0; margin-left: auto;} 
+            .nav-actions { border-left: none; padding-left: 0; margin-left: 15px;} 
         }
 
         /* SPA VIEWS */
         .page-view { display: none; padding-top: 80px; min-height: 100vh; animation: fadeIn 0.4s ease-in-out; }
         .page-view.active { display: block; }
-        @media (max-width: 992px) { .page-view { padding-top: 120px; } }
+        @media (max-width: 992px) { .page-view { padding-top: 130px; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         /* HERO SECTION */
