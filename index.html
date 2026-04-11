@@ -199,31 +199,31 @@
         .rm-desc { font-size: 15px; color: #475569; line-height: 1.8; font-family: 'Noto Sans Gujarati', sans-serif; white-space: pre-wrap; }
 
         /* =======================================================
-           ADVANCED JITO STYLE FULL-SCREEN LIGHTBOX 
+           ADVANCED JITO STYLE 100% FULL-SCREEN LIGHTBOX 
         ======================================================= */
-        #lightbox { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index: 5000; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px); }
+        #lightbox { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index: 9999; justify-content: center; align-items: center; }
         
-        /* Image covers Full Screen */
-        #lightbox img { width: 100vw; height: 100vh; object-fit: contain; transition: opacity 0.2s ease; }
+        /* Image covers Full Screen WITHOUT Borders */
+        #lightbox img { width: 100vw; height: 100vh; object-fit: contain; margin: 0; padding: 0; border: none; border-radius: 0; box-shadow: none; transition: opacity 0.2s ease; }
         
         /* Close Button styling */
-        #lightbox-close { position: absolute; top: 20px; right: 30px; color: rgba(255,255,255,0.7); font-size: 30px; cursor: pointer; transition: 0.2s; z-index: 5010; background: rgba(0,0,0,0.5); width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+        #lightbox-close { position: absolute; top: 20px; right: 30px; color: rgba(255,255,255,0.7); font-size: 35px; cursor: pointer; transition: 0.2s; z-index: 99999; background: rgba(0,0,0,0.5); width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
         #lightbox-close:hover { color: var(--white); background: var(--primary); transform: scale(1.1); }
         
         /* Arrows pushed to the edges */
-        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 35px; color: white; cursor: pointer; background: rgba(0,0,0,0.4); width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: 0.3s; z-index: 5010; border: 2px solid rgba(255,255,255,0.2); }
+        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 35px; color: white; cursor: pointer; background: rgba(0,0,0,0.4); width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: 0.3s; z-index: 99999; border: 2px solid rgba(255,255,255,0.2); }
         .lb-nav:hover { background: var(--primary); border-color: var(--primary); transform: translateY(-50%) scale(1.1); }
         #lb-prev { left: 20px; }
         #lb-next { right: 20px; }
         
         /* Bottom Information Overlay */
-        .lb-info-bar { position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px 20px 20px; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); display: flex; flex-direction: column; align-items: center; z-index: 5010; pointer-events: none; }
+        .lb-info-bar { position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px 20px 20px; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); display: flex; flex-direction: column; align-items: center; z-index: 99999; pointer-events: none; }
         #lightbox-caption { color:white; font-size:26px; font-weight:800; text-shadow: 2px 2px 6px rgba(0,0,0,0.8); margin-bottom: 5px; text-align: center; }
         #lb-counter { color: #cbd5e1; font-size: 15px; font-weight: 600; letter-spacing: 1px; }
 
         @media (max-width: 768px) { 
             .lb-nav { display: none !important; /* Hide arrows on mobile for Swipe */ } 
-            #lightbox-close { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 20px; }
+            #lightbox-close { top: 15px; right: 15px; width: 45px; height: 45px; font-size: 24px; }
             #lightbox-caption { font-size: 20px; }
         }
 
@@ -333,7 +333,7 @@
     <!-- MODALS -->
     <div id="readMoreModal"><div class="rm-content"><button class="rm-close" onclick="closeReadMoreModal()"><i class="fa-solid fa-xmark"></i></button><img id="rm-img" class="rm-img" src=""><div class="rm-body"><span class="rm-date" id="rm-date"></span><h3 class="rm-title" id="rm-title"></h3><div class="rm-desc" id="rm-desc"></div></div></div></div>
     
-    <!-- ADVANCED JITO STYLE FULL-SCREEN LIGHTBOX -->
+    <!-- JITO STYLE 100% FULL-SCREEN LIGHTBOX -->
     <div id="lightbox">
         <div id="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></div>
         
@@ -461,8 +461,8 @@
             if(currentLbIndex >= currentLbImages.length) currentLbIndex = 0;
             if(currentLbIndex < 0) currentLbIndex = currentLbImages.length - 1;
             
-            imgEl.style.opacity = 0;
-            setTimeout(() => { updateLightboxView(); imgEl.style.opacity = 1; }, 150);
+            // Fast transition for keyboard feeling
+            updateLightboxView(); 
         }
 
         function updateLightboxView() {
@@ -479,14 +479,15 @@
             }
         }
 
-        // KEYBOARD NAVIGATION FIX (Left, Right, Escape)
-        window.addEventListener('keydown', function(event) {
-            if (lightboxEl.style.display === 'flex') {
-                if (event.key === 'ArrowLeft') {
+        // 100% WORKING KEYBOARD NAVIGATION
+        document.addEventListener('keydown', function(e) {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox && lightbox.style.display === 'flex') {
+                if (e.key === 'ArrowLeft' || e.keyCode === 37) {
                     changeLightboxImg(-1);
-                } else if (event.key === 'ArrowRight') {
+                } else if (e.key === 'ArrowRight' || e.keyCode === 39) {
                     changeLightboxImg(1);
-                } else if (event.key === 'Escape') {
+                } else if (e.key === 'Escape' || e.keyCode === 27) {
                     closeLightbox();
                 }
             }
