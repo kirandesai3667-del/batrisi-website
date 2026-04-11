@@ -94,7 +94,7 @@
             
             <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
             
-            <!-- CSV Upload Container (Delete All & Upload buttons) -->
+            <!-- CSV Upload Container -->
             <div id="csvUploadBtnContainer" style="display:none; gap: 15px; align-items: center;">
                 <button class="btn-add" style="background:#ef4444;" onclick="deleteAllMembers()"><i class="fa-solid fa-trash-can"></i> Delete All Data</button>
                 
@@ -126,12 +126,7 @@
     <div id="toast">Success!</div>
 
     <script>
-        // FIREBASE SETUP
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
-            authDomain: "batrisi-latest-app.firebaseapp.com",
-            projectId: "batrisi-latest-app"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
@@ -145,14 +140,10 @@
             'downloads': [ {key:'title', label:'Document Title'}, {key:'desc', label:'Form Description', isArea:true}, {key:'file', label:'PDF Link (Google Drive)'} ]
         };
 
-        let currentCol = 'events';
-        let uploadedUrlsArray = []; 
-        let currentEditId = null; 
-        window.tableData = {}; 
+        let currentCol = 'events'; let uploadedUrlsArray = []; let currentEditId = null; window.tableData = {}; 
 
         function adminLogin() {
-            if(document.getElementById('adminUser').value==='Batrisi' && document.getElementById('adminPwd').value==='Bat@3232')
-                document.getElementById('login-overlay').style.display='none';
+            if(document.getElementById('adminUser').value==='Batrisi' && document.getElementById('adminPwd').value==='Bat@3232') document.getElementById('login-overlay').style.display='none';
             else document.getElementById('loginError').style.display='block';
         }
 
@@ -169,7 +160,6 @@
                 document.getElementById('standardAddBtn').style.display = 'flex';
                 document.getElementById('csvUploadBtnContainer').style.display = 'none';
             }
-
             fetchTableData();
         }
 
@@ -177,19 +167,17 @@
             const body = document.getElementById('tableBody');
             const thead = document.getElementById('tableHeaders');
 
-            // Set Headers
             if(currentCol === 'members') {
                 thead.innerHTML = '<th>Member No.</th><th>Member Name</th><th>Address</th><th>Native Name</th><th>Mobile Number</th><th>Action</th>';
             } else {
                 thead.innerHTML = '<th>Record Info</th><th>Media</th><th>Actions</th>';
             }
 
-            // To prevent browser hang, limit members to 200 items in CMS display
             let query = db.collection(currentCol).orderBy('timestamp', 'desc');
-            if(currentCol === 'members') { query = query.limit(200); }
+            if(currentCol === 'members') { query = query.limit(200); } // Prevent browser hang
 
             query.onSnapshot(snap => {
-                let tempHtml = ""; // Use string building to prevent DOM freezing
+                let tempHtml = ""; 
                 window.tableData = {}; 
                 
                 snap.forEach(doc => {
@@ -205,8 +193,7 @@
                             <td><i class="fa-solid fa-phone" style="color:#64748b; font-size:12px;"></i> ${d.mobileNumber || '-'}</td>
                             <td><button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:16px;" title="Delete Member"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>`;
-                    } 
-                    else {
+                    } else {
                         let mediaHtml = '';
                         if(d.images && d.images.length > 0) { mediaHtml = `<img src="${d.images[0]}"><br><small>+${d.images.length-1} more</small>`; } 
                         else if(d.image || d.photo) { mediaHtml = `<img src="${d.image || d.photo}" onerror="this.src='https://via.placeholder.com/40'">`; } 
@@ -224,64 +211,37 @@
                     }
                 });
 
-                // Inform user if limit is reached
                 if(currentCol === 'members' && snap.size >= 200) {
-                    tempHtml += `<tr><td colspan="6" style="text-align:center; padding: 20px; color:#64748b; background:#f1f5f9; font-weight:bold;"><i class="fa-solid fa-circle-info"></i> Showing latest 200 records to keep Admin Panel fast. (All ${snap.size}+ records are safe in Database).</td></tr>`;
+                    tempHtml += `<tr><td colspan="6" style="text-align:center; padding: 20px; color:#64748b; background:#f1f5f9; font-weight:bold;"><i class="fa-solid fa-circle-info"></i> Showing latest 200 records to keep Admin Panel fast. (All records are safe in Database).</td></tr>`;
                 }
 
-                body.innerHTML = tempHtml; // Inject to DOM exactly once (Fast!)
+                body.innerHTML = tempHtml; 
             });
         }
 
-        // ==========================================
-        // DELETE ALL MEMBERS (SAFE MODE)
-        // ==========================================
         async function deleteAllMembers() {
             if(!confirm("⚠️ WARNING: This will delete ALL members from the database!\nAre you absolutely sure you want to clear the entire database?")) return;
-            
             const t = document.getElementById('toast');
-            t.innerText = "Deleting all data... Please wait (Do not close page).";
-            t.style.background = "#ef4444"; 
-            t.classList.add('show');
-            
+            t.innerText = "Deleting all data... Please wait (Do not close page)."; t.style.background = "#ef4444"; t.classList.add('show');
             try {
                 const snapshot = await db.collection('members').get();
-                if(snapshot.empty) {
-                    t.innerText = "Database is already empty!";
-                    setTimeout(() => { t.classList.remove('show'); t.style.background = "#10b981"; }, 3000);
-                    return;
-                }
+                if(snapshot.empty) { t.innerText = "Database is already empty!"; setTimeout(() => { t.classList.remove('show'); t.style.background = "#10b981"; }, 3000); return; }
 
-                const batches = [];
-                let currentBatch = db.batch();
-                let currentCount = 0;
-                
+                const batches = []; let currentBatch = db.batch(); let currentCount = 0;
                 snapshot.docs.forEach((doc) => {
-                    currentBatch.delete(doc.ref);
-                    currentCount++;
-                    if(currentCount === 490) { // Firestore batch limit safe check
-                        batches.push(currentBatch.commit());
-                        currentBatch = db.batch();
-                        currentCount = 0;
-                    }
+                    currentBatch.delete(doc.ref); currentCount++;
+                    if(currentCount === 490) { batches.push(currentBatch.commit()); currentBatch = db.batch(); currentCount = 0; }
                 });
-                
                 if(currentCount > 0) batches.push(currentBatch.commit());
                 await Promise.all(batches);
                 
-                t.innerText = "All members deleted successfully!";
-                t.style.background = "#10b981"; // Reset toast color to green
-                setTimeout(() => t.classList.remove('show'), 3000);
-                
-            } catch(e) {
-                alert("Error deleting: " + e.message);
-                t.classList.remove('show'); t.style.background = "#10b981";
-            }
+                t.innerText = "All members deleted successfully!"; t.style.background = "#10b981"; setTimeout(() => t.classList.remove('show'), 3000);
+            } catch(e) { alert("Error deleting: " + e.message); t.classList.remove('show'); t.style.background = "#10b981"; }
         }
 
-        // ==========================================
-        // BULK CSV UPLOAD LOGIC
-        // ==========================================
+        // ==============================================================
+        // BULLETPROOF CSV READER (Fixes space issues in Excel Headers)
+        // ==============================================================
         async function handleCSVUpload(el) {
             const file = el.files[0];
             if(!file) return;
@@ -289,13 +249,9 @@
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                transformHeader: function(header) {
-                    return header.trim().toLowerCase().replace(/\s+/g, '_');
-                },
                 complete: async function(results) {
                     const rows = results.data;
                     if(rows.length === 0) { alert("Empty CSV or invalid format!"); return; }
-
                     if(!confirm(`Found ${rows.length} records in CSV.\nDo you want to upload this data?`)) { el.value = ""; return; }
 
                     const t = document.getElementById('toast');
@@ -305,17 +261,26 @@
                     let batch = db.batch();
                     let count = 0;
                     
+                    // Super Helper: Cleans all spaces and special chars to guarantee a match
+                    const getVal = (rowObj, possibleKeys) => {
+                        for(let k in rowObj) {
+                            let cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, ''); // Removes ALL spaces and special chars
+                            if(possibleKeys.includes(cleanK)) return rowObj[k] ? String(rowObj[k]).trim() : '';
+                        }
+                        return '';
+                    };
+
                     try {
                         for(let i=0; i<rows.length; i++) {
                             const row = rows[i];
                             const docRef = db.collection('members').doc();
                             
                             let dataObj = {
-                                memberNumber: row['member_number'] || row['member_no'] || '',
-                                memberName: row['member_name'] || '',
-                                nativeName: row['native_name'] || '',
-                                mobileNumber: row['mobile_number'] || row['mobile_no'] || '',
-                                address: row['address'] || '',
+                                memberNumber: getVal(row, ['membernumber', 'memberno', 'no']),
+                                memberName: getVal(row, ['membername', 'name']),
+                                nativeName: getVal(row, ['nativename', 'native']),
+                                mobileNumber: getVal(row, ['mobilenumber', 'mobileno', 'mobile', 'phone']),
+                                address: getVal(row, ['address', 'add']),
                                 timestamp: Date.now() + i 
                             };
                             
@@ -333,15 +298,14 @@
                         t.innerText = "CSV Upload Successful!";
                         setTimeout(() => t.classList.remove('show'), 3000);
                         el.value = ""; 
-                        
                     } catch(e) {
                         alert("Error uploading CSV: " + e.message);
                     }
                 }
             });
         }
-        // ==========================================
 
+        // Standard Functions
         function openAddModal() { currentEditId = null; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Add New Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
         function editDoc(id) { currentEditId = id; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(f.isMultiFile) { uploadedUrlsArray = data[f.key] || []; if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; } else if(f.isFile) { uploadedUrlsArray = [data[f.key] || ""]; document.getElementById('manual_link').value = uploadedUrlsArray[0]; updatePreview(uploadedUrlsArray[0]); } else if(document.getElementById('f_'+f.key)) { document.getElementById('f_'+f.key).value = data[f.key] || ""; } }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
         function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
@@ -353,6 +317,7 @@
         function deleteDoc(id) { if(confirm("Are you sure you want to delete this record?")) db.collection(currentCol).doc(id).delete(); }
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; document.getElementById('uploadProgress').style.display='none'; }
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
+        
         initCMS('events', 'Events');
     </script>
 </body>
