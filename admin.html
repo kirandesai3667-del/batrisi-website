@@ -11,6 +11,9 @@
     <!-- Firebase SDK (Only Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
         :root { --primary: #ea580c; --dark: #0f172a; --sidebar: #1e293b; --bg: #f1f5f9; --border: #e2e8f0; }
@@ -67,7 +70,7 @@
         </div>
     </div>
 
-    <!-- SIDEBAR RESTORED COMPLETELY -->
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <div style="padding:25px; border-bottom:1px solid rgba(255,255,255,0.1); text-align:center;"><h2>Batrisi CMS</h2></div>
         <button class="nav-btn active" onclick="initCMS('events', 'Events')">Manage Events</button>
@@ -76,17 +79,26 @@
         <button class="nav-btn" onclick="initCMS('gallery', 'Gallery (Multi Image)')">Manage Gallery</button>
         <button class="nav-btn" onclick="initCMS('committee', 'Committee')">Manage Committee</button>
         <button class="nav-btn" onclick="initCMS('downloads', 'Downloads')">Manage Downloads</button>
+        
+        <!-- NEW: Manage Members Button -->
+        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="initCMS('members', 'Members Database (CSV)')"><i class="fa-solid fa-users"></i> Manage Members</button>
+
         <button class="nav-btn" style="margin-top:auto; color:red;" onclick="location.reload()">Logout</button>
     </div>
 
     <div class="main-content">
-        <div class="toolbar">
+        <div class="toolbar" id="topToolbar">
             <h1 id="cms-title">Manage Events</h1>
-            <button class="btn-add" onclick="openAddModal()">+ Add New Record</button>
+            <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
+            <!-- CSV Upload Container (Hidden by default) -->
+            <div id="csvUploadBtnContainer" style="display:none;">
+                <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCSVUpload(this)">
+                <button class="btn-add" style="background:#10b981;" onclick="document.getElementById('csvFileInput').click()"><i class="fa-solid fa-file-csv"></i> Upload CSV DB</button>
+            </div>
         </div>
         <div class="table-container">
             <table>
-                <thead><tr><th>Record Info</th><th>Media</th><th>Actions</th></tr></thead>
+                <thead><tr id="tableHeaders"><th>Record Info</th><th>Media</th><th>Actions</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -96,11 +108,8 @@
     <div class="modal" id="cmsModal">
         <div class="modal-content">
             <h2 id="modalTitle" style="margin-bottom:20px;">Add/Edit Record</h2>
-            
             <div id="dynamicFields"></div>
-
             <div class="progress-box" id="uploadProgress">Uploading: 0 / 0 Files</div>
-
             <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:25px;">
                 <button onclick="closeCMSModal()" style="padding:10px 20px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
                 <button id="saveBtn" onclick="saveDataToFirebase()" style="padding:10px 25px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px;">SAVE RECORD</button>
@@ -121,7 +130,6 @@
         const db = firebase.firestore();
         const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
 
-        // SCHEMA UPDATED WITH MULTI-IMAGE LOGIC FOR MEDIA & GALLERY
         const schemas = {
             'events': [ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
             'media': [ {key:'title', label:'Media / News Title'}, {key:'date', label:'Date (e.g. 15 Aug 2026)'}, {key:'images', label:'Upload Newspaper Image(s) - Select Multiple', isMultiFile:true} ],
@@ -132,7 +140,7 @@
         };
 
         let currentCol = 'events';
-        let uploadedUrlsArray = []; // Using Array for multi-images
+        let uploadedUrlsArray = []; 
         let currentEditId = null; 
         window.tableData = {}; 
 
@@ -147,11 +155,30 @@
             document.getElementById('cms-title').innerText = "Manage " + title;
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
+            
+            // Adjust Toolbar for CSV Upload vs Standard Add
+            if(col === 'members') {
+                document.getElementById('standardAddBtn').style.display = 'none';
+                document.getElementById('csvUploadBtnContainer').style.display = 'block';
+            } else {
+                document.getElementById('standardAddBtn').style.display = 'block';
+                document.getElementById('csvUploadBtnContainer').style.display = 'none';
+            }
+
             fetchTableData();
         }
 
         function fetchTableData() {
             const body = document.getElementById('tableBody');
+            const thead = document.getElementById('tableHeaders');
+
+            // Change table headers if members section
+            if(currentCol === 'members') {
+                thead.innerHTML = '<th>Member No & Name</th><th>Contact Info</th><th>Actions</th>';
+            } else {
+                thead.innerHTML = '<th>Record Info</th><th>Media</th><th>Actions</th>';
+            }
+
             db.collection(currentCol).orderBy('timestamp', 'desc').onSnapshot(snap => {
                 body.innerHTML = "";
                 window.tableData = {}; 
@@ -159,28 +186,100 @@
                     const d = doc.data();
                     window.tableData[doc.id] = d; 
                     
-                    let mediaHtml = '';
-                    if(d.images && d.images.length > 0) {
-                        mediaHtml = `<img src="${d.images[0]}"><br><small>+${d.images.length-1} more</small>`;
-                    } else if(d.image || d.photo) {
-                        mediaHtml = `<img src="${d.image || d.photo}" onerror="this.src='https://via.placeholder.com/40'">`;
-                    } else if(d.file) {
-                        mediaHtml = `<i class="fa-solid fa-file-pdf" style="font-size:30px; color:#ef4444;"></i>`;
-                    } else {
-                        mediaHtml = `<i class="fa-solid fa-file-lines" style="font-size:30px; color:gray;"></i>`;
-                    }
+                    // Render Member Row
+                    if(currentCol === 'members') {
+                        body.innerHTML += `<tr>
+                            <td><b>No: ${d.memberNumber || '-'}</b><br><span style="color:var(--primary); font-weight:600; font-size:15px;">${d.memberName || 'No Name'}</span></td>
+                            <td><i class="fa-solid fa-phone" style="color:#64748b;"></i> ${d.mobileNumber || '-'}<br><small style="color:gray;">Native: ${d.nativeName || '-'}</small></td>
+                            <td>
+                                <button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>`;
+                    } 
+                    // Render Other Standard Rows
+                    else {
+                        let mediaHtml = '';
+                        if(d.images && d.images.length > 0) {
+                            mediaHtml = `<img src="${d.images[0]}"><br><small>+${d.images.length-1} more</small>`;
+                        } else if(d.image || d.photo) {
+                            mediaHtml = `<img src="${d.image || d.photo}" onerror="this.src='https://via.placeholder.com/40'">`;
+                        } else if(d.file) {
+                            mediaHtml = `<i class="fa-solid fa-file-pdf" style="font-size:30px; color:#ef4444;"></i>`;
+                        } else {
+                            mediaHtml = `<i class="fa-solid fa-file-lines" style="font-size:30px; color:gray;"></i>`;
+                        }
 
-                    body.innerHTML += `<tr>
-                        <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || d.date || '').substring(0,40)}</small></td>
-                        <td>${mediaHtml}</td>
-                        <td>
-                            <button onclick="editDoc('${doc.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer; font-weight:bold; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                            <button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button>
-                        </td>
-                    </tr>`;
+                        body.innerHTML += `<tr>
+                            <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || d.date || '').substring(0,40)}</small></td>
+                            <td>${mediaHtml}</td>
+                            <td>
+                                <button onclick="editDoc('${doc.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer; font-weight:bold; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                <button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>`;
+                    }
                 });
             });
         }
+
+        // ==========================================
+        // NEW: BULK CSV UPLOAD LOGIC
+        // ==========================================
+        async function handleCSVUpload(el) {
+            const file = el.files[0];
+            if(!file) return;
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async function(results) {
+                    const rows = results.data;
+                    if(rows.length === 0) { alert("Empty CSV or invalid format!"); return; }
+
+                    if(!confirm(`Found ${rows.length} records in CSV.\nUploading will add this database directly.\nDo you want to proceed?`)) { el.value = ""; return; }
+
+                    const t = document.getElementById('toast');
+                    t.innerText = `Uploading ${rows.length} members... Please wait.`;
+                    t.classList.add('show');
+
+                    let batch = db.batch();
+                    let count = 0;
+                    
+                    try {
+                        for(let i=0; i<rows.length; i++) {
+                            const docRef = db.collection('members').doc();
+                            // Capturing based on possible column headers provided in image
+                            let dataObj = {
+                                memberNumber: rows[i]['Member Number'] || rows[i]['member_number'] || rows[i]['MEMBER NUMBER'] || '',
+                                memberName: rows[i]['Member Name'] || rows[i]['member_name'] || rows[i]['MEMBER NAME'] || '',
+                                nativeName: rows[i]['Native Name'] || rows[i]['native_name'] || rows[i]['NATIVE NAME'] || '',
+                                mobileNumber: rows[i]['Mobile Number'] || rows[i]['mobile_number'] || rows[i]['MOBILE NUMBER'] || '',
+                                address: rows[i]['Address'] || rows[i]['address'] || rows[i]['ADDRESS'] || '',
+                                timestamp: Date.now() + i // To maintain order
+                            };
+                            
+                            batch.set(docRef, dataObj);
+                            count++;
+                            
+                            if(count === 490) { // Firestore limit is 500 per batch
+                                await batch.commit();
+                                batch = db.batch();
+                                count = 0;
+                            }
+                        }
+                        if(count > 0) { await batch.commit(); }
+                        
+                        t.innerText = "CSV Upload Successful!";
+                        setTimeout(() => t.classList.remove('show'), 3000);
+                        el.value = ""; 
+                        
+                    } catch(e) {
+                        alert("Error uploading CSV: " + e.message);
+                    }
+                }
+            });
+        }
+        // ==========================================
 
         function openAddModal() {
             currentEditId = null; uploadedUrlsArray = [];
@@ -195,150 +294,61 @@
             generateModalFields();
             
             const data = window.tableData[id];
-            
             setTimeout(() => {
                 schemas[currentCol].forEach(f => {
-                    if(f.isMultiFile) {
-                        uploadedUrlsArray = data[f.key] || [];
-                        if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; // Show first link
-                    } else if(f.isFile) {
-                        uploadedUrlsArray = [data[f.key] || ""];
-                        document.getElementById('manual_link').value = uploadedUrlsArray[0];
-                        updatePreview(uploadedUrlsArray[0]);
-                    } else if(document.getElementById('f_'+f.key)) {
-                        document.getElementById('f_'+f.key).value = data[f.key] || "";
-                    }
+                    if(f.isMultiFile) { uploadedUrlsArray = data[f.key] || []; if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; } 
+                    else if(f.isFile) { uploadedUrlsArray = [data[f.key] || ""]; document.getElementById('manual_link').value = uploadedUrlsArray[0]; updatePreview(uploadedUrlsArray[0]); } 
+                    else if(document.getElementById('f_'+f.key)) { document.getElementById('f_'+f.key).value = data[f.key] || ""; }
                 });
             }, 50);
-            
             document.getElementById('cmsModal').style.display = 'flex';
         }
 
         function generateModalFields() {
-            const fields = schemas[currentCol];
-            let html = "";
-            
+            const fields = schemas[currentCol]; let html = "";
             fields.forEach(f => {
-                if(f.isMultiFile) {
-                    html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;">
-                        <label>${f.label}</label>
-                        <input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)">
-                        <p class="drive-note">--- OR Paste Google Drive Link Here ---<br>(We will auto-fix image cracking issue)</p>
-                        <input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here">
-                    </div>`;
-                } else if(f.isFile) {
-                    html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;">
-                        <label>${f.label}</label>
-                        <input type="file" onchange="handleSingleUpload(this)">
-                        <p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p>
-                        <input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)">
-                        <img id="modal_prev" class="preview-img">
-                    </div>`;
-                } else if(f.isArea) {
-                    html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`;
-                } else {
-                    html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`;
-                }
+                if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p class="drive-note">--- OR Paste Google Drive Link Here ---<br>(We will auto-fix image cracking issue)</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } 
+                else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } 
+                else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } 
+                else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; }
             });
             document.getElementById('dynamicFields').innerHTML = html;
         }
 
-        // AUTO FIX GOOGLE DRIVE LINKS
-        function convertDriveLink(url) {
-            if(!url) return "";
-            if(url.includes("drive.google.com/file/d/")) {
-                let id = url.split("/d/")[1].split("/")[0];
-                return `https://drive.google.com/uc?export=view&id=${id}`;
-            }
-            return url;
-        }
+        function convertDriveLink(url) { if(!url) return ""; if(url.includes("drive.google.com/file/d/")) { let id = url.split("/d/")[1].split("/")[0]; return `https://drive.google.com/uc?export=view&id=${id}`; } return url; }
 
-        // BULK UPLOAD LOGIC (For 400-500 images)
         async function handleBulkUpload(el) {
             const files = el.files; if(!files.length) return;
             const btn = document.getElementById('saveBtn'); btn.disabled = true;
             const prog = document.getElementById('uploadProgress'); prog.style.display = 'block';
-
-            uploadedUrlsArray = [];
-            let successCount = 0;
-
+            uploadedUrlsArray = []; let successCount = 0;
             for(let i=0; i<files.length; i++) {
                 prog.innerText = `Uploading: ${i+1} of ${files.length} Files... Please Wait!`;
                 const fd = new FormData(); fd.append("image", files[i]);
-                try {
-                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                    const data = await res.json();
-                    if(data.data && data.data.url) {
-                        uploadedUrlsArray.push(data.data.url);
-                        successCount++;
-                    }
-                } catch(e) { console.log("Failed", i); }
+                try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); if(data.data && data.data.url) { uploadedUrlsArray.push(data.data.url); successCount++; } } catch(e) { console.log("Failed", i); }
             }
-            prog.innerText = `Upload Complete! (${successCount} Images Ready to Save)`;
-            prog.style.color = "green";
-            btn.disabled = false;
+            prog.innerText = `Upload Complete! (${successCount} Images Ready to Save)`; prog.style.color = "green"; btn.disabled = false;
         }
 
-        // SINGLE UPLOAD
         async function handleSingleUpload(el) {
             const file = el.files[0]; if(!file) return;
             const btn = document.getElementById('saveBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true;
             const fd = new FormData(); fd.append("image", file);
-            try {
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                const data = await res.json();
-                uploadedUrlsArray = [data.data.url];
-                updatePreview(data.data.url);
-            } catch(e) { alert("Upload Failed!"); }
+            try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); uploadedUrlsArray = [data.data.url]; updatePreview(data.data.url); } catch(e) { alert("Upload Failed!"); }
             btn.innerText = "SAVE RECORD"; btn.disabled = false;
         }
 
-        function updatePreview(url) {
-            const img = document.getElementById('modal_prev');
-            if(img) {
-                if(url && !url.includes('.pdf')) { img.src = url; img.style.display = 'block'; }
-                else { img.style.display = 'none'; }
-            }
-        }
+        function updatePreview(url) { const img = document.getElementById('modal_prev'); if(img) { if(url && !url.includes('.pdf')) { img.src = url; img.style.display = 'block'; } else { img.style.display = 'none'; } } }
 
         async function saveDataToFirebase() {
-            const btn = document.getElementById('saveBtn');
-            btn.innerText = "SAVING..."; btn.disabled = true;
-
-            const fields = schemas[currentCol];
-            let dataObj = {};
-
+            const btn = document.getElementById('saveBtn'); btn.innerText = "SAVING..."; btn.disabled = true;
+            const fields = schemas[currentCol]; let dataObj = {};
             fields.forEach(f => {
-                if(f.isMultiFile) {
-                    let manual = document.getElementById('manual_link').value;
-                    if(manual) {
-                        // Fix Drive link and push if user typed a link manually
-                        uploadedUrlsArray.push(convertDriveLink(manual));
-                    }
-                    dataObj[f.key] = uploadedUrlsArray; // Save as Array
-                } 
-                else if(f.isFile) {
-                    let manual = document.getElementById('manual_link').value;
-                    dataObj[f.key] = manual || (uploadedUrlsArray.length > 0 ? uploadedUrlsArray[0] : "");
-                } 
-                else {
-                    dataObj[f.key] = document.getElementById('f_'+f.key).value;
-                }
+                if(f.isMultiFile) { let manual = document.getElementById('manual_link').value; if(manual) { uploadedUrlsArray.push(convertDriveLink(manual)); } dataObj[f.key] = uploadedUrlsArray; } 
+                else if(f.isFile) { let manual = document.getElementById('manual_link').value; dataObj[f.key] = manual || (uploadedUrlsArray.length > 0 ? uploadedUrlsArray[0] : ""); } 
+                else { dataObj[f.key] = document.getElementById('f_'+f.key).value; }
             });
-
-            try {
-                if (currentEditId) {
-                    await db.collection(currentCol).doc(currentEditId).update(dataObj);
-                } else {
-                    dataObj.timestamp = Date.now(); 
-                    await db.collection(currentCol).add(dataObj);
-                }
-                closeCMSModal();
-                showToast();
-            } catch(e) {
-                alert("Database Error! Please check your connection.");
-            }
-
+            try { if (currentEditId) { await db.collection(currentCol).doc(currentEditId).update(dataObj); } else { dataObj.timestamp = Date.now(); await db.collection(currentCol).add(dataObj); } closeCMSModal(); showToast(); } catch(e) { alert("Database Error! Please check your connection."); }
             btn.innerText = "SAVE RECORD"; btn.disabled = false;
         }
 
@@ -346,7 +356,6 @@
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; document.getElementById('uploadProgress').style.display='none'; }
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
-        // Start App
         initCMS('events', 'Events');
     </script>
 </body>
