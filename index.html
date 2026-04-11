@@ -32,15 +32,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
         body { background: var(--light); color: var(--dark); overflow-x: hidden; }
 
-        /* NAVBAR - COMPACT & FULLY OPTIMIZED FOR LONG BUTTON NAMES */
+        /* NAVBAR - FULL NAME VISIBLE ALWAYS & BUTTONS FIXED */
         .navbar { position: fixed; top: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(15px); padding: 10px 1.5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.06); z-index: 1000; }
         .nav-left { display: flex; align-items: center; flex-shrink: 0;}
         .logo { text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .brand-logo-img { height: 38px; width: 38px; object-fit: contain; }
-        .nav-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-        .nav-brand-text .title { font-size: 18px; font-weight: 800; color: var(--dark); white-space: nowrap; letter-spacing: -0.5px; }
+        .brand-logo-img { height: 40px; width: 40px; object-fit: contain; }
+        .nav-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+        .nav-brand-text .title { font-size: 19px; font-weight: 800; color: var(--dark); white-space: nowrap; letter-spacing: -0.5px; }
         .nav-brand-text .title span { color: var(--primary); }
-        .nav-brand-text .subtitle { font-size: 10px; font-weight: 600; color: #64748b; white-space: nowrap; }
+        .nav-brand-text .subtitle { font-size: 10.5px; font-weight: 600; color: #64748b; white-space: nowrap; display: block !important; }
         
         .nav-right { display: flex; align-items: center; justify-content: flex-end;}
         .nav-links { display: flex; gap: 12px; align-items: center; }
@@ -52,14 +52,15 @@
         .btn-legacy:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4); }
         .btn-saffron { background: linear-gradient(135deg, #f97316, #ea580c) !important; box-shadow: 0 6px 15px rgba(234, 88, 12, 0.3) !important; }
 
-        /* For Standard Laptops (like 1366x768) */
-        @media (max-width: 1380px) { 
-            .nav-brand-text .subtitle { display: none; } 
-            .nav-links { gap: 10px; } 
-            .nav-links a { font-size: 12.5px;} 
-            .nav-actions { margin-left: 6px; padding-left: 6px; gap: 5px;} 
-            .btn-legacy { padding: 6px 10px; font-size: 11.5px;} 
+        /* Scales down nicely for laptops without hiding the society name */
+        @media (max-width: 1400px) { 
             .nav-brand-text .title { font-size: 16px; }
+            .nav-brand-text .subtitle { font-size: 9px; } 
+            .nav-links { gap: 8px; } 
+            .nav-links a { font-size: 12px;} 
+            .nav-actions { margin-left: 6px; padding-left: 6px; gap: 4px;} 
+            .btn-legacy { padding: 6px 10px; font-size: 11px;} 
+            .brand-logo-img { height: 35px; width: 35px; }
         }
         
         /* For Mobile / Tablet */
@@ -270,9 +271,7 @@
                 <a href="#contact">Contact</a>
             </div>
             <div class="nav-actions">
-                <!-- Find Member Number Button -->
                 <a onclick="openMemberSearchModal()" class="btn-legacy" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-magnifying-glass"></i> Find Member No.</a>
-                
                 <a href="id_card_app.html" class="btn-legacy" target="_blank"><i class="fa-solid fa-id-card"></i> Apply For New Membership</a>
                 <a href="medical_app_standalone.html" class="btn-legacy btn-saffron" target="_blank"><i class="fa-solid fa-notes-medical"></i> Medical Sahay</a>
             </div>
@@ -480,7 +479,9 @@
             db.collection('committee').orderBy('timestamp', 'asc').onSnapshot(snap => { let html = ''; snap.forEach(doc => { let d = doc.data(); html += `<div class="card committee-card"><img src="${d.photo}" class="committee-img"><br><span class="pos-badge">${d.position}</span><h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3><p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p><p style="color:#64748b; font-size:14px; font-weight:500;"><i class="fa-solid fa-phone"></i> ${d.phone}</p></div>`; }); document.getElementById('committee-grid').innerHTML = html; });
         }
 
-        // MEMBER SEARCH LOGIC
+        // ===============================================
+        // ADVANCED SMART MEMBER SEARCH LOGIC
+        // ===============================================
         function openMemberSearchModal() {
             document.getElementById('memberSearchModal').style.display = 'flex';
             document.getElementById('memberSearchInput').value = '';
@@ -492,13 +493,16 @@
         }
 
         async function executeMemberSearch() {
-            const query = document.getElementById('memberSearchInput').value.trim().toLowerCase();
+            const rawQuery = document.getElementById('memberSearchInput').value.trim().toLowerCase();
             const resContainer = document.getElementById('memberSearchResults');
             
-            if(!query) { 
+            if(!rawQuery) { 
                 resContainer.innerHTML = '<p style="color:red; text-align:center; font-weight:bold;">Please enter your Name or Mobile Number.</p>'; 
                 return; 
             }
+
+            // SMART ALGORITHM: Replace '*' with space, then split by spaces to find individual words
+            const searchTerms = rawQuery.replace(/\*/g, ' ').split(/\s+/).filter(t => t.length > 0);
 
             resContainer.innerHTML = '<p style="text-align:center; color:var(--primary); font-weight:bold; margin-top:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Searching Details...</p>';
 
@@ -508,8 +512,14 @@
                 
                 snapshot.forEach(doc => {
                     let d = doc.data();
-                    let matchName = (d.memberName || "").toLowerCase().includes(query);
-                    let matchMobile = (d.mobileNumber || "").includes(query);
+                    let memberName = (d.memberName || "").toLowerCase();
+                    let mobileNumber = (d.mobileNumber || "").toLowerCase();
+                    
+                    // Match Name: TRUE if ALL search terms are found anywhere in the member's full name
+                    let matchName = searchTerms.every(term => memberName.includes(term));
+                    
+                    // Match Mobile: TRUE if any of the search terms match the mobile number
+                    let matchMobile = searchTerms.some(term => mobileNumber.includes(term));
                     
                     if(matchName || matchMobile) {
                         results.push(d);
