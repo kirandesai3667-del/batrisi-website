@@ -15,7 +15,6 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script> <!-- ADDED FOR OTP -->
 
     <style>
         :root {
@@ -38,6 +37,7 @@
            ======================================================= */
         .navbar { position: fixed; top: 0; left: 0; width: 100%; background: rgba(255,255,255,0.98); backdrop-filter: blur(15px); padding: 12px 2%; display: flex; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.06); z-index: 1000; }
         
+        /* Logo Section on the Left */
         .nav-left { display: flex; align-items: center; flex-shrink: 0; margin-right: 2.5%; } 
         .logo { text-decoration: none; display: flex; align-items: center; gap: 10px; }
         .brand-logo-img { height: 42px; width: 42px; object-fit: contain; }
@@ -46,18 +46,23 @@
         .nav-brand-text .title span { color: var(--primary); }
         .nav-brand-text .subtitle { font-size: 10.5px; font-weight: 600; color: #64748b; white-space: nowrap; display: block !important; }
         
+        /* Right Section takes remaining space to distribute items evenly */
         .nav-right { display: flex; align-items: center; flex-grow: 1; }
         
+        /* Links moved towards the Logo */
         .nav-links { display: flex; gap: 16px; align-items: center; }
         .nav-links a { text-decoration: none; color: var(--darker); font-weight: 600; font-size: 14px; transition: var(--transition); cursor: pointer; white-space: nowrap;}
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
         
+        /* Buttons pushed to the far Right */
         .nav-actions { display: flex; gap: 8px; margin-left: auto; padding-left: 15px; border-left: 2px solid #e2e8f0; align-items: center;}
         
+        /* Button Styles */
         .btn-legacy { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--white) !important; padding: 8px 16px; border-radius: 50px; font-weight: 600; font-size: 13px; letter-spacing: 0.2px; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3); transition: all 0.2s ease; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; }
         .btn-legacy:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4); }
         .btn-saffron { background: linear-gradient(135deg, #f97316, #ea580c) !important; box-shadow: 0 6px 15px rgba(234, 88, 12, 0.3) !important; }
 
+        /* Scale down nicely for smaller laptops */
         @media (max-width: 1350px) { 
             .nav-brand-text .title { font-size: 16px; }
             .nav-brand-text .subtitle { font-size: 9px; } 
@@ -69,6 +74,7 @@
             .brand-logo-img { height: 35px; width: 35px; }
         }
         
+        /* Mobile / Tablet Layout */
         @media (max-width: 992px) { 
             .navbar { flex-direction: column; padding: 12px 4%; gap: 12px; } 
             .nav-left { margin-right: 0; width: 100%; justify-content: center; }
@@ -76,28 +82,98 @@
             .nav-actions { border-left: none; padding-left: 0; margin-left: 15px;} 
         }
 
+        /* SPA VIEWS */
         .page-view { display: none; padding-top: 80px; min-height: 100vh; animation: fadeIn 0.4s ease-in-out; }
         .page-view.active { display: block; }
         @media (max-width: 992px) { .page-view { padding-top: 130px; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        .hero { background: linear-gradient(rgba(15,23,42,0.92), rgba(234,88,12,0.85)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; display: flex; flex-direction: column; align-items: center; padding: 120px 20px 60px; border-bottom-left-radius: 50px; border-bottom-right-radius: 50px; min-height: auto; }
-        .hero-logo { height: 90px; width: 90px; object-fit: contain; background: rgba(255,255,255,0.95); border-radius: 50%; padding: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); animation: float 3s ease-in-out infinite; margin: 0 auto 20px; display: block; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        /* HERO SECTION */
+        .hero { 
+            background: linear-gradient(rgba(15,23,42,0.92), rgba(234,88,12,0.85)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 120px 20px 60px; 
+            border-bottom-left-radius: 50px; 
+            border-bottom-right-radius: 50px; 
+            min-height: auto;
+        }
+
+        /* 3D FLOATING LOGO */
+        .hero-logo { 
+            height: 90px; 
+            width: 90px; 
+            object-fit: contain; 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 50%; 
+            padding: 12px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
+            animation: float 3s ease-in-out infinite; 
+            margin: 0 auto 20px; 
+            display: block;
+        }
+        @keyframes float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-10px); } 
+            100% { transform: translateY(0px); } 
+        }
+
+        /* Top Text */
         .hero-top-text { text-align: center; color: var(--white); margin-bottom: 35px; z-index: 10; max-width: 800px; }
         .hero-top-text p { font-size: 18px; line-height: 1.6; color: #f1f5f9; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
         .hero-top-text strong { color: white; font-weight: 800; font-size: 22px; display: inline-block; margin-bottom: 5px; }
 
         @media (max-width: 768px) { .hero-top-text p { font-size: 15px; } .hero-top-text strong { font-size: 18px; } .hero-logo { height: 75px; width: 75px; } }
 
-        .swiper { width: 96%; max-width: 1400px; height: 65vh; min-height: 400px; max-height: 700px; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7); border: 3px solid rgba(255,255,255,0.2); background: #000; }
-        .swiper-slide { width: 100%; height: 100%; background-position: center top !important; background-size: cover !important; background-repeat: no-repeat; cursor: pointer; position: relative; }
-        .swiper-slide::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 40%, transparent 100%); pointer-events: none; }
-        .swiper-button-next, .swiper-button-prev { color: white !important; background: rgba(0,0,0,0.6); width: 60px !important; height: 60px !important; border-radius: 50%; transition: 0.3s; margin: 0 10px; border: 2px solid rgba(255,255,255,0.3); }
+        /* JITO Style Flat Slider */
+        .swiper { 
+            width: 96%; 
+            max-width: 1400px; 
+            height: 65vh; 
+            min-height: 400px;
+            max-height: 700px;
+            border-radius: 20px; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7); 
+            border: 3px solid rgba(255,255,255,0.2);
+            background: #000;
+        }
+        
+        .swiper-slide { 
+            width: 100%; 
+            height: 100%; 
+            background-position: center top !important; 
+            background-size: cover !important; 
+            background-repeat: no-repeat; 
+            cursor: pointer; 
+            position: relative; 
+        }
+        .swiper-slide::after { 
+            content: ''; 
+            position: absolute; 
+            inset: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 40%, transparent 100%); 
+            pointer-events: none; 
+        }
+        
+        /* Custom Swiper Arrows */
+        .swiper-button-next, .swiper-button-prev { 
+            color: white !important; 
+            background: rgba(0,0,0,0.6); 
+            width: 60px !important; 
+            height: 60px !important; 
+            border-radius: 50%; 
+            transition: 0.3s; 
+            margin: 0 10px; 
+            border: 2px solid rgba(255,255,255,0.3); 
+        }
         .swiper-button-next:hover, .swiper-button-prev:hover { background: var(--primary); transform: scale(1.1); border-color: var(--primary); }
         .swiper-button-next::after, .swiper-button-prev::after { font-size: 22px !important; font-weight: 900; }
+
         .swiper-pagination-bullet { background: #fff !important; opacity: 0.5; width: 12px; height: 12px; margin-bottom: 10px !important;}
         .swiper-pagination-bullet-active { background: var(--primary) !important; opacity: 1; transform: scale(1.4); }
+
+        /* Slide Bottom Info (Overlay) */
         .slide-bottom-info { position: absolute; bottom: 40px; left: 40px; z-index: 5; text-align: left; max-width: 80%; pointer-events: none; }
         .slide-badge { background: var(--primary); color: white; padding: 6px 18px; border-radius: 30px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 12px; box-shadow: 0 5px 15px rgba(234, 88, 12, 0.5); }
         .slide-title { font-size: 36px; font-weight: 800; color: white; line-height: 1.2; font-family: 'Noto Sans Gujarati', sans-serif; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); margin-bottom: 8px;}
@@ -138,6 +214,7 @@
         .committee-img { width: 160px; height: 180px; border-radius: 12px; object-fit: cover; border: 4px solid var(--secondary); margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
         .pos-badge { display: inline-block; background: var(--primary); color: var(--white); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(234,88,12,0.2); }
 
+        /* MODALS */
         #readMoreModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(5px); z-index: 3000; justify-content: center; align-items: center; padding: 20px; }
         .rm-content { background: var(--white); width: 100%; max-width: 650px; max-height: 90vh; border-radius: 20px; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: zoomIn 0.3s ease; display: flex; flex-direction: column; }
         @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -149,6 +226,7 @@
         .rm-title { font-size: 26px; font-weight: 800; color: var(--dark); margin-bottom: 15px; font-family: 'Noto Sans Gujarati', sans-serif; line-height: 1.3;}
         .rm-desc { font-size: 15px; color: #475569; line-height: 1.8; font-family: 'Noto Sans Gujarati', sans-serif; white-space: pre-wrap; }
 
+        /* ADVANCED JITO STYLE 100% FULL-SCREEN LIGHTBOX */
         #lightbox { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index: 9999; justify-content: center; align-items: center; }
         #lightbox img { width: 100vw; height: 100vh; object-fit: contain; margin: 0; padding: 0; border: none; border-radius: 0; box-shadow: none; transition: opacity 0.2s ease; }
         #lightbox-close { position: absolute; top: 20px; right: 30px; color: rgba(255,255,255,0.7); font-size: 35px; cursor: pointer; transition: 0.2s; z-index: 99999; background: rgba(0,0,0,0.5); width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
@@ -171,6 +249,7 @@
         .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto 40px; }
         .footer-bottom { text-align: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #94a3b8; }
 
+        /* MEMBER SEARCH MODAL STYLES */
         .search-result-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: left; }
         .search-result-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px; margin-bottom: 12px; }
         .search-result-name { font-weight: 800; font-size: 18px; color: var(--primary); margin:0;}
@@ -181,6 +260,7 @@
 </head>
 <body>
 
+    <!-- NAVIGATION -->
     <nav class="navbar">
         <div class="nav-left">
             <a href="#home" class="logo">
@@ -210,12 +290,15 @@
         </div>
     </nav>
 
+    <!-- SPA VIEWS -->
     <div id="view-home" class="page-view active">
+        <!-- HYBRID HERO SECTION WITH 3D LOGO -->
         <div class="hero">
             <div class="hero-top-text">
                 <img src="./logo.png" alt="Logo" class="hero-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120.png?text=Logo';">
                 <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong><br>Dedicated to education, medical relief, and cultural unity since 1944.</p>
             </div>
+            <!-- Big JITO Style Slider -->
             <div class="swiper mySwiper">
                 <div class="swiper-wrapper" id="hero-slider-wrapper"></div>
                 <div class="swiper-button-next"></div>
@@ -223,12 +306,14 @@
                 <div class="swiper-pagination"></div>
             </div>
         </div>
+
         <div class="container">
             <h2 class="section-title">Latest <span>Updates</span></h2>
             <div class="grid-landscape" id="home-events-grid"></div>
         </div>
     </div>
 
+    <!-- OTHER SECTIONS -->
     <div id="view-about" class="page-view">
         <div class="container">
             <h2 class="section-title">About <span>Us</span></h2>
@@ -269,6 +354,7 @@
     <!-- MODALS -->
     <div id="readMoreModal"><div class="rm-content"><button class="rm-close" onclick="closeReadMoreModal()"><i class="fa-solid fa-xmark"></i></button><img id="rm-img" class="rm-img" src=""><div class="rm-body"><span class="rm-date" id="rm-date"></span><h3 class="rm-title" id="rm-title"></h3><div class="rm-desc" id="rm-desc"></div></div></div></div>
     
+    <!-- JITO STYLE 100% FULL-SCREEN LIGHTBOX -->
     <div id="lightbox">
         <div id="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></div>
         <div class="lb-nav" id="lb-prev" onclick="changeLightboxImg(-1)"><i class="fa-solid fa-chevron-left"></i></div>
@@ -280,31 +366,24 @@
         </div>
     </div>
 
-    <!-- MEMBER SEARCH MODAL (UPDATED WITH OTP UI) -->
+    <!-- MEMBER SEARCH MODAL -->
     <div id="memberSearchModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(5px); z-index: 5000; justify-content: center; align-items: center; padding: 20px;">
         <div style="background: var(--white); width: 100%; max-width: 600px; border-radius: 20px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); padding: 30px; display: flex; flex-direction: column; animation: zoomIn 0.3s ease;">
             <button onclick="closeMemberSearchModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.05); border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 18px; cursor: pointer; transition: 0.2s;"><i class="fa-solid fa-xmark"></i></button>
             <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 20px; color: var(--dark); text-align:center;"><i class="fa-solid fa-address-card" style="color:var(--primary);"></i> Find Your Details</h3>
 
-            <div style="display:flex; gap:10px; margin-bottom: 15px;" id="phone-input-group">
-                <input type="number" id="memberSearchInput" placeholder="Enter 10-Digit Mobile No..." style="flex:1; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline:none;" onkeypress="if(event.key === 'Enter') sendOTP()">
-                <button id="send-otp-btn" onclick="sendOTP()" class="btn-legacy btn-saffron" style="border:none; cursor:pointer; font-size:15px; padding: 0 20px;"><i class="fa-solid fa-paper-plane"></i> Send OTP</button>
+            <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                <input type="text" id="memberSearchInput" placeholder="Enter Mobile No. or Name..." style="flex:1; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline:none;" onkeypress="if(event.key === 'Enter') executeMemberSearch()">
+                <button onclick="executeMemberSearch()" class="btn-legacy btn-saffron" style="border:none; cursor:pointer; font-size:15px; padding: 0 20px;"><i class="fa-solid fa-search"></i> Search</button>
             </div>
-
-            <div style="display:none; gap:10px; margin-bottom: 15px;" id="otp-input-group">
-                <input type="number" id="otpInput" placeholder="Enter 6-Digit OTP..." style="flex:1; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline:none;" onkeypress="if(event.key === 'Enter') verifyOTP()">
-                <button id="verify-otp-btn" onclick="verifyOTP()" class="btn-legacy" style="background: linear-gradient(135deg, #10b981, #059669); border:none; cursor:pointer; font-size:15px; padding: 0 20px;"><i class="fa-solid fa-check"></i> Verify & Search</button>
-            </div>
-
-            <div id="recaptcha-container"></div>
-            <p id="otp-message" style="text-align: center; font-size: 14px; margin-bottom: 15px; font-weight: 600;"></p>
 
             <div id="memberSearchResults" style="overflow-y: auto; max-height: 50vh; padding-right: 5px;">
-                <p style="text-align:center; color:#64748b; font-size: 14px; margin-top: 10px;">Enter your registered 10-Digit Mobile Number to receive an OTP and find your Member Number.</p>
+                <p style="text-align:center; color:#64748b; font-size: 14px; margin-top: 10px;">Search by your registered Name or Mobile Number to find your Member Number.</p>
             </div>
         </div>
     </div>
 
+    <!-- FOOTER -->
     <footer>
         <div class="footer-grid">
             <div>
@@ -326,8 +405,10 @@
         <div class="footer-bottom">&copy; 2026 Shree Batrisi Jain Co-Op. Education Society Ltd. All Rights Reserved.</div>
     </footer>
 
+    <!-- Swiper JS Script -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
 
+    <!-- LOGIC -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
@@ -343,6 +424,7 @@
         
         function openReadMoreModal(docId) { const d = window.allEventsData[docId]; if(!d) return; document.getElementById('rm-img').src = d.image || 'https://via.placeholder.com/800x400'; document.getElementById('rm-date').innerHTML = `<i class="fa-regular fa-calendar"></i> ${d.date}`; document.getElementById('rm-title').innerText = d.title; document.getElementById('rm-desc').innerText = d.desc; document.getElementById('readMoreModal').style.display = 'flex'; }
         function closeReadMoreModal() { document.getElementById('readMoreModal').style.display = 'none'; }
+        
         function sliderJumpTo(type) { window.location.hash = `#${type.toLowerCase()}`; }
 
         async function fetchHeroSliderData() {
@@ -363,7 +445,16 @@
                 let sliderHtml = '';
                 slides.slice(0, 6).forEach(item => {
                     let coverImg = (item.images && item.images.length > 0) ? item.images[0] : (item.image || 'https://via.placeholder.com/1920x1080');
-                    sliderHtml += `<div class="swiper-slide" style="background-image: url('${coverImg}')" onclick="sliderJumpTo('${item.type}')"><div class="slide-bottom-info"><span class="slide-badge">${item.type}</span><div class="slide-title">${item.title}</div><div class="click-hint">Click to view in ${item.type} <i class="fa-solid fa-arrow-right"></i></div></div></div>`;
+                    
+                    sliderHtml += `
+                        <div class="swiper-slide" style="background-image: url('${coverImg}')" onclick="sliderJumpTo('${item.type}')">
+                            <div class="slide-bottom-info">
+                                <span class="slide-badge">${item.type}</span>
+                                <div class="slide-title">${item.title}</div>
+                                <div class="click-hint">Click to view in ${item.type} <i class="fa-solid fa-arrow-right"></i></div>
+                            </div>
+                        </div>
+                    `;
                 });
                 document.getElementById('hero-slider-wrapper').innerHTML = sliderHtml;
 
@@ -371,7 +462,12 @@
             } catch(e) { console.log("Slider Error:", e); }
         }
 
-        let currentLbImages = []; let currentLbIndex = 0; const lightboxEl = document.getElementById('lightbox'); const imgEl = document.getElementById('lightbox-img');
+        // FULL SCREEN LIGHTBOX LOGIC
+        let currentLbImages = [];
+        let currentLbIndex = 0;
+        const lightboxEl = document.getElementById('lightbox');
+        const imgEl = document.getElementById('lightbox-img');
+
         function openLightbox(imgData, caption) { currentLbImages = Array.isArray(imgData) ? imgData : [imgData]; currentLbIndex = 0; document.getElementById('lightbox-caption').innerText = caption || ''; updateLightboxView(); lightboxEl.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
         function closeLightbox() { lightboxEl.style.display = 'none'; document.body.style.overflow = 'auto'; }
         function changeLightboxImg(dir) { currentLbIndex += dir; if(currentLbIndex >= currentLbImages.length) currentLbIndex = 0; if(currentLbIndex < 0) currentLbIndex = currentLbImages.length - 1; updateLightboxView(); }
@@ -380,119 +476,46 @@
         document.addEventListener('keydown', function(e) { const lightbox = document.getElementById('lightbox'); if (lightbox && lightbox.style.display === 'flex') { if (e.key === 'ArrowLeft' || e.keyCode === 37) { changeLightboxImg(-1); } else if (e.key === 'ArrowRight' || e.keyCode === 39) { changeLightboxImg(1); } else if (e.key === 'Escape' || e.keyCode === 27) { closeLightbox(); } } });
         let touchstartX = 0; let touchendX = 0; lightboxEl.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, { passive: true }); lightboxEl.addEventListener('touchend', e => { touchendX = e.changedTouches[0].screenX; if (touchendX < touchstartX - 50) changeLightboxImg(1); if (touchendX > touchstartX + 50) changeLightboxImg(-1); }, { passive: true });
 
+        // FETCH ALL DATA
         function fetchAllData() {
             db.collection('about').orderBy('timestamp', 'desc').onSnapshot(snap => { if(!snap.empty) { let html = ''; snap.forEach(doc => { let d = doc.data(); html += `<h3 style="color: var(--dark); font-size: 24px; margin-bottom: 15px; font-weight: 800;">${d.title}</h3><p style="white-space: pre-wrap;">${d.desc}</p><br>`; }); document.getElementById('about-content').innerHTML = html; } });
+
             db.collection('events').orderBy('timestamp', 'desc').onSnapshot(snap => { let html = ''; let count = 0; let homeHtml = ''; snap.forEach(doc => { let d = doc.data(); window.allEventsData[doc.id] = d; let card = `<div class="event-card"><div class="event-img-wrap"><img src="${d.image}"></div><div class="event-body"><span class="event-date-badge"><i class="fa-regular fa-calendar"></i> ${d.date}</span><h3 class="event-title">${d.title}</h3><p class="event-desc">${d.desc}</p><button onclick="openReadMoreModal('${doc.id}')" class="btn-legacy btn-saffron" style="margin-top:auto; padding:6px 15px; font-size:12px; width:fit-content; cursor:pointer; border:none;">વધુ વાંચો (Read More) <i class="fa-solid fa-arrow-right"></i></button></div></div>`; html += card; if(count < 4) homeHtml += card; count++; }); document.getElementById('events-grid').innerHTML = html; document.getElementById('home-events-grid').innerHTML = homeHtml; });
+
             db.collection('media').orderBy('timestamp', 'desc').onSnapshot(snap => { let html = ''; snap.forEach(doc => { let d = doc.data(); let imgArr = d.images && d.images.length > 0 ? d.images : [d.image]; let cover = imgArr[0]; let badge = imgArr.length > 1 ? `<span class="multi-photo-badge"><i class="fa-regular fa-images"></i> ${imgArr.length} Pages</span>` : ''; let safeTitle = (d.title || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;'); html += `<div class="card" onclick='openLightbox(${JSON.stringify(imgArr)}, "${safeTitle}")' style="cursor:pointer;">${badge}<img src="${cover}" class="card-img"><div class="card-body"><span style="color:var(--primary); font-weight:700; font-size:13px;"><i class="fa-regular fa-newspaper"></i> ${d.date || ''}</span><h3 class="card-title" style="margin-top:5px;">${d.title}</h3></div></div>`; }); document.getElementById('media-grid').innerHTML = html; });
+
             db.collection('gallery').orderBy('timestamp', 'desc').onSnapshot(snap => { let html = ''; snap.forEach(doc => { let d = doc.data(); let imgArr = d.images && d.images.length > 0 ? d.images : [d.image]; let cover = imgArr[0]; let badge = imgArr.length > 1 ? `<span class="multi-photo-badge"><i class="fa-regular fa-images"></i> ${imgArr.length} Photos</span>` : ''; let safeTitle = (d.title || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;'); html += `<div class="card" style="cursor:pointer;" onclick='openLightbox(${JSON.stringify(imgArr)}, "${safeTitle}")'>${badge}<img src="${cover}" class="card-img" style="height:250px;"><div class="card-body" style="padding:15px; text-align:center;"><p style="font-weight:700; margin:0; color:var(--dark);">${d.title}</p></div></div>`; }); document.getElementById('gallery-grid').innerHTML = html; });
+            
             db.collection('downloads').orderBy('timestamp', 'desc').onSnapshot(snap => { let html = ''; snap.forEach(doc => { let d = doc.data(); let descHtml = d.desc ? `<p style="font-size:13px; color:#64748b; margin-bottom:15px; line-height:1.6;">${d.desc}</p>` : ''; html += `<div class="card dl-card" style="padding: 25px; display:flex; flex-direction:column; justify-content:space-between;"><div><div style="display:flex; align-items:flex-start; gap:15px; margin-bottom:12px;"><i class="fa-solid fa-file-pdf" style="font-size:35px; color:#ef4444; margin-top:3px;"></i><h3 class="card-title" style="margin:0; font-size:18px; color:var(--dark); line-height:1.3;">${d.title}</h3></div>${descHtml}</div><a href="${d.file}" target="_blank" class="btn-legacy btn-saffron" style="padding:8px 20px; font-size:13px; width:fit-content; margin-top:10px;"><i class="fa-solid fa-download"></i> View / Download PDF</a></div>`; }); document.getElementById('downloads-grid').innerHTML = html; });
+
             db.collection('committee').orderBy('timestamp', 'asc').onSnapshot(snap => { let html = ''; snap.forEach(doc => { let d = doc.data(); html += `<div class="card committee-card"><img src="${d.photo}" class="committee-img"><br><span class="pos-badge">${d.position}</span><h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3><p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p><p style="color:#64748b; font-size:14px; font-weight:500;"><i class="fa-solid fa-phone"></i> ${d.phone}</p></div>`; }); document.getElementById('committee-grid').innerHTML = html; });
         }
 
         // ===============================================
-        // ADVANCED SMART MEMBER SEARCH LOGIC WITH OTP
+        // ADVANCED SMART MEMBER SEARCH LOGIC
         // ===============================================
-
-        let confirmationResult = null;
-        let recaptchaVerifier = null;
-
         function openMemberSearchModal() {
             document.getElementById('memberSearchModal').style.display = 'flex';
             document.getElementById('memberSearchInput').value = '';
-            document.getElementById('memberSearchInput').disabled = false;
-            document.getElementById('memberSearchResults').innerHTML = '<p style="text-align:center; color:#64748b; font-size: 14px; margin-top: 10px;">Enter your registered 10-Digit Mobile Number to receive an OTP and find your Member Number.</p>';
-            
-            document.getElementById('send-otp-btn').style.display = 'inline-block';
-            document.getElementById('otp-input-group').style.display = 'none';
-            document.getElementById('otpInput').value = '';
-            document.getElementById('otp-message').innerText = '';
-            
-            if(recaptchaVerifier) {
-                recaptchaVerifier.clear();
-                recaptchaVerifier = null;
-                document.getElementById('recaptcha-container').innerHTML = '';
-            }
+            document.getElementById('memberSearchResults').innerHTML = '<p style="text-align:center; color:#64748b; font-size: 14px; margin-top: 10px;">Search by your registered Name or Mobile Number to find your Member Number.</p>';
         }
 
         function closeMemberSearchModal() {
             document.getElementById('memberSearchModal').style.display = 'none';
         }
 
-        function initRecaptcha() {
-            if (!recaptchaVerifier) {
-                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                    'size': 'invisible'
-                });
-            }
-        }
-
-        function sendOTP() {
-            const phoneInput = document.getElementById('memberSearchInput').value.trim();
-            const msgEl = document.getElementById('otp-message');
-
-            if (!/^\d{10}$/.test(phoneInput)) {
-                msgEl.style.color = "red";
-                msgEl.innerText = "Please enter exactly a 10-digit mobile number.";
-                return;
-            }
-
-            msgEl.style.color = "var(--primary)";
-            msgEl.innerText = "Sending OTP...";
-
-            initRecaptcha();
-            const phoneNumber = "+91" + phoneInput;
-
-            firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier)
-                .then((result) => {
-                    confirmationResult = result;
-                    msgEl.style.color = "green";
-                    msgEl.innerText = "OTP sent successfully to " + phoneNumber;
-                    
-                    document.getElementById('send-otp-btn').style.display = 'none';
-                    document.getElementById('otp-input-group').style.display = 'flex';
-                    document.getElementById('memberSearchInput').disabled = true;
-                }).catch((error) => {
-                    console.error("OTP Error:", error);
-                    msgEl.style.color = "red";
-                    msgEl.innerText = "Failed to send OTP. Please try again.";
-                    if(recaptchaVerifier) recaptchaVerifier.render().then(id => grecaptcha.reset(id));
-                });
-        }
-
-        function verifyOTP() {
-            const otpCode = document.getElementById('otpInput').value.trim();
-            const msgEl = document.getElementById('otp-message');
-
-            if (!otpCode || otpCode.length !== 6) {
-                msgEl.style.color = "red";
-                msgEl.innerText = "Please enter a valid 6-digit OTP.";
-                return;
-            }
-
-            msgEl.style.color = "var(--primary)";
-            msgEl.innerText = "Verifying...";
-
-            confirmationResult.confirm(otpCode).then((result) => {
-                msgEl.style.color = "green";
-                msgEl.innerText = "Verified successfully! Fetching details...";
-                
-                document.getElementById('otp-input-group').style.display = 'none';
-                
-                executeMemberSearch();
-
-            }).catch((error) => {
-                msgEl.style.color = "red";
-                msgEl.innerText = "Invalid OTP code. Please check and try again.";
-            });
-        }
-
         async function executeMemberSearch() {
             const rawQuery = document.getElementById('memberSearchInput').value.trim().toLowerCase();
             const resContainer = document.getElementById('memberSearchResults');
             
-            if(!rawQuery) return; 
+            if(!rawQuery) { 
+                resContainer.innerHTML = '<p style="color:red; text-align:center; font-weight:bold;">Please enter your Name or Mobile Number.</p>'; 
+                return; 
+            }
 
+            // SMART ALGORITHM: Replace '*' with space, then split by spaces to find individual words
             const searchTerms = rawQuery.replace(/\*/g, ' ').split(/\s+/).filter(t => t.length > 0);
+
             resContainer.innerHTML = '<p style="text-align:center; color:var(--primary); font-weight:bold; margin-top:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Searching Details...</p>';
 
             try {
@@ -501,16 +524,22 @@
                 
                 snapshot.forEach(doc => {
                     let d = doc.data();
+                    let memberName = (d.memberName || "").toLowerCase();
                     let mobileNumber = (d.mobileNumber || "").toLowerCase();
+                    
+                    // Match Name: TRUE if ALL search terms are found anywhere in the member's full name
+                    let matchName = searchTerms.every(term => memberName.includes(term));
+                    
+                    // Match Mobile: TRUE if any of the search terms match the mobile number
                     let matchMobile = searchTerms.some(term => mobileNumber.includes(term));
                     
-                    if(matchMobile) {
+                    if(matchName || matchMobile) {
                         results.push(d);
                     }
                 });
 
                 if(results.length === 0) {
-                    resContainer.innerHTML = '<p style="color:red; text-align:center; font-weight:bold; margin-top:20px;">No record found with this Mobile Number.</p>';
+                    resContainer.innerHTML = '<p style="color:red; text-align:center; font-weight:bold; margin-top:20px;">No record found with this Name or Mobile Number.</p>';
                 } else {
                     let html = '';
                     results.forEach(d => {
