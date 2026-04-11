@@ -60,7 +60,7 @@
         @media (max-width: 992px) { .page-view { padding-top: 120px; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* HERO SECTION (HYBRID: SS2 Top + SS1 Bottom) */
+        /* HERO SECTION */
         .hero { 
             background: linear-gradient(rgba(15,23,42,0.92), rgba(234,88,12,0.85)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; 
             display: flex; 
@@ -72,18 +72,37 @@
             min-height: auto;
         }
 
-        /* Top Text from old screenshot */
+        /* 3D FLOATING LOGO */
+        .hero-logo { 
+            height: 90px; 
+            width: 90px; 
+            object-fit: contain; 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 50%; 
+            padding: 12px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
+            animation: float 3s ease-in-out infinite; 
+            margin: 0 auto 20px; 
+            display: block;
+        }
+        @keyframes float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-10px); } 
+            100% { transform: translateY(0px); } 
+        }
+
+        /* Top Text */
         .hero-top-text { text-align: center; color: var(--white); margin-bottom: 35px; z-index: 10; max-width: 800px; }
         .hero-top-text p { font-size: 18px; line-height: 1.6; color: #f1f5f9; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-        .hero-top-text strong { color: white; font-weight: 800; font-size: 20px; display: inline-block; margin-bottom: 5px; }
+        .hero-top-text strong { color: white; font-weight: 800; font-size: 22px; display: inline-block; margin-bottom: 5px; }
 
-        @media (max-width: 768px) { .hero-top-text p { font-size: 15px; } .hero-top-text strong { font-size: 17px; } }
+        @media (max-width: 768px) { .hero-top-text p { font-size: 15px; } .hero-top-text strong { font-size: 18px; } .hero-logo { height: 75px; width: 75px; } }
 
         /* JITO Style Flat Slider */
         .swiper { 
             width: 96%; 
             max-width: 1400px; 
-            height: 65vh; /* Massive cinematic height */
+            height: 65vh; 
             min-height: 400px;
             max-height: 700px;
             border-radius: 20px; 
@@ -95,7 +114,6 @@
         .swiper-slide { 
             width: 100%; 
             height: 100%; 
-            /* THE MAGIC FIX FOR HEAD CUTTING: */
             background-position: center top !important; 
             background-size: cover !important; 
             background-repeat: no-repeat; 
@@ -202,7 +220,7 @@
 </head>
 <body>
 
-    <!-- NAVIGATION (ALL BUTTONS SAFE) -->
+    <!-- NAVIGATION -->
     <nav class="navbar">
         <div class="nav-left">
             <a href="#home" class="logo">
@@ -237,8 +255,9 @@
         <!-- NEW HYBRID HERO SECTION -->
         <div class="hero">
             
-            <!-- Top Text (Like your Old Screenshot) -->
+            <!-- Top Text WITH 3D LOGO -->
             <div class="hero-top-text">
+                <img src="./logo.png" alt="Logo" class="hero-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120.png?text=Logo';">
                 <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong><br>Dedicated to education, medical relief, and cultural unity since 1944.</p>
             </div>
 
@@ -406,7 +425,7 @@
         }
 
         // ============================================
-        // 100% FIXED MOBILE SWIPE FOR LIGHTBOX 
+        // 100% FIXED MOBILE SWIPE & KEYBOARD LOGIC 
         // ============================================
         let currentLbImages = [];
         let currentLbIndex = 0;
@@ -448,7 +467,21 @@
             }
         }
 
-        // SWIPE DETECTION LOGIC (Perfect for Mobile)
+        // --- KEYBOARD ARROW KEY SUPPORT ---
+        document.addEventListener('keydown', function(event) {
+            // Check if lightbox is visible
+            if (lightboxEl.style.display === 'flex') {
+                if (event.key === 'ArrowLeft') {
+                    changeLightboxImg(-1); // Slide Left
+                } else if (event.key === 'ArrowRight') {
+                    changeLightboxImg(1); // Slide Right
+                } else if (event.key === 'Escape') {
+                    closeLightbox(); // Close on Esc
+                }
+            }
+        });
+
+        // --- SWIPE DETECTION LOGIC (Perfect for Mobile) ---
         let touchstartX = 0;
         let touchendX = 0;
 
