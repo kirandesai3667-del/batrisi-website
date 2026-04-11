@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shree Batrisi Jain Co-Op. Education Society Ltd.</title>
     
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Swiper CSS (Advanced 3D Slider) -->
+    <!-- Swiper CSS (For 3D Slider) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 
     <!-- Firebase SDKs -->
@@ -16,7 +17,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --primary: #ea580c; --primary-dark: #c2410c; --secondary: #fbbf24; --dark: #0f172a; --darker: #1e293b; --light: #f8fafc; --white: #ffffff; --shadow: 0 10px 25px -5px rgba(0,0,0,0.1); --transition: all 0.3s ease; }
+        :root {
+            --primary: #ea580c; 
+            --primary-dark: #c2410c;
+            --secondary: #fbbf24; 
+            --dark: #0f172a;
+            --darker: #1e293b;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
         body { background: var(--light); color: var(--dark); overflow-x: hidden; }
 
@@ -26,70 +38,114 @@
         .logo { text-decoration: none; display: flex; align-items: center; gap: 12px; }
         .brand-logo-img { height: 45px; width: 45px; object-fit: contain; }
         .nav-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-        .nav-brand-text .title { font-size: 22px; font-weight: 800; color: var(--dark); letter-spacing: -0.5px; }
+        .nav-brand-text .title { font-size: 22px; font-weight: 800; color: var(--dark); white-space: nowrap; letter-spacing: -0.5px; }
         .nav-brand-text .title span { color: var(--primary); }
-        .nav-brand-text .subtitle { font-size: 12px; font-weight: 600; color: #64748b; }
+        .nav-brand-text .subtitle { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; }
         .nav-right { display: flex; align-items: center; }
         .nav-links { display: flex; gap: 22px; align-items: center; }
         .nav-links a { text-decoration: none; color: var(--darker); font-weight: 600; font-size: 15px; transition: var(--transition); cursor: pointer; }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
-        .nav-actions { display: flex; gap: 15px; margin-left: 20px; padding-left: 20px; border-left: 2px solid #e2e8f0; }
+        .nav-actions { display: flex; gap: 15px; margin-left: 20px; padding-left: 20px; border-left: 2px solid #e2e8f0; align-items: center; }
 
-        .btn-legacy { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--white) !important; padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn-legacy:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4); }
-        .btn-saffron { background: linear-gradient(135deg, #f97316, #ea580c) !important; }
+        .btn-legacy { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--white) !important; padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 14px; letter-spacing: 0.5px; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3), inset 0 -3px 0 rgba(0,0,0,0.3); transition: all 0.2s ease; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+        .btn-legacy:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4), inset 0 -3px 0 rgba(0,0,0,0.3); }
+        .btn-saffron { background: linear-gradient(135deg, #f97316, #ea580c) !important; box-shadow: 0 6px 15px rgba(234, 88, 12, 0.3), inset 0 -3px 0 rgba(0,0,0,0.2) !important; }
 
-        @media (max-width: 992px) { .navbar { flex-direction: column; padding: 10px 4%; gap: 10px; } .nav-right { width: 100%; justify-content: space-between; overflow-x: auto; } .nav-actions { border: none; padding: 0; } }
+        @media (max-width: 1250px) { .nav-brand-text .subtitle { display: none; } .nav-actions { margin-left: 10px; padding-left: 10px; gap: 10px; } .btn-legacy { padding: 8px 16px; font-size: 13px; } .nav-links { gap: 15px; } }
+        @media (max-width: 992px) { .navbar { flex-direction: column; padding: 10px 4%; gap: 10px; } .nav-right { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; } .nav-actions { border-left: none; padding-left: 0; } }
 
         /* SPA VIEWS */
         .page-view { display: none; padding-top: 80px; min-height: 100vh; animation: fadeIn 0.4s ease-in-out; }
         .page-view.active { display: block; }
+        @media (max-width: 992px) { .page-view { padding-top: 120px; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* HERO & FULL SIZE 3D SWIPER */
-        .hero { min-height: 100vh; background: linear-gradient(rgba(15,23,42,0.95), rgba(234,88,12,0.85)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--white); padding: 100px 20px 40px; border-bottom-left-radius: 50px; border-bottom-right-radius: 50px; }
-        .hero-top-text { text-align: center; margin-bottom: 20px; z-index: 10; }
-        .hero-logo { height: 80px; width: 80px; background: white; border-radius: 50%; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: float 3s infinite ease-in-out; margin-bottom: 10px; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        /* HERO & ADVANCED 3D SLIDER STYLES */
+        .hero { min-height: 100vh; background: linear-gradient(rgba(15,23,42,0.9), rgba(234,88,12,0.85)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--white); padding: 120px 20px 60px; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; overflow: hidden; }
+        .hero-top-text { text-align: center; margin-bottom: 30px; z-index: 10; }
+        .hero-logo { height: 90px; width: 90px; object-fit: contain; margin-bottom: 15px; background: rgba(255,255,255,0.95); border-radius: 50%; padding: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .hero p { font-size: 16px; max-width: 600px; margin: 0 auto; color: #cbd5e1; }
         
-        /* MEGA SLIDER */
-        .swiper { width: 100%; max-width: 1400px; padding: 20px 0 60px; }
-        .swiper-slide { width: 600px; height: 400px; border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); overflow: hidden; position: relative; border: 4px solid rgba(255,255,255,0.2); cursor: pointer; transition: 0.3s; background-size: cover; background-position: center; }
+        /* UPDATED SLIDER SIZING - BIGGER & CINEMATIC */
+        .swiper { width: 100%; max-width: 1400px; padding-top: 20px; padding-bottom: 60px; }
+        .swiper-slide { background-position: center; background-size: cover; width: 650px; height: 420px; border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); overflow: hidden; position: relative; border: 4px solid rgba(255,255,255,0.15); cursor: pointer; transition: 0.3s ease; }
         @media (max-width: 768px) { .swiper-slide { width: 90%; height: 350px; } }
-        .swiper-slide:hover { border-color: var(--secondary); }
-        .slide-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px 30px 30px; background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.6), transparent); text-align: left; }
-        .slide-badge { background: var(--primary); padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(234,88,12,0.5); }
-        .slide-title { font-size: 26px; font-weight: 800; line-height: 1.3; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-        .click-hint { font-size: 12px; color: var(--secondary); margin-top: 8px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .swiper-slide:hover { border-color: var(--secondary); transform: scale(1.02); }
+        .slide-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px 30px 25px; background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.6), transparent); color: white; text-align: left; }
+        .slide-badge { background: var(--primary); color: white; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 800; text-transform: uppercase; display: inline-block; margin-bottom: 10px; letter-spacing: 1px;}
+        .slide-title { font-size: 26px; font-weight: 800; line-height: 1.3; font-family: 'Noto Sans Gujarati', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);}
+        .click-hint { font-size: 13px; color: var(--secondary); margin-top: 10px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+        .swiper-pagination-bullet { background: #fff !important; opacity: 0.5; width: 10px; height: 10px; }
+        .swiper-pagination-bullet-active { background: var(--secondary) !important; opacity: 1; transform: scale(1.5); }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
         .section-title { text-align: center; font-size: 36px; font-weight: 800; margin-bottom: 40px; color: var(--dark); }
-        .section-title span { color: var(--primary); }
+        .section-title span { color: var(--primary); background: rgba(234,88,12,0.1); padding: 0 10px; border-radius: 8px;}
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .grid-landscape { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 30px; }
 
-        .card { background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f1f5f9; cursor: pointer; }
+        .card { background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f1f5f9; position: relative; }
         .card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); }
-        .card-img { width: 100%; height: 250px; object-fit: cover; }
-        .multi-photo-badge { position: absolute; top: 15px; right: 15px; background: rgba(15,23,42,0.8); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); }
+        .card-img { width: 100%; height: 220px; object-fit: cover; }
+        .card-body { padding: 25px; }
+
+        /* Badge for Multiple Photos */
+        .multi-photo-badge { position: absolute; top: 15px; right: 15px; background: rgba(15,23,42,0.85); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        .event-card { display: flex; flex-direction: row; background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f1f5f9; height: 100%; }
+        .event-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); }
+        .event-img-wrap { width: 40%; flex-shrink: 0; background: #e2e8f0; position: relative; }
+        .event-img-wrap img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+        .event-body { padding: 25px; width: 60%; display: flex; flex-direction: column; }
+        .event-date-badge { display: inline-block; background: #fff7ed; color: var(--primary); font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 20px; margin-bottom: 12px; border: 1px solid #ffedd5; width: fit-content; }
+        .event-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: var(--dark); font-family: 'Noto Sans Gujarati', sans-serif; line-height: 1.3; }
+        .event-desc { color: #64748b; font-size: 14px; line-height: 1.6; font-family: 'Noto Sans Gujarati', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 15px; flex-grow: 1; }
+
+        @media (max-width: 768px) { .grid-landscape { grid-template-columns: 1fr; } .event-card { flex-direction: column; } .event-img-wrap { width: 100%; height: 220px; position: relative; } .event-body { width: 100%; } }
+        
+        .committee-card { text-align: center; padding: 40px 20px; background: linear-gradient(to bottom, #ffffff, #f8fafc); }
+        .committee-img { width: 160px; height: 180px; border-radius: 12px; object-fit: cover; border: 4px solid var(--secondary); margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        .pos-badge { display: inline-block; background: var(--primary); color: var(--white); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(234,88,12,0.2); }
+
+        /* MODALS */
+        #readMoreModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(5px); z-index: 3000; justify-content: center; align-items: center; padding: 20px; }
+        .rm-content { background: var(--white); width: 100%; max-width: 650px; max-height: 90vh; border-radius: 20px; overflow-y: auto; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: zoomIn 0.3s ease; display: flex; flex-direction: column; }
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .rm-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; transition: 0.2s; z-index: 10; border: none; }
+        .rm-close:hover { background: var(--primary); }
+        .rm-img { width: 100%; height: 300px; object-fit: cover; background: #e2e8f0; }
+        .rm-body { padding: 30px; }
+        .rm-date { display: inline-block; background: #fff7ed; color: var(--primary); font-weight: 700; font-size: 13px; padding: 6px 15px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #ffedd5; }
+        .rm-title { font-size: 26px; font-weight: 800; color: var(--dark); margin-bottom: 15px; font-family: 'Noto Sans Gujarati', sans-serif; line-height: 1.3;}
+        .rm-desc { font-size: 15px; color: #475569; line-height: 1.8; font-family: 'Noto Sans Gujarati', sans-serif; white-space: pre-wrap; }
 
         /* ADVANCED LIGHTBOX FOR MULTIPLE IMAGES */
-        #lightbox { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index: 4000; justify-content: center; align-items: center; flex-direction: column; }
-        #lightbox img { max-width: 85%; max-height: 80vh; border-radius: 12px; border: 4px solid var(--white); box-shadow: 0 20px 50px rgba(0,0,0,0.7); object-fit: contain; }
-        #lightbox-close { position: absolute; top: 30px; right: 40px; color: white; font-size: 40px; cursor: pointer; z-index: 4010; }
-        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 50px; color: white; cursor: pointer; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 50%; transition: 0.3s; z-index: 4010; }
-        .lb-nav:hover { background: var(--primary); }
+        #lightbox { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.95); z-index: 4000; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(8px); }
+        #lightbox img { max-width: 90%; max-height: 75vh; border-radius: 12px; border: 4px solid var(--white); box-shadow: 0 20px 40px rgba(0,0,0,0.5); object-fit: contain; }
+        #lightbox-close { position: absolute; top: 30px; right: 40px; color: var(--white); font-size: 40px; cursor: pointer; transition: 0.2s; z-index: 4010; }
+        #lightbox-close:hover { color: var(--primary); transform: scale(1.1); }
+        
+        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 45px; color: white; cursor: pointer; background: rgba(0,0,0,0.4); width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: 0.3s; z-index: 4010; }
+        .lb-nav:hover { background: var(--primary); transform: translateY(-50%) scale(1.1); }
         #lb-prev { left: 30px; }
         #lb-next { right: 30px; }
-        #lb-counter { color: white; margin-top: 15px; font-size: 16px; font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
+        #lb-counter { color: white; margin-top: 15px; font-size: 16px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 6px 18px; border-radius: 20px; letter-spacing: 1px; }
 
+        footer { background: var(--dark); color: var(--white); padding: 60px 20px 20px; margin-top: auto; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto 40px; }
+        .footer-bottom { text-align: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 14px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
+    <!-- NAVIGATION (RESTORED EXACTLY AS ORIGINAL) -->
     <nav class="navbar">
         <div class="nav-left">
             <a href="#home" class="logo">
-                <img src="./logo.png" alt="Logo" class="brand-logo-img">
+                <img src="./logo.png" alt="Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/45x45.png?text=Logo';">
                 <div class="nav-brand-text">
                     <div class="title">Shree <span>Batrisi</span></div>
                     <div class="subtitle">Jain Co-Op. Education Society Ltd.</div>
@@ -101,100 +157,163 @@
                 <a href="#home" class="active">Home</a>
                 <a href="#about">About</a>
                 <a href="#events">Events</a>
-                <a href="#gallery">Gallery</a>
                 <a href="#media">Media</a>
+                <a href="#gallery">Gallery</a>
+                <a href="#downloads">Downloads</a>
                 <a href="#committee">Committee</a>
+                <a href="#contact">Contact</a>
             </div>
             <div class="nav-actions">
-                <a href="admin.html" class="btn-legacy btn-saffron" target="_blank"><i class="fa-solid fa-shield"></i> Admin</a>
+                <a href="id_card_app.html" class="btn-legacy" target="_blank"><i class="fa-solid fa-id-card"></i> Get ID Card</a>
+                <a href="medical_app_standalone.html" class="btn-legacy btn-saffron" target="_blank"><i class="fa-solid fa-notes-medical"></i> Medical Sahay</a>
             </div>
         </div>
     </nav>
 
+    <!-- SPA VIEWS -->
     <div id="view-home" class="page-view active">
+        
+        <!-- NEW 3D HERO SECTION WITH CLICKABLE MEGA SLIDER -->
         <div class="hero">
             <div class="hero-top-text">
-                <img src="./logo.png" alt="Logo" class="hero-logo">
-                <h1 style="font-size:40px; font-weight:800;">Welcome to Batrisi Samaj</h1>
+                <img src="./logo.png" alt="Logo" class="hero-logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120.png?text=Logo';">
+                <h1>Empowering the Community</h1>
+                <p>Welcome to <strong>Shree Batrisi Jain Co-Op. Education Society Ltd.</strong> Dedicated to education, medical relief, and cultural unity since 1944.</p>
             </div>
             
-            <!-- MEGA 3D SLIDER -->
             <div class="swiper mySwiper">
-                <div class="swiper-wrapper" id="hero-slider-wrapper"></div>
+                <div class="swiper-wrapper" id="hero-slider-wrapper">
+                    <!-- Slides injected by JS -->
+                </div>
                 <div class="swiper-pagination"></div>
             </div>
         </div>
-    </div>
 
-    <!-- GALLERY VIEW -->
-    <div id="view-gallery" class="page-view">
         <div class="container">
-            <h2 class="section-title">Photo <span>Gallery</span></h2>
-            <div class="grid" id="gallery-grid"></div>
+            <h2 class="section-title">Latest <span>Updates</span></h2>
+            <div class="grid-landscape" id="home-events-grid"></div>
         </div>
     </div>
 
-    <!-- MEDIA VIEW -->
-    <div id="view-media" class="page-view">
+    <!-- OTHER SECTIONS RESTORED -->
+    <div id="view-about" class="page-view">
         <div class="container">
-            <h2 class="section-title">Media <span>Coverage</span></h2>
-            <div class="grid" id="media-grid"></div>
+            <h2 class="section-title">About <span>Us</span></h2>
+            <div class="card" style="padding: 40px; text-align: center; max-width: 900px; margin: 0 auto; line-height: 1.8; font-size: 18px;">
+                <img src="./logo.png" alt="Logo" style="height: 70px; width: 70px; margin-bottom: 15px; object-fit: contain;">
+                <div id="about-content" style="margin-bottom: 20px;"></div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 15px; color: #64748b;">
+                    <b>Reg No:</b> GH/230 &nbsp;|&nbsp; <b>GSTIN:</b> 24AAATS6070J1ZE
+                </div>
+            </div>
         </div>
     </div>
     
-    <!-- ADVANCED LIGHTBOX -->
+    <div id="view-events" class="page-view"><div class="container"><h2 class="section-title">Upcoming <span>Events</span></h2><div class="grid-landscape" id="events-grid"></div></div></div>
+    <div id="view-media" class="page-view"><div class="container"><h2 class="section-title">Media <span>Coverage</span></h2><div class="grid" id="media-grid"></div></div></div>
+    <div id="view-gallery" class="page-view"><div class="container"><h2 class="section-title">Photo <span>Gallery</span></h2><div class="grid" id="gallery-grid"></div></div></div>
+    <div id="view-downloads" class="page-view"><div class="container"><h2 class="section-title">Important <span>Downloads</span></h2><div class="grid" id="downloads-grid"></div></div></div>
+    <div id="view-committee" class="page-view"><div class="container"><h2 class="section-title">Our <span>Committee</span></h2><div class="grid" id="committee-grid"></div></div></div>
+    
+    <div id="view-contact" class="page-view">
+        <div class="container">
+            <h2 class="section-title">Contact <span>Us</span></h2>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; max-width: 1000px; margin: 0 auto;">
+                <div class="card" style="padding: 40px; border-top: 4px solid var(--primary);">
+                    <h3 style="margin-bottom: 25px; color: var(--dark); font-size: 24px;">Get In Touch</h3>
+                    <p style="margin-bottom:20px; font-size: 16px;"><i class="fa-solid fa-location-dot" style="color:var(--primary); width:30px;"></i> Sheth Shri Hiralal Hargovandas Batrishi Hall, Near R.T.O Circle, Ahmedabad - 380027</p>
+                    <p style="margin-bottom:20px; font-size: 16px;"><i class="fa-solid fa-phone" style="color:var(--primary); width:30px;"></i> 079-27557668</p>
+                    <p style="margin-bottom:20px; font-size: 16px;"><i class="fa-solid fa-mobile-screen" style="color:var(--primary); width:30px;"></i> +91 95864 23232</p>
+                    <p style="font-size: 16px;"><i class="fa-solid fa-envelope" style="color:var(--primary); width:30px;"></i> 32cedusociety@gmail.com</p>
+                </div>
+                <div class="card" style="padding: 0; box-shadow: var(--shadow);">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3670.362627914486!2d72.580252!3d23.083818!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e839217646a51%3A0xc3c5f4b0051ea0ab!2sSubhash%20Bridge!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" width="100%" height="100%" style="border:0; min-height: 350px;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="readMoreModal"><div class="rm-content"><button class="rm-close" onclick="closeReadMoreModal()"><i class="fa-solid fa-xmark"></i></button><img id="rm-img" class="rm-img" src=""><div class="rm-body"><span class="rm-date" id="rm-date"></span><h3 class="rm-title" id="rm-title"></h3><div class="rm-desc" id="rm-desc"></div></div></div></div>
+    
+    <!-- ADVANCED LIGHTBOX HTML -->
     <div id="lightbox">
         <i class="fa-solid fa-xmark" id="lightbox-close" onclick="closeLightbox()"></i>
-        <i class="fa-solid fa-chevron-left lb-nav" id="lb-prev" onclick="changeLightboxImg(-1)"></i>
+        <div class="lb-nav" id="lb-prev" onclick="changeLightboxImg(-1)"><i class="fa-solid fa-chevron-left"></i></div>
         <img id="lightbox-img" src="">
-        <i class="fa-solid fa-chevron-right lb-nav" id="lb-next" onclick="changeLightboxImg(1)"></i>
-        <p id="lightbox-caption" style="color:white; margin-top:15px; font-size:22px; font-weight:700;"></p>
+        <div class="lb-nav" id="lb-next" onclick="changeLightboxImg(1)"><i class="fa-solid fa-chevron-right"></i></div>
+        <p id="lightbox-caption" style="color:white; margin-top:20px; font-size:24px; font-weight:800; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);"></p>
         <p id="lb-counter"></p>
     </div>
 
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <img src="./logo.png" alt="Logo" style="height: 60px; width: 60px; object-fit: contain; background: var(--white); padding: 8px; border-radius: 12px;">
+                    <h3 style="color:var(--secondary); margin: 0; line-height: 1.3; font-size: 22px;">Shree Batrisi<br><span style="font-size: 13px; color: #cbd5e1;">Jain Co-Op. Education Society Ltd.</span></h3>
+                </div>
+                <p style="color:#94a3b8; font-size:14px; line-height:1.7;">Dedicated to education, medical relief, and community welfare since 1944.</p>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 20px; color: var(--white);">Quick Links</h3>
+                <ul style="list-style: none; line-height: 2.2;">
+                    <li><a href="#about" style="color:#cbd5e1; text-decoration:none;"><i class="fa-solid fa-angle-right" style="color:var(--primary); font-size:12px;"></i> About Us</a></li>
+                    <li><a href="#events" style="color:#cbd5e1; text-decoration:none;"><i class="fa-solid fa-angle-right" style="color:var(--primary); font-size:12px;"></i> Events</a></li>
+                    <li style="margin-top:10px;"><a href="admin.html" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:600;"><i class="fa-solid fa-shield-halved"></i> Admin Login</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2026 Shree Batrisi Jain Co-Op. Education Society Ltd. All Rights Reserved.</div>
+    </footer>
+
+    <!-- Swiper JS Script -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
+    <!-- LOGIC -->
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
+            authDomain: "batrisi-latest-app.firebaseapp.com",
+            projectId: "batrisi-latest-app"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Router
-        function handleRoute() { 
-            let hash = window.location.hash || '#home'; 
-            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active')); 
-            document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active')); 
-            let targetView = document.getElementById('view-' + hash.substring(1)); 
-            if(targetView) targetView.classList.add('active'); 
-            let activeLink = document.querySelector(`.nav-links a[href="${hash}"]`); 
-            if(activeLink) activeLink.classList.add('active'); 
-            window.scrollTo(0,0); 
-        }
-        window.addEventListener('hashchange', handleRoute); 
-        window.addEventListener('load', () => { handleRoute(); fetchHeroSliderData(); fetchAllData(); });
-
-        // Jump to section when clicking slider
+        window.allEventsData = {};
+        function handleRoute() { let hash = window.location.hash || '#home'; document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active')); let targetView = document.getElementById('view-' + hash.substring(1)); if(targetView) targetView.classList.add('active'); let activeLink = document.querySelector(`.nav-links a[href="${hash}"]`); if(activeLink) activeLink.classList.add('active'); window.scrollTo(0,0); }
+        window.addEventListener('hashchange', handleRoute); window.addEventListener('load', () => { handleRoute(); fetchAllData(); fetchHeroSliderData(); });
+        
+        function openReadMoreModal(docId) { const d = window.allEventsData[docId]; if(!d) return; document.getElementById('rm-img').src = d.image || 'https://via.placeholder.com/800x400'; document.getElementById('rm-date').innerHTML = `<i class="fa-regular fa-calendar"></i> ${d.date}`; document.getElementById('rm-title').innerText = d.title; document.getElementById('rm-desc').innerText = d.desc; document.getElementById('readMoreModal').style.display = 'flex'; }
+        function closeReadMoreModal() { document.getElementById('readMoreModal').style.display = 'none'; }
+        
+        // SLIDER JUMP TO SECTION LOGIC
         function sliderJumpTo(type) {
             window.location.hash = `#${type.toLowerCase()}`;
         }
 
-        // Fetch Data for Mega Slider
+        // UPDATED HERO SLIDER (3D COVERFLOW + CLICK ACTION)
         async function fetchHeroSliderData() {
             try {
-                const [gallerySnap, mediaSnap] = await Promise.all([
-                    db.collection('gallery').orderBy('timestamp', 'desc').limit(5).get(),
-                    db.collection('media').orderBy('timestamp', 'desc').limit(3).get()
+                const [eventsSnap, mediaSnap, gallerySnap] = await Promise.all([
+                    db.collection('events').orderBy('timestamp', 'desc').limit(3).get(),
+                    db.collection('media').orderBy('timestamp', 'desc').limit(3).get(),
+                    db.collection('gallery').orderBy('timestamp', 'desc').limit(3).get()
                 ]);
 
                 let slides = [];
-                gallerySnap.forEach(doc => slides.push({...doc.data(), type: 'Gallery'}));
+                eventsSnap.forEach(doc => slides.push({...doc.data(), type: 'Events'}));
                 mediaSnap.forEach(doc => slides.push({...doc.data(), type: 'Media'}));
+                gallerySnap.forEach(doc => slides.push({...doc.data(), type: 'Gallery'}));
 
                 slides.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 
                 let sliderHtml = '';
-                slides.forEach(item => {
-                    // Handle array of images or single image
+                slides.slice(0, 6).forEach(item => {
+                    // Check if it's an array of images or single image
                     let coverImg = (item.images && item.images.length > 0) ? item.images[0] : (item.image || 'https://via.placeholder.com/600x400');
+                    
                     sliderHtml += `
                         <div class="swiper-slide" style="background-image: url('${coverImg}')" onclick="sliderJumpTo('${item.type}')">
                             <div class="slide-overlay">
@@ -207,7 +326,7 @@
                 });
                 document.getElementById('hero-slider-wrapper').innerHTML = sliderHtml;
 
-                // CINEMATIC 3D SWIPER SETUP
+                // CINEMATIC BIG 3D COVERFLOW
                 new Swiper(".mySwiper", {
                     effect: "coverflow",
                     grabCursor: true,
@@ -215,20 +334,23 @@
                     slidesPerView: "auto",
                     loop: true,
                     autoplay: { delay: 3000, disableOnInteraction: false },
-                    coverflowEffect: { rotate: 20, stretch: 0, depth: 400, modifier: 1, slideShadows: true },
+                    coverflowEffect: {
+                        rotate: 15, stretch: 0, depth: 400, modifier: 1, slideShadows: true,
+                    },
                     pagination: { el: ".swiper-pagination", clickable: true },
                 });
-            } catch(e) { console.log(e); }
+            } catch(e) { console.log("Slider Error:", e); }
         }
 
-        // Lightbox Logic for Arrays
+        // NEW MULTI-IMAGE LIGHTBOX LOGIC
         let currentLbImages = [];
         let currentLbIndex = 0;
 
-        function openLightbox(imgArray, title) { 
-            currentLbImages = Array.isArray(imgArray) ? imgArray : [imgArray];
+        function openLightbox(imgData, caption) { 
+            // Check if string (old data) or array (new data)
+            currentLbImages = Array.isArray(imgData) ? imgData : [imgData];
             currentLbIndex = 0;
-            document.getElementById('lightbox-caption').innerText = title || ''; 
+            document.getElementById('lightbox-caption').innerText = caption || ''; 
             updateLightboxView();
             document.getElementById('lightbox').style.display = 'flex'; 
         }
@@ -244,38 +366,38 @@
 
         function updateLightboxView() {
             document.getElementById('lightbox-img').src = currentLbImages[currentLbIndex];
-            
-            // Hide/Show arrows if only 1 image
             let navs = document.querySelectorAll('.lb-nav');
             if(currentLbImages.length <= 1) {
                 navs.forEach(n => n.style.display = 'none');
                 document.getElementById('lb-counter').style.display = 'none';
             } else {
-                navs.forEach(n => n.style.display = 'block');
+                navs.forEach(n => n.style.display = 'flex');
                 document.getElementById('lb-counter').style.display = 'block';
                 document.getElementById('lb-counter').innerText = `Image ${currentLbIndex + 1} of ${currentLbImages.length}`;
             }
         }
 
-        // Fetch Grid Data
+        // FETCH ALL DATA 
         function fetchAllData() {
-            db.collection('gallery').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                let html = '';
-                snap.forEach(doc => { 
-                    let d = doc.data(); 
-                    let imgArr = d.images && d.images.length > 0 ? d.images : [d.image]; // Fallback for old data
-                    let cover = imgArr[0];
-                    let badge = imgArr.length > 1 ? `<span class="multi-photo-badge"><i class="fa-regular fa-images"></i> ${imgArr.length} Photos</span>` : '';
-                    
-                    html += `<div class="card" style="position:relative;" onclick='openLightbox(${JSON.stringify(imgArr)}, "${d.title.replace(/"/g, '&quot;')}")'>
-                                ${badge}
-                                <img src="${cover}" class="card-img">
-                                <div style="padding:15px; text-align:center;"><p style="font-weight:700; color:var(--dark);">${d.title}</p></div>
-                             </div>`; 
-                });
-                document.getElementById('gallery-grid').innerHTML = html;
+            db.collection('about').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                if(!snap.empty) {
+                    let html = '';
+                    snap.forEach(doc => { let d = doc.data(); html += `<h3 style="color: var(--dark); font-size: 24px; margin-bottom: 15px; font-weight: 800;">${d.title}</h3><p style="white-space: pre-wrap;">${d.desc}</p><br>`; });
+                    document.getElementById('about-content').innerHTML = html;
+                }
             });
 
+            db.collection('events').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                let html = ''; let count = 0; let homeHtml = '';
+                snap.forEach(doc => {
+                    let d = doc.data(); window.allEventsData[doc.id] = d;
+                    let card = `<div class="event-card"><div class="event-img-wrap"><img src="${d.image}"></div><div class="event-body"><span class="event-date-badge"><i class="fa-regular fa-calendar"></i> ${d.date}</span><h3 class="event-title">${d.title}</h3><p class="event-desc">${d.desc}</p><button onclick="openReadMoreModal('${doc.id}')" class="btn-legacy btn-saffron" style="margin-top:auto; padding:6px 15px; font-size:12px; width:fit-content; cursor:pointer; border:none;">વધુ વાંચો (Read More) <i class="fa-solid fa-arrow-right"></i></button></div></div>`;
+                    html += card; if(count < 4) homeHtml += card; count++;
+                });
+                document.getElementById('events-grid').innerHTML = html; document.getElementById('home-events-grid').innerHTML = homeHtml;
+            });
+
+            // MEDIA WITH MULTI-IMAGE BADGE
             db.collection('media').orderBy('timestamp', 'desc').onSnapshot(snap => {
                 let html = '';
                 snap.forEach(doc => { 
@@ -283,17 +405,52 @@
                     let imgArr = d.images && d.images.length > 0 ? d.images : [d.image];
                     let cover = imgArr[0];
                     let badge = imgArr.length > 1 ? `<span class="multi-photo-badge"><i class="fa-regular fa-images"></i> ${imgArr.length} Pages</span>` : '';
+                    
+                    // Fixed Quotes issue in JSON.stringify using escape
+                    let safeTitle = (d.title || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-                    html += `<div class="card" style="position:relative;" onclick='openLightbox(${JSON.stringify(imgArr)}, "${d.title.replace(/"/g, '&quot;')}")'>
+                    html += `<div class="card" onclick='openLightbox(${JSON.stringify(imgArr)}, "${safeTitle}")' style="cursor:pointer;">
                                 ${badge}
                                 <img src="${cover}" class="card-img">
-                                <div style="padding:15px;">
-                                    <h3 style="font-size:18px; margin-bottom:5px;">${d.title}</h3>
-                                    <span style="color:gray; font-size:12px;">${d.date || ''}</span>
+                                <div class="card-body">
+                                    <span style="color:var(--primary); font-weight:700; font-size:13px;"><i class="fa-regular fa-newspaper"></i> ${d.date || ''}</span>
+                                    <h3 class="card-title" style="margin-top:5px;">${d.title}</h3>
                                 </div>
                              </div>`; 
                 });
                 document.getElementById('media-grid').innerHTML = html;
+            });
+
+            // GALLERY WITH MULTI-IMAGE BADGE
+            db.collection('gallery').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                let html = '';
+                snap.forEach(doc => { 
+                    let d = doc.data(); 
+                    let imgArr = d.images && d.images.length > 0 ? d.images : [d.image];
+                    let cover = imgArr[0];
+                    let badge = imgArr.length > 1 ? `<span class="multi-photo-badge"><i class="fa-regular fa-images"></i> ${imgArr.length} Photos</span>` : '';
+                    
+                    let safeTitle = (d.title || "").replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+                    html += `<div class="card" style="cursor:pointer;" onclick='openLightbox(${JSON.stringify(imgArr)}, "${safeTitle}")'>
+                                ${badge}
+                                <img src="${cover}" class="card-img" style="height:250px;">
+                                <div class="card-body" style="padding:15px; text-align:center;"><p style="font-weight:700; margin:0; color:var(--dark);">${d.title}</p></div>
+                             </div>`; 
+                });
+                document.getElementById('gallery-grid').innerHTML = html;
+            });
+            
+            db.collection('downloads').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                let html = '';
+                snap.forEach(doc => { let d = doc.data(); let descHtml = d.desc ? `<p style="font-size:13px; color:#64748b; margin-bottom:15px; line-height:1.6;">${d.desc}</p>` : ''; html += `<div class="card dl-card" style="padding: 25px; display:flex; flex-direction:column; justify-content:space-between;"><div><div style="display:flex; align-items:flex-start; gap:15px; margin-bottom:12px;"><i class="fa-solid fa-file-pdf" style="font-size:35px; color:#ef4444; margin-top:3px;"></i><h3 class="card-title" style="margin:0; font-size:18px; color:var(--dark); line-height:1.3;">${d.title}</h3></div>${descHtml}</div><a href="${d.file}" target="_blank" class="btn-legacy btn-saffron" style="padding:8px 20px; font-size:13px; width:fit-content; margin-top:10px;"><i class="fa-solid fa-download"></i> View / Download PDF</a></div>`; });
+                document.getElementById('downloads-grid').innerHTML = html;
+            });
+
+            db.collection('committee').orderBy('timestamp', 'asc').onSnapshot(snap => {
+                let html = '';
+                snap.forEach(doc => { let d = doc.data(); html += `<div class="card committee-card"><img src="${d.photo}" class="committee-img"><br><span class="pos-badge">${d.position}</span><h3 class="card-title" style="margin-bottom:5px;">${d.name}</h3><p style="color:var(--primary); font-size:14px; font-weight:600; margin-bottom:5px;"><i class="fa-solid fa-location-dot"></i> Native: ${d.native}</p><p style="color:#64748b; font-size:14px; font-weight:500;"><i class="fa-solid fa-phone"></i> ${d.phone}</p></div>`; });
+                document.getElementById('committee-grid').innerHTML = html;
             });
         }
     </script>
