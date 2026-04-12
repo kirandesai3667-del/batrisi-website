@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Batrisi All In One</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#FFFFFF">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Modern Typography: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <!-- Firebase SDKs -->
@@ -18,122 +19,230 @@
 
     <style>
         :root {
-            --bg-base: #000000;
-            --bg-surface: #0a0a0a;
-            --bg-elevated: #1a1a1a;
-            --bg-glass: rgba(10, 10, 10, 0.85);
-            --text-primary: #F5F5F5;
-            --text-secondary: #A8A8A8;
-            --accent-color: #0095F6; 
-            --accent-hover: #1877F2;
-            --gradient-primary: linear-gradient(135deg, #0095F6 0%, #bc1888 100%);
-            --danger: #ED4956;
-            --success: #00ba7c;
-            --warning: #f09433;
-            --border-color: #262626;
-            --border-light: #363636;
+            /* Clean Light Theme Colors */
+            --bg-base: #F4F7FB; 
+            --bg-surface: #FFFFFF; 
+            --bg-elevated: #FFFFFF; 
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            
+            /* Typography Colors */
+            --text-primary: #1E293B; 
+            --text-secondary: #64748B; 
+            
+            /* Brand Colors (Blue & Green) */
+            --accent-color: #1E88E5; 
+            --accent-hover: #1565C0;
+            --gradient-primary: linear-gradient(135deg, #1E88E5 0%, #43A047 100%);
+            
+            /* Status Colors */
+            --danger: #EF4444; 
+            --success: #43A047; 
+            --warning: #F59E0B; 
+            
+            /* Borders & UI Elements */
+            --border-color: #E2E8F0; 
+            --border-light: #F1F5F9;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
         body { background-color: var(--bg-base); color: var(--text-primary); height: 100dvh; width: 100vw; overflow: hidden; display: flex; justify-content: center; }
-        #app-wrapper { width: 100%; max-width: 480px; height: 100%; background-color: var(--bg-base); position: relative; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        @media (min-width: 768px) { #app-wrapper { max-width: 100%; } }
+        
+        #app-wrapper { 
+            width: 100%; max-width: 480px; height: 100%; 
+            background-color: var(--bg-base); position: relative; overflow: hidden; 
+            display: flex; flex-direction: column; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.05); 
+        }
+        @media (min-width: 768px) { #app-wrapper { max-width: 100%; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); } }
+        
         .screen { display: none; flex-direction: column; height: 100%; width: 100%; position: absolute; top: 0; left: 0; background: var(--bg-base); z-index: 10; animation: fadeIn 0.3s ease; }
         .screen.active { display: flex; }
+        
         .content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; scroll-behavior: smooth; }
         .content-area::-webkit-scrollbar { display: none; }
-        .header { background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 20px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; }
-        .header-title { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
-        .header-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        
+        /* Header Upgrade */
+        .header { 
+            background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); 
+            padding: 20px; border-bottom: 1px solid var(--border-color); 
+            position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .header-title { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; color: var(--text-primary); }
+        .header-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; font-weight: 500; }
+        
+        /* Notifications Upgrade */
         .notification-container { position: relative; }
         .bell { font-size: 24px; cursor: pointer; position: relative; color: var(--text-primary); transition: transform 0.2s; }
         .bell:active { transform: scale(0.9); }
-        .notif-count { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid var(--bg-base); }
-        .notif-dropdown { display: none; position: absolute; right: 0; top: 40px; width: 280px; background: var(--bg-elevated); color: white; border-radius: 16px; border: 1px solid var(--border-light); padding: 15px; max-height: 350px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.2s ease; }
-        .notif-dropdown h4 { margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .notif-count { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 10px; border: 2px solid var(--bg-surface); }
+        .notif-dropdown { 
+            display: none; position: absolute; right: 0; top: 40px; width: 280px; 
+            background: var(--bg-elevated); color: var(--text-primary); 
+            border-radius: 16px; border: 1px solid var(--border-color); padding: 15px; 
+            max-height: 350px; overflow-y: auto; z-index: 1000; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); animation: fadeIn 0.2s ease; 
+        }
+        .notif-dropdown h4 { margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; }
         .notif-dropdown ul { list-style: none; padding: 0; }
-        .notif-dropdown li { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 13px; cursor: pointer; border-radius: 8px; transition: background 0.2s; }
-        .notif-dropdown li:hover { background: rgba(255,255,255,0.05); }
-        .notif-dropdown li.unread { background: rgba(0, 149, 246, 0.1); border-left: 3px solid var(--accent-color); }
-        .notif-dropdown li small { color: var(--text-secondary); font-size: 10px; margin-top: 4px; display: block; }
+        .notif-dropdown li { padding: 12px; border-bottom: 1px solid var(--border-light); font-size: 13px; cursor: pointer; border-radius: 8px; transition: background 0.2s; }
+        .notif-dropdown li:hover { background: #F8FAFC; }
+        .notif-dropdown li.unread { background: rgba(30, 136, 229, 0.05); border-left: 3px solid var(--accent-color); }
+        .notif-dropdown li small { color: var(--text-secondary); font-size: 10px; margin-top: 6px; display: block; }
+        
+        /* Typography Highlights */
         .brand-gradient { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; text-align: center; }
-        h2 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
+        h2 { font-size: 20px; font-weight: 700; margin-bottom: 15px; color: var(--text-primary); }
         h3 { font-size: 16px; font-weight: 600; margin-bottom: 10px; color: var(--accent-color); }
-        h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-        .card { background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        
+        /* Cards */
+        .card { 
+            background: var(--bg-surface); border: 1px solid var(--border-color); 
+            border-radius: 20px; padding: 24px; margin-bottom: 18px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); transition: transform 0.2s, box-shadow 0.2s; 
+        }
+        .card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.06); }
         .card:active { transform: scale(0.99); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge.pending { background: rgba(240, 148, 51, 0.2); color: var(--warning); }
-        .badge.approved { background: rgba(0, 186, 124, 0.2); color: var(--success); }
-        .badge.declined { background: rgba(237, 73, 86, 0.2); color: var(--danger); }
-        .badge.completed { background: rgba(0, 149, 246, 0.2); color: var(--accent-color); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; }
+        
+        /* Badges */
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge.pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge.approved { background: rgba(67, 160, 71, 0.1); color: var(--success); border: 1px solid rgba(67, 160, 71, 0.2); }
+        .badge.declined { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .badge.completed { background: rgba(30, 136, 229, 0.1); color: var(--accent-color); border: 1px solid rgba(30, 136, 229, 0.2); }
+        
+        /* Content Structuring */
         .info-group { margin-bottom: 12px; }
-        .info-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500;}
         .info-value { font-size: 15px; font-weight: 500; color: var(--text-primary); word-break: break-word; }
-        .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .detail-label { color: var(--text-secondary); }
-        .section-box { background: var(--bg-surface); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-light); }
-        .form-group { margin-bottom: 16px; position: relative; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; align-items: center; }
+        .detail-label { color: var(--text-secondary); font-weight: 500; }
+        .section-box { background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+        
+        /* Modern Inputs & Forms */
+        .form-group { margin-bottom: 18px; position: relative; }
         label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
-        input, select, textarea { width: 100%; background: var(--bg-surface); border: 1px solid var(--border-light); color: var(--text-primary); padding: 16px; border-radius: 16px; font-size: 15px; outline: none; transition: border-color 0.2s, background 0.2s; appearance: none; }
-        input[type="date"] { color: var(--text-primary); cursor: pointer; }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-        input:focus, select:focus, textarea:focus { border-color: var(--accent-color); background: var(--bg-elevated); }
-        input:read-only, textarea:read-only { opacity: 0.7; cursor: not-allowed; background: var(--bg-base); border-color: transparent; }
+        input, select, textarea { 
+            width: 100%; background: #F8FAFC; border: 1.5px solid var(--border-color); 
+            color: var(--text-primary); padding: 14px 16px; border-radius: 12px; 
+            font-size: 14px; outline: none; transition: all 0.2s ease; appearance: none; 
+            font-weight: 500;
+        }
+        input[type="date"] { cursor: pointer; }
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0); }
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--accent-color); background: #FFFFFF; 
+            box-shadow: 0 0 0 4px rgba(30, 136, 229, 0.1); 
+        }
+        input:read-only, textarea:read-only { opacity: 1; cursor: not-allowed; background: var(--border-light); border-color: transparent; color: var(--text-secondary); }
+        
         .password-wrapper { position: relative; }
-        .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--text-secondary); cursor: pointer; }
+        .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; }
+        .toggle-password:hover { color: var(--accent-color); }
+        
         .checkbox-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-        .checkbox-wrapper input { width: 18px; height: 18px; margin: 0; padding: 0; accent-color: var(--accent-color); appearance: auto; -webkit-appearance: auto; cursor: pointer; }
-        .checkbox-wrapper label { margin: 0; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
-        button { width: 100%; border: none; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, opacity 0.2s; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .checkbox-wrapper input { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; }
+        .checkbox-wrapper label { margin: 0; font-size: 14px; color: var(--text-primary); cursor: pointer; font-weight: 500; }
+        
+        /* Enhanced Buttons */
+        button { 
+            width: 100%; border: none; padding: 16px; border-radius: 12px; 
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; 
+            color: #FFFFFF; display: flex; justify-content: center; align-items: center; gap: 8px; 
+        }
         button:active { transform: scale(0.96); }
-        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        .btn-primary { background: var(--accent-color); }
-        .btn-gradient { background: var(--gradient-primary); box-shadow: 0 8px 20px rgba(0, 149, 246, 0.3); }
-        .btn-success { background: var(--success); }
-        .btn-danger { background: var(--danger); }
-        .btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text-primary); }
+        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .btn-primary { background: var(--accent-color); box-shadow: 0 6px 15px rgba(30, 136, 229, 0.2); }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-gradient { background: var(--gradient-primary); box-shadow: 0 6px 15px rgba(30, 136, 229, 0.25); }
+        .btn-success { background: var(--success); box-shadow: 0 6px 15px rgba(67, 160, 71, 0.2); }
+        .btn-danger { background: var(--danger); box-shadow: 0 6px 15px rgba(239, 68, 68, 0.2); }
+        .btn-outline { background: transparent; border: 1.5px solid var(--border-color); color: var(--text-primary); box-shadow: none; }
+        .btn-outline:hover { background: #F8FAFC; }
+        
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .btn-small { padding: 8px 12px; font-size: 13px; border-radius: 10px; width: auto; }
-        .dropzone { border: 2px dashed var(--border-light); border-radius: 20px; padding: 40px 20px; text-align: center; color: var(--text-secondary); background: var(--bg-surface); cursor: pointer; transition: 0.2s; }
-        .dropzone.dragover { border-color: var(--accent-color); background: rgba(0, 149, 246, 0.1); }
-        .dropzone i { font-size: 40px; margin-bottom: 10px; color: var(--text-primary); }
-        .bottom-nav { background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 15px 0 calc(15px + env(safe-area-inset-bottom)); position: absolute; bottom: 0; width: 100%; z-index: 30; }
+        
+        /* Drag & Drop */
+        .dropzone { 
+            border: 2px dashed var(--border-color); border-radius: 16px; padding: 40px 20px; 
+            text-align: center; color: var(--text-secondary); background: #F8FAFC; 
+            cursor: pointer; transition: all 0.2s; 
+        }
+        .dropzone.dragover { border-color: var(--accent-color); background: rgba(30, 136, 229, 0.05); }
+        .dropzone i { font-size: 40px; margin-bottom: 10px; color: var(--accent-color); }
+        
+        /* Bottom Navigation Upgrade */
+        .bottom-nav { 
+            background: var(--bg-surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); 
+            border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; 
+            padding: 15px 0 calc(15px + env(safe-area-inset-bottom)); position: absolute; bottom: 0; width: 100%; z-index: 30; 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
+        }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; width: 100%; }
-        .nav-item.active { color: var(--text-primary); }
+        .nav-item.active { color: var(--accent-color); }
         .nav-item i { font-size: 26px; transition: transform 0.2s; }
         .nav-item.active i { transform: scale(1.15); font-weight: bold; }
-        .nav-item span { font-size: 11px; margin-top: 4px; font-weight: 500; }
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--bg-elevated); color: var(--text-primary); padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 500; border: 1px solid var(--border-light); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; }
+        .nav-item span { font-size: 11px; margin-top: 4px; font-weight: 600; }
+        
+        /* Modern Toasts */
+        .toast { 
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); 
+            background: var(--bg-elevated); color: var(--text-primary); padding: 14px 24px; 
+            border-radius: 30px; font-size: 14px; font-weight: 600; border: 1px solid var(--border-color); 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); z-index: 9999; 
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; 
+        }
         .toast.show { transform: translateX(-50%) translateY(0); }
+        
+        /* Action Grid */
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .action-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; text-align: center; transition: background 0.2s;}
-        .action-card:hover { background: var(--bg-elevated); }
+        .action-card { 
+            background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; 
+            padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            gap: 10px; cursor: pointer; text-align: center; transition: all 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .action-card:hover { background: #F8FAFC; border-color: var(--accent-color); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05);}
         .action-card i { font-size: 32px; color: var(--accent-color); }
-        .action-card span { font-size: 13px; font-weight: 600; }
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(5px); }
+        .action-card span { font-size: 13px; font-weight: 600; color: var(--text-primary);}
+        
+        /* Modals */
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
-        .modal-content { background: var(--bg-surface); width: 100%; border-radius: 24px 24px 0 0; padding: 30px 20px 50px; animation: slideUp 0.3s cubic-bezier(0.1, 0.8, 0.2, 1); max-height: 85vh; overflow-y: auto; }
+        .modal-content { background: var(--bg-surface); width: 100%; border-radius: 24px 24px 0 0; padding: 30px 20px 50px; animation: slideUp 0.3s cubic-bezier(0.1, 0.8, 0.2, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1);}
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .table-container { width: 100%; overflow-x: auto; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border-color); margin-top: 15px; }
+        
+        /* Tables */
+        .table-container { width: 100%; overflow-x: auto; background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-color); margin-top: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);}
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 13px; }
-        th { background: var(--bg-surface); color: var(--text-secondary); font-weight: 600; text-transform: uppercase; position: sticky; top: 0; z-index: 10;}
-        tr:hover { background: rgba(255,255,255,0.02); }
-        td { color: var(--text-primary); }
-        .qr-wrapper { background: #fff; padding: 15px; border-radius: 12px; display: inline-block; margin-top: 10px; }
-        .img-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px; margin-top: 10px; border: 1px solid var(--border-light); display: none; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+        th { background: #F8FAFC; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; position: sticky; top: 0; z-index: 10; font-size: 12px; letter-spacing: 0.5px;}
+        tr:hover { background: #F8FAFC; }
+        td { color: var(--text-primary); font-weight: 500;}
+        
+        /* Images & Utilities */
+        .qr-wrapper { background: #fff; padding: 15px; border-radius: 16px; display: inline-block; margin-top: 10px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.03);}
+        .img-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px; margin-top: 10px; border: 1px solid var(--border-color); display: none; background: #F8FAFC;}
         #reader { border-radius: 16px; overflow: hidden; border: 2px solid var(--accent-color); }
         #reader video { object-fit: cover; }
-        .update-card { background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .update-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; background: var(--bg-surface); }
-        .update-meta { font-size: 12px; color: var(--accent-color); margin-bottom: 8px; font-weight: 600; display: flex; gap: 10px; align-items: center;}
-        .update-msg { font-size: 15px; color: var(--text-primary); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;}
-        .video-responsive-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; width: 100%; border-radius: 12px; margin-bottom: 15px; background: #000; }
+        
+        /* Updates Card */
+        .update-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .update-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; background: var(--bg-base); border: 1px solid var(--border-light);}
+        .update-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; display: flex; gap: 10px; align-items: center;}
+        .update-msg { font-size: 15px; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;}
+        
+        /* Videos */
+        .video-responsive-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; width: 100%; border-radius: 12px; margin-bottom: 15px; background: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
         .video-responsive-container iframe, .video-responsive-container video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .ig-fallback-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gradient-primary); color: white; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; margin-bottom: 15px; font-size: 14px; transition: transform 0.2s; }
+        
+        .ig-fallback-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--gradient-primary); color: white; padding: 14px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; margin-bottom: 15px; font-size: 14px; transition: transform 0.2s; box-shadow: 0 6px 15px rgba(30, 136, 229, 0.25);}
         .ig-fallback-btn:active { transform: scale(0.96); }
     </style>
 </head>
@@ -146,10 +255,10 @@
     <div id="screen-login" class="screen active" style="padding: 20px; overflow-y: auto; display: flex; flex-direction: column;">
         <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <i class="ph-fill ph-shield-check" style="font-size: 50px; color: var(--accent-color); margin-bottom: 10px;"></i>
-                <h1 class="brand-gradient" style="font-size: 24px;">Batrisi All In One</h1>
+                <i class="ph-fill ph-shield-check" style="font-size: 60px; color: var(--accent-color); margin-bottom: 10px; filter: drop-shadow(0 4px 10px rgba(30,136,229,0.2));"></i>
+                <h1 class="brand-gradient" style="font-size: 26px;">Batrisi All In One</h1>
             </div>
-            <div class="card" style="padding: 20px;">
+            <div class="card" style="padding: 24px;">
                 <form id="login-form">
                     <div class="form-group">
                         <label>Select Role</label>
@@ -171,7 +280,7 @@
                             <i class="ph ph-eye toggle-password" onclick="togglePassword()"></i>
                         </div>
                     </div>
-                    <div class="checkbox-wrapper" style="margin-bottom: 20px;">
+                    <div class="checkbox-wrapper" style="margin-bottom: 24px;">
                         <input type="checkbox" id="remember-me">
                         <label for="remember-me">Remember Login</label>
                     </div>
@@ -179,14 +288,14 @@
                 </form>
             </div>
         </div>
-        <div style="text-align: center; padding: 30px 20px 20px; font-size: 11px; color: var(--text-secondary); line-height: 1.6;">
-            <b style="color: var(--text-primary); font-size: 12px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br>
+        <div style="text-align: center; padding: 30px 20px 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+            <b style="color: var(--text-primary); font-size: 13px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br>
             Sheth Shri Hiralal Hargovandas Batrishi Hall<br>
             Near R.T.O Circle, Subhashbridge, Collector Kacheri<br>
             Ahmedabad - 380027<br><br>
             Phone: 079-27557668<br>
             Mobile: +91 95864 23232<br>
-            Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none;">32cedusociety@gmail.com</a><br><br>
+            Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">32cedusociety@gmail.com</a><br><br>
             GSTIN: 24AAATS6070J1ZE<br>
             Reg No: GH/230<br>
             Reg Date: 10/10/1944
@@ -198,19 +307,19 @@
         <div class="header">
             <div>
                 <div class="header-title">Admin Dashboard</div>
-                <div class="header-subtitle">Welcome, <span id="admin-name-display">Admin</span></div>
+                <div class="header-subtitle">Welcome, <span id="admin-name-display" style="color: var(--accent-color);">Admin</span></div>
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer;" onclick="refreshSystemData()"></i>
+                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-secondary)'" onclick="refreshSystemData()"></i>
                 <div class="notification-container">
                     <div class="bell" onclick="toggleNotifications()">
                         <i class="ph ph-bell"></i>
                         <span id="notifCount-admin" class="notif-count">0</span>
                     </div>
                     <div id="notifDropdown-admin" class="notif-dropdown">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
-                            <span style="font-size:11px; color:var(--text-secondary); cursor:pointer; font-weight:600;" onclick="clearAdminNotifications()">Clear Announcements 🧹</span>
-                            <span style="font-size:11px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; margin-bottom: 12px;">
+                            <span style="font-size:12px; color:var(--text-secondary); cursor:pointer; font-weight:600;" onclick="clearAdminNotifications()">Clear Announcements 🧹</span>
+                            <span style="font-size:12px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
                         </div>
                         <ul id="notifList-admin"></ul>
                     </div>
@@ -238,12 +347,12 @@
                 <div class="action-card" onclick="refreshSystemData()">
                     <i class="ph ph-arrows-clockwise"></i><span>Refresh System Data</span>
                 </div>
-                <div class="action-card" onclick="openModal('modal-send-notification')">
+                <div class="action-card" onclick="openModal('modal-send-notification')" style="grid-column: span 2;">
                     <i class="ph ph-broadcast"></i><span>Send Notification to All</span>
                 </div>
             </div>
 
-            <div style="background: var(--bg-elevated); padding: 15px; border-radius: 16px; margin-top: 20px; border: 1px solid var(--border-color);">
+            <div style="background: var(--bg-surface); padding: 20px; border-radius: 20px; margin-top: 20px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                 <h3 style="margin-top: 0; color: var(--text-primary);">Filter Reports</h3>
                 <div style="display: flex; gap: 10px;">
                     <select id="admin-filter-month" onchange="renderAdminRequests()">
@@ -270,24 +379,24 @@
             </div>
 
             <div class="card" id="admin-monthly-totals" style="margin-top: 20px; border-color: var(--accent-color);">
-                <h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-primary);">Financial Summary (Completed Reports)</h3>
+                <h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-primary);">Financial Summary <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">(Completed Reports)</span></h3>
                 <div class="grid-2">
-                    <div class="action-card" style="background: rgba(0, 149, 246, 0.1); border-color: var(--accent-color); padding: 15px 10px;">
-                        <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Total W/O Discount</span>
+                    <div class="action-card" style="background: rgba(30, 136, 229, 0.05); border-color: var(--accent-color); padding: 15px 10px;">
+                        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Total W/O Discount</span>
                         <span id="admin-total-original" style="font-size: 18px; font-weight: 800; color: var(--accent-color);">₹ 0.00</span>
                         <span id="admin-total-label1" style="font-size: 10px; color: var(--text-secondary); margin-top: 5px;">Based on Filter</span>
                     </div>
-                    <div class="action-card" style="background: rgba(0, 186, 124, 0.1); border-color: var(--success); padding: 15px 10px;">
-                        <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Total With Discount</span>
+                    <div class="action-card" style="background: rgba(67, 160, 71, 0.05); border-color: var(--success); padding: 15px 10px;">
+                        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Total With Discount</span>
                         <span id="admin-total-final" style="font-size: 18px; font-weight: 800; color: var(--success);">₹ 0.00</span>
                         <span id="admin-total-label2" style="font-size: 10px; color: var(--text-secondary); margin-top: 5px;">Based on Filter</span>
                     </div>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 15px;">
                 <h2 style="margin: 0;">Request Overview</h2>
-                <select id="admin-filter-status" style="width: auto; padding: 8px 12px; border-radius: 8px; font-size: 13px;" onchange="renderAdminRequests()">
+                <select id="admin-filter-status" style="width: auto; padding: 10px 14px; border-radius: 10px; font-size: 13px;" onchange="renderAdminRequests()">
                     <option value="All">All Status</option>
                     <option value="Pending">Pending</option>
                     <option value="Approved">Approved</option>
@@ -296,7 +405,7 @@
                 </select>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto;">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">
                 <button class="btn-small btn-outline" style="border-color: var(--success); color: var(--success);" onclick="executeNewExport('excel')"><i class="ph ph-file-xls"></i> Export Excel</button>
                 <button class="btn-small btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="executeNewExport('pdf')"><i class="ph ph-file-pdf"></i> Export PDF</button>
                 <button class="btn-small btn-outline" style="border-color: var(--accent-color); color: var(--accent-color);" onclick="executeNewExport('csv')"><i class="ph ph-file-csv"></i> Export CSV</button>
@@ -311,9 +420,10 @@
                 </table>
                 <div id="admin-pagination-controls" style="padding: 10px; text-align: center;"></div>
             </div>
-            <p id="admin-empty-msg" style="text-align: center; color: var(--text-secondary); margin-top: 20px; display: none;">No requests found.</p>
-            <div style="text-align: center; padding: 30px 20px 20px; font-size: 11px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);">
-                <b style="color: var(--text-primary); font-size: 12px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br> Sheth Shri Hiralal Hargovandas Batrishi Hall<br> Near R.T.O Circle, Subhashbridge, Collector Kacheri<br> Ahmedabad - 380027<br><br> Phone: 079-27557668<br> Mobile: +91 95864 23232<br> Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none;">32cedusociety@gmail.com</a><br><br> GSTIN: 24AAATS6070J1ZE<br> Reg No: GH/230<br> Reg Date: 10/10/1944
+            <p id="admin-empty-msg" style="text-align: center; color: var(--text-secondary); margin-top: 30px; font-weight: 500; display: none;">No requests found.</p>
+            
+            <div style="text-align: center; padding: 40px 20px 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);">
+                <b style="color: var(--text-primary); font-size: 13px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br> Sheth Shri Hiralal Hargovandas Batrishi Hall<br> Near R.T.O Circle, Subhashbridge, Collector Kacheri<br> Ahmedabad - 380027<br><br> Phone: 079-27557668<br> Mobile: +91 95864 23232<br> Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">32cedusociety@gmail.com</a><br><br> GSTIN: 24AAATS6070J1ZE<br> Reg No: GH/230<br> Reg Date: 10/10/1944
             </div>
         </div>
         <div class="bottom-nav">
@@ -324,27 +434,34 @@
     </div>
 
     <!-- MODALS -->
-    <div id="modal-upload-excel" class="modal"><div class="modal-content"><h2 style="text-align: center;">Upload Member Database</h2><p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Upload Excel (.xlsx/.csv) containing Member Details</p><div style="background: rgba(240, 148, 51, 0.1); border: 1px solid rgba(240, 148, 51, 0.3); padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 12px; color: var(--warning);"><b>Required Columns:</b> MemberNumber, MemberName, Address, NativeName, MobileNumber</div><div class="dropzone" id="excel-dropzone" onclick="document.getElementById('excel-file').click()"><i class="ph ph-file-arrow-up"></i><div id="excel-file-name">Tap to browse or drop .csv / .xlsx file here</div><input type="file" id="excel-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelUpload(event)"></div><button class="btn-outline" style="margin-top: 20px;" onclick="closeModal('modal-upload-excel')">Cancel</button></div></div>
-    <div id="modal-manage-labs" class="modal"><div class="modal-content"><h2 style="text-align: center;">Manage Laboratories</h2><div id="admin-lab-list" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;"></div><h3 style="border-top: 1px solid var(--border-color); padding-top: 15px;">Add New Lab</h3><form id="form-add-lab"><input type="text" id="new-lab-name" placeholder="Lab Name (e.g. K.D Lab)" required><input type="text" id="new-lab-prefix" placeholder="Token Prefix (e.g. KD)" required><input type="text" id="new-lab-id" placeholder="Login ID" required><input type="text" id="new-lab-pass" placeholder="Password" required><button type="submit" class="btn-success">Save Laboratory</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-manage-labs')">Close</button></div></div>
-    <div id="modal-manage-committee" class="modal"><div class="modal-content"><h2 style="text-align: center;">Manage Committee</h2><div id="admin-committee-list" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;"></div><h3 style="border-top: 1px solid var(--border-color); padding-top: 15px;">Add Member</h3><form id="form-add-committee"><input type="text" id="new-com-name" placeholder="Full Name" required><input type="text" id="new-com-id" placeholder="Mobile Number" required><input type="text" id="new-com-pass" placeholder="Password" required><button type="submit" class="btn-success">Save Committee Member</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-manage-committee')">Close</button></div></div>
-    <div id="modal-add-member" class="modal"><div class="modal-content"><h2 style="text-align: center;">Add Member Manually</h2><form id="form-add-member"><input type="text" id="manual-mem-no" placeholder="Member Number (e.g. M123)" required style="text-transform: uppercase;"><input type="text" id="manual-mem-name" placeholder="Member Name" required><input type="text" id="manual-mem-address" placeholder="Address" required><input type="text" id="manual-mem-native" placeholder="Native Name" required><input type="number" id="manual-mem-mobile" placeholder="Mobile Number" required><button type="submit" class="btn-success">Save Member</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-add-member')">Cancel</button></div></div>
+    <div id="modal-upload-excel" class="modal"><div class="modal-content"><h2 style="text-align: center;">Upload Member Database</h2><p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Upload Excel (.xlsx/.csv) containing Member Details</p><div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 12px; color: var(--warning);"><b>Required Columns:</b> MemberNumber, MemberName, Address, NativeName, MobileNumber</div><div class="dropzone" id="excel-dropzone" onclick="document.getElementById('excel-file').click()"><i class="ph ph-file-arrow-up"></i><div id="excel-file-name" style="font-weight: 500;">Tap to browse or drop .csv / .xlsx file here</div><input type="file" id="excel-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelUpload(event)"></div><button class="btn-outline" style="margin-top: 20px;" onclick="closeModal('modal-upload-excel')">Cancel</button></div></div>
+    
+    <div id="modal-manage-labs" class="modal"><div class="modal-content"><h2 style="text-align: center;">Manage Laboratories</h2><div id="admin-lab-list" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div><h3 style="border-top: 1px solid var(--border-light); padding-top: 15px;">Add New Lab</h3><form id="form-add-lab"><input type="text" id="new-lab-name" placeholder="Lab Name (e.g. K.D Lab)" required style="margin-bottom: 12px;"><input type="text" id="new-lab-prefix" placeholder="Token Prefix (e.g. KD)" required style="margin-bottom: 12px;"><input type="text" id="new-lab-id" placeholder="Login ID" required style="margin-bottom: 12px;"><input type="text" id="new-lab-pass" placeholder="Password" required style="margin-bottom: 16px;"><button type="submit" class="btn-success">Save Laboratory</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-manage-labs')">Close</button></div></div>
+    
+    <div id="modal-manage-committee" class="modal"><div class="modal-content"><h2 style="text-align: center;">Manage Committee</h2><div id="admin-committee-list" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div><h3 style="border-top: 1px solid var(--border-light); padding-top: 15px;">Add Member</h3><form id="form-add-committee"><input type="text" id="new-com-name" placeholder="Full Name" required style="margin-bottom: 12px;"><input type="text" id="new-com-id" placeholder="Mobile Number" required style="margin-bottom: 12px;"><input type="text" id="new-com-pass" placeholder="Password" required style="margin-bottom: 16px;"><button type="submit" class="btn-success">Save Committee Member</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-manage-committee')">Close</button></div></div>
+    
+    <div id="modal-add-member" class="modal"><div class="modal-content"><h2 style="text-align: center;">Add Member Manually</h2><form id="form-add-member"><input type="text" id="manual-mem-no" placeholder="Member Number (e.g. M123)" required style="text-transform: uppercase; margin-bottom: 12px;"><input type="text" id="manual-mem-name" placeholder="Member Name" required style="margin-bottom: 12px;"><input type="text" id="manual-mem-address" placeholder="Address" required style="margin-bottom: 12px;"><input type="text" id="manual-mem-native" placeholder="Native Name" required style="margin-bottom: 12px;"><input type="number" id="manual-mem-mobile" placeholder="Mobile Number" required style="margin-bottom: 16px;"><button type="submit" class="btn-success">Save Member</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-add-member')">Cancel</button></div></div>
+    
     <div id="modal-export-file" class="modal"><div class="modal-content"><h2 style="text-align: center;" id="export-modal-title">Export CSV Log</h2><div class="form-group"><label>Enter File Name</label><input type="text" id="export-file-name" placeholder="Medical_Report_March_2026"></div><input type="hidden" id="export-type-flag"><div class="btn-group" style="width: 100%;"><button class="btn-outline" onclick="closeModal('modal-export-file')">Cancel</button><button class="btn-success" onclick="executeExport()">Download</button></div></div></div>
-    <div id="modal-delete-confirm" class="modal"><div class="modal-content" style="align-items: center;"><i class="ph-fill ph-warning-circle" style="font-size: 50px; color: var(--danger); margin-bottom: 15px;"></i><h2 style="margin-bottom: 5px;">Delete Report?</h2><p style="text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Are you sure you want to delete this report? This action cannot be undone.</p><input type="hidden" id="delete-req-id"><div class="btn-group" style="width: 100%;"><button class="btn-outline" onclick="closeModal('modal-delete-confirm')">Cancel</button><button class="btn-danger" onclick="executeDelete()">Confirm Delete</button></div></div></div>
-    <div id="modal-batrisi-programs" class="modal"><div class="modal-content"><h2 style="text-align: center;">Manage Programs</h2><div id="admin-program-list" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;"></div><h3 style="border-top: 1px solid var(--border-color); padding-top: 15px;">Add New Program</h3><form id="form-add-program"><div class="form-group"><label>Program Title *</label><input type="text" id="prog-title" placeholder="e.g. Annual Medical Camp" required></div><div class="form-group"><label>Message / Description *</label><textarea id="prog-msg" rows="3" placeholder="Enter program details..." required></textarea></div><div class="form-group"><label>Image (Upload or Paste URL)</label><input type="file" id="prog-img-file" accept="image/png, image/jpeg, image/jpg" style="background: transparent; padding: 0; border: none; margin-bottom: 10px;"><input type="url" id="prog-img" placeholder="OR Paste URL (https://i.ibb.co/...)"></div><div class="form-group"><label>Video (Upload or Paste URL)</label><input type="file" id="prog-vid-file" accept="video/mp4,video/x-m4v,video/*" style="background: transparent; padding: 0; border: none; margin-bottom: 5px;"><div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Max file size: 10MB</div><input type="url" id="prog-vid-url" placeholder="OR Paste URL (YouTube, Insta, FB, MP4)"><div id="video-upload-progress-container" style="display:none; margin-top:10px;"><div style="font-size: 12px; color: var(--accent-color); margin-bottom: 5px;" id="video-upload-text">Uploading Video: 0%</div><div style="width: 100%; background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden;"><div id="video-upload-bar" style="width: 0%; background: var(--success); height: 100%;"></div></div><button type="button" class="btn-danger btn-small" id="btn-cancel-upload" style="margin-top: 10px; width: auto;"><i class="ph ph-x"></i> Cancel Upload</button></div></div><button type="submit" class="btn-success" style="margin-top: 15px;">Post Update</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-batrisi-programs')">Close</button></div></div>
+    
+    <div id="modal-delete-confirm" class="modal"><div class="modal-content" style="align-items: center;"><i class="ph-fill ph-warning-circle" style="font-size: 60px; color: var(--danger); margin-bottom: 15px;"></i><h2 style="margin-bottom: 5px;">Delete Report?</h2><p style="text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 25px;">Are you sure you want to delete this report? This action cannot be undone.</p><input type="hidden" id="delete-req-id"><div class="btn-group" style="width: 100%;"><button class="btn-outline" onclick="closeModal('modal-delete-confirm')">Cancel</button><button class="btn-danger" onclick="executeDelete()">Confirm Delete</button></div></div></div>
+    
+    <div id="modal-batrisi-programs" class="modal"><div class="modal-content"><h2 style="text-align: center;">Manage Programs</h2><div id="admin-program-list" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div><h3 style="border-top: 1px solid var(--border-light); padding-top: 15px;">Add New Program</h3><form id="form-add-program"><div class="form-group"><label>Program Title *</label><input type="text" id="prog-title" placeholder="e.g. Annual Medical Camp" required></div><div class="form-group"><label>Message / Description *</label><textarea id="prog-msg" rows="3" placeholder="Enter program details..." required></textarea></div><div class="form-group"><label>Image (Upload or Paste URL)</label><input type="file" id="prog-img-file" accept="image/png, image/jpeg, image/jpg" style="background: transparent; padding: 0; border: none; margin-bottom: 10px; cursor: pointer;"><input type="url" id="prog-img" placeholder="OR Paste URL (https://i.ibb.co/...)"></div><div class="form-group"><label>Video (Upload or Paste URL)</label><input type="file" id="prog-vid-file" accept="video/mp4,video/x-m4v,video/*" style="background: transparent; padding: 0; border: none; margin-bottom: 5px; cursor: pointer;"><div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Max file size: 10MB</div><input type="url" id="prog-vid-url" placeholder="OR Paste URL (YouTube, Insta, FB, MP4)"><div id="video-upload-progress-container" style="display:none; margin-top:10px;"><div style="font-size: 12px; color: var(--accent-color); margin-bottom: 5px; font-weight:600;" id="video-upload-text">Uploading Video: 0%</div><div style="width: 100%; background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden;"><div id="video-upload-bar" style="width: 0%; background: var(--success); height: 100%;"></div></div><button type="button" class="btn-danger btn-small" id="btn-cancel-upload" style="margin-top: 15px; width: auto;"><i class="ph ph-x"></i> Cancel Upload</button></div></div><button type="submit" class="btn-success" style="margin-top: 15px;">Post Update</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-batrisi-programs')">Close</button></div></div>
+    
     <div id="modal-send-notification" class="modal"><div class="modal-content"><h2 style="text-align: center;">Send Broadcast Notification</h2><div class="form-group"><label>Title</label><input type="text" id="notif-title" placeholder="e.g. Important Update" required></div><div class="form-group"><label>Message</label><textarea id="notif-message" rows="4" placeholder="Enter your message here..." required></textarea></div><div class="btn-group"><button class="btn-outline" onclick="closeModal('modal-send-notification')">Cancel</button><button class="btn-success" onclick="sendBroadcastNotification()">Send Now</button></div></div></div>
 
     <!-- MEMBER DASHBOARD -->
     <div id="screen-member" class="screen">
         <div class="header">
-            <div><div class="header-title">Member Hub</div><div class="header-subtitle" id="member-header-name">Welcome</div></div>
+            <div><div class="header-title">Member Hub</div><div class="header-subtitle" style="color: var(--accent-color);">Welcome, <span id="member-header-name"></span></div></div>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer;" onclick="refreshSystemData()"></i>
+                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-secondary)'" onclick="refreshSystemData()"></i>
                 <div class="notification-container">
                     <div class="bell" onclick="toggleNotifications()"><i class="ph ph-bell"></i><span id="notifCount-member" class="notif-count">0</span></div>
                     <div id="notifDropdown-member" class="notif-dropdown">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; margin-bottom: 12px;">
                             <h4 style="border:none; margin:0; padding:0;">Notifications</h4>
-                            <span style="font-size:11px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
+                            <span style="font-size:12px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
                         </div>
                         <ul id="notifList-member"></ul>
                     </div>
@@ -363,15 +480,15 @@
     <!-- COMMITTEE DASHBOARD -->
     <div id="screen-committee" class="screen">
         <div class="header">
-            <div><div class="header-title">Committee Panel</div><div class="header-subtitle" id="committee-header-name">Welcome</div></div>
+            <div><div class="header-title">Committee Panel</div><div class="header-subtitle" style="color: var(--accent-color);">Welcome, <span id="committee-header-name"></span></div></div>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer;" onclick="refreshSystemData()"></i>
+                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-secondary)'" onclick="refreshSystemData()"></i>
                 <div class="notification-container">
                     <div class="bell" onclick="toggleNotifications()"><i class="ph ph-bell"></i><span id="notifCount-committee" class="notif-count">0</span></div>
                     <div id="notifDropdown-committee" class="notif-dropdown">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; margin-bottom: 12px;">
                             <h4 style="border:none; margin:0; padding:0;">Notifications</h4>
-                            <span style="font-size:11px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
+                            <span style="font-size:12px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
                         </div>
                         <ul id="notifList-committee"></ul>
                     </div>
@@ -390,15 +507,15 @@
     <!-- LAB DASHBOARD -->
     <div id="screen-lab" class="screen">
         <div class="header">
-            <div><div class="header-title">Lab Portal</div><div class="header-subtitle" id="lab-header-name">Welcome</div></div>
+            <div><div class="header-title">Lab Portal</div><div class="header-subtitle" style="color: var(--accent-color);">Welcome, <span id="lab-header-name"></span></div></div>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer;" onclick="refreshSystemData()"></i>
+                <i class="ph ph-arrows-clockwise" style="font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-secondary)'" onclick="refreshSystemData()"></i>
                 <div class="notification-container">
                     <div class="bell" onclick="toggleNotifications()"><i class="ph ph-bell"></i><span id="notifCount-lab" class="notif-count">0</span></div>
                     <div id="notifDropdown-lab" class="notif-dropdown">
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; margin-bottom: 12px;">
                             <h4 style="border:none; margin:0; padding:0;">Notifications</h4>
-                            <span style="font-size:11px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
+                            <span style="font-size:12px; color:var(--accent-color); cursor:pointer; font-weight:600;" onclick="markAllRead()">Mark all as read</span>
                         </div>
                         <ul id="notifList-lab"></ul>
                     </div>
@@ -406,20 +523,21 @@
             </div>
         </div>
         <div class="content-area">
-            <div class="card"><h2>Search Token</h2><button class="btn-outline" onclick="startScanner()" style="margin-bottom: 15px; border-color: var(--accent-color); color: var(--accent-color);"><i class="ph ph-qr-code" style="font-size: 20px;"></i> Scan Token (Camera)</button><div style="text-align: center; color: var(--text-secondary); margin-bottom: 15px; font-size: 12px;">— OR ENTER MANUALLY —</div><div class="form-group"><input type="text" id="lab-search-token" placeholder="e.g. SAD-001" style="text-transform: uppercase;"></div><button class="btn-primary" onclick="searchToken()"><i class="ph ph-magnifying-glass"></i> Search</button></div>
-            <div id="lab-result-area" style="display: none;"><div class="card" id="lab-request-details"></div><div class="card"><h2>Process Report</h2><div class="form-group"><label>Billing Date (DD/MM/YYYY)</label><input type="date" id="lab-billing-date" required></div><div class="form-group"><label>Report Name</label><input type="text" id="lab-report-name" placeholder="e.g. COMPLETE BLOOD COUNT" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></div><div class="form-group"><label>Total Report Amount (₹)</label><input type="number" id="lab-original-amount" placeholder="0.00" oninput="calculateDiscount()"></div><div class="form-group"><label>Discount Amount (₹)</label><input type="text" id="lab-discount-amount" value="0.00" readonly style="color: var(--warning); font-weight: bold;"></div><div class="form-group"><label>Batrisi Sahay Amount (₹)</label><input type="text" id="lab-sahay-amount" value="0.00" readonly style="color: var(--success); font-weight: bold;"></div><div class="form-group"><label>Upload Invoice (Photo/Image)</label><input type="file" id="lab-invoice-file" accept="image/png, image/jpeg, image/jpg" capture="environment" onchange="handleInvoiceUpload(event)" style="background: transparent; padding: 0; border: none;"><img id="invoice-preview" class="img-preview" src=""></div><div class="detail-row" style="font-size: 18px; margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 15px;"><span class="detail-label" style="color: var(--text-primary);">Final Payable Amount:</span><span id="lab-final-amount" style="font-weight: 800; color: var(--accent-color);">₹ 0.00</span></div><button class="btn-success" style="margin-top: 20px;" onclick="closeLabReport()">Complete & Close Report</button></div></div>
-            <div class="card" id="lab-monthly-totals" style="margin-top: 15px; border-color: var(--accent-color);"><h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-primary);">Current Month Summary</h3><div class="grid-2"><div class="action-card" style="background: rgba(0, 149, 246, 0.1); border-color: var(--accent-color); padding: 15px 10px;"><span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Total W/O Discount</span><span id="lab-total-original" style="font-size: 18px; font-weight: 800; color: var(--accent-color);">₹ 0.00</span></div><div class="action-card" style="background: rgba(0, 186, 124, 0.1); border-color: var(--success); padding: 15px 10px;"><span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Total With Discount</span><span id="lab-total-final" style="font-size: 18px; font-weight: 800; color: var(--success);">₹ 0.00</span></div></div></div>
-            <div id="lab-overview-section" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 20px;"><h2>Request Overview</h2><div class="table-container"> <table> <thead> <tr><th>Token</th><th>Status</th><th>Patient Details</th><th>Medical Details</th><th>Amount (Paid)</th></tr> </thead> <tbody id="lab-request-list-body"></tbody> </table> </div></div>
-            <div style="text-align: center; padding: 30px 20px 20px; font-size: 11px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);"><b style="color: var(--text-primary); font-size: 12px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br>Sheth Shri Hiralal Hargovandas Batrishi Hall<br>Near R.T.O Circle, Subhashbridge, Collector Kacheri<br>Ahmedabad - 380027<br><br>Phone: 079-27557668<br>Mobile: +91 95864 23232<br>Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none;">32cedusociety@gmail.com</a><br><br>GSTIN: 24AAATS6070J1ZE<br>Reg No: GH/230<br>Reg Date: 10/10/1944</div>
+            <div class="card"><h2>Search Token</h2><button class="btn-outline" onclick="startScanner()" style="margin-bottom: 15px; border-color: var(--accent-color); color: var(--accent-color);"><i class="ph ph-qr-code" style="font-size: 20px;"></i> Scan Token (Camera)</button><div style="text-align: center; color: var(--text-secondary); margin-bottom: 15px; font-size: 12px; font-weight: 500;">— OR ENTER MANUALLY —</div><div class="form-group"><input type="text" id="lab-search-token" placeholder="e.g. SAD-001" style="text-transform: uppercase;"></div><button class="btn-primary" onclick="searchToken()"><i class="ph ph-magnifying-glass"></i> Search</button></div>
+            <div id="lab-result-area" style="display: none;"><div class="card" id="lab-request-details"></div><div class="card"><h2>Process Report</h2><div class="form-group"><label>Billing Date (DD/MM/YYYY)</label><input type="date" id="lab-billing-date" required></div><div class="form-group"><label>Report Name</label><input type="text" id="lab-report-name" placeholder="e.g. COMPLETE BLOOD COUNT" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></div><div class="form-group"><label>Total Report Amount (₹)</label><input type="number" id="lab-original-amount" placeholder="0.00" oninput="calculateDiscount()"></div><div class="form-group"><label>Discount Amount (₹)</label><input type="text" id="lab-discount-amount" value="0.00" readonly style="color: var(--warning); font-weight: bold; background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);"></div><div class="form-group"><label>Batrisi Sahay Amount (₹)</label><input type="text" id="lab-sahay-amount" value="0.00" readonly style="color: var(--success); font-weight: bold; background: rgba(67, 160, 71, 0.05); border-color: rgba(67, 160, 71, 0.2);"></div><div class="form-group"><label>Upload Invoice (Photo/Image)</label><input type="file" id="lab-invoice-file" accept="image/png, image/jpeg, image/jpg" capture="environment" onchange="handleInvoiceUpload(event)" style="background: transparent; padding: 0; border: none; cursor: pointer;"><img id="invoice-preview" class="img-preview" src=""></div><div class="detail-row" style="font-size: 18px; margin-top: 15px; border-top: 1px solid var(--border-light); padding-top: 20px;"><span class="detail-label" style="color: var(--text-primary);">Final Payable Amount:</span><span id="lab-final-amount" style="font-weight: 800; color: var(--accent-color);">₹ 0.00</span></div><button class="btn-success" style="margin-top: 25px;" onclick="closeLabReport()">Complete & Close Report</button></div></div>
+            <div class="card" id="lab-monthly-totals" style="margin-top: 20px; border-color: var(--accent-color);"><h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-primary);">Current Month Summary</h3><div class="grid-2"><div class="action-card" style="background: rgba(30, 136, 229, 0.05); border-color: var(--accent-color); padding: 15px 10px;"><span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Total W/O Discount</span><span id="lab-total-original" style="font-size: 18px; font-weight: 800; color: var(--accent-color);">₹ 0.00</span></div><div class="action-card" style="background: rgba(67, 160, 71, 0.05); border-color: var(--success); padding: 15px 10px;"><span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Total With Discount</span><span id="lab-total-final" style="font-size: 18px; font-weight: 800; color: var(--success);">₹ 0.00</span></div></div></div>
+            <div id="lab-overview-section" style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px;"><h2 style="margin-bottom: 15px;">Request Overview</h2><div class="table-container"> <table> <thead> <tr><th>Token</th><th>Status</th><th>Patient Details</th><th>Medical Details</th><th>Amount (Paid)</th></tr> </thead> <tbody id="lab-request-list-body"></tbody> </table> </div></div>
+            
+            <div style="text-align: center; padding: 40px 20px 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);"><b style="color: var(--text-primary); font-size: 13px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br>Sheth Shri Hiralal Hargovandas Batrishi Hall<br>Near R.T.O Circle, Subhashbridge, Collector Kacheri<br>Ahmedabad - 380027<br><br>Phone: 079-27557668<br>Mobile: +91 95864 23232<br>Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">32cedusociety@gmail.com</a><br><br>GSTIN: 24AAATS6070J1ZE<br>Reg No: GH/230<br>Reg Date: 10/10/1944</div>
         </div>
         <div class="bottom-nav"><div class="nav-item active" onclick="resetLabSearch()"><i class="ph-fill ph-magnifying-glass"></i><span>Search</span></div><div class="nav-item" onclick="logout()"><i class="ph ph-sign-out"></i><span>Logout</span></div></div>
     </div>
 
     <!-- Extra modals: decline, view photo, change password, QR scanner -->
     <div id="modal-decline" class="modal"><div class="modal-content"><h2>Decline Request</h2><div class="form-group"><label>Reason for rejection</label><textarea id="decline-reason" rows="3" placeholder="Enter reason..."></textarea></div><input type="hidden" id="decline-request-id"><div class="btn-group"><button class="btn-outline" onclick="closeModal('modal-decline')">Cancel</button><button class="btn-danger" onclick="confirmDecline()">Confirm Decline</button></div></div></div>
-    <div id="modal-view-photo" class="modal"><div class="modal-content" style="background: transparent; align-items: center; padding-bottom: 20px;"><img id="full-id-photo" src="" style="max-width: 100%; max-height: 70vh; border-radius: 12px; object-fit: contain;"><button class="btn-outline" style="margin-top: 20px; background: rgba(0,0,0,0.5); color: white; border: none;" onclick="closeModal('modal-view-photo')"><i class="ph ph-x"></i> Close</button></div></div>
-    <div id="modal-change-password-committee" class="modal"><div class="modal-content"><h2 style="text-align: center;">Change Password</h2><form id="form-change-password"><div class="form-group"><label>Old Password</label><input type="password" id="cp-old" required></div><div class="form-group"><label>New Password</label><input type="password" id="cp-new" required></div><div class="form-group"><label>Confirm New Password</label><input type="password" id="cp-confirm" required></div><button type="submit" class="btn-success" style="margin-top: 15px;">Update Password</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-change-password-committee')">Cancel</button></div></div>
-    <div id="modal-qr-scanner" class="modal"><div class="modal-content" style="align-items: center;"><h2>Scan Token QR</h2><div id="reader" style="width: 100%; max-width: 400px; margin-bottom: 20px;"></div><button class="btn-danger" onclick="stopScanner()">Cancel</button></div></div>
+    <div id="modal-view-photo" class="modal"><div class="modal-content" style="background: transparent; align-items: center; padding-bottom: 20px; box-shadow: none;"><img id="full-id-photo" src="" style="max-width: 100%; max-height: 75vh; border-radius: 16px; object-fit: contain; box-shadow: 0 10px 40px rgba(0,0,0,0.2); background: white;"><button class="btn-outline" style="margin-top: 20px; background: var(--bg-surface); color: var(--text-primary); border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" onclick="closeModal('modal-view-photo')"><i class="ph ph-x"></i> Close Image</button></div></div>
+    <div id="modal-change-password-committee" class="modal"><div class="modal-content"><h2 style="text-align: center;">Change Password</h2><form id="form-change-password"><div class="form-group"><label>Old Password</label><input type="password" id="cp-old" required></div><div class="form-group"><label>New Password</label><input type="password" id="cp-new" required></div><div class="form-group"><label>Confirm New Password</label><input type="password" id="cp-confirm" required></div><button type="submit" class="btn-success" style="margin-top: 20px;">Update Password</button></form><button class="btn-outline" style="margin-top: 10px;" onclick="closeModal('modal-change-password-committee')">Cancel</button></div></div>
+    <div id="modal-qr-scanner" class="modal"><div class="modal-content" style="align-items: center;"><h2>Scan Token QR</h2><div id="reader" style="width: 100%; max-width: 400px; margin-bottom: 20px;"></div><button class="btn-danger" onclick="stopScanner()">Cancel Scanner</button></div></div>
 
 </div>
 
@@ -700,7 +818,7 @@
             list.innerHTML = "";
 
             if (myNotifs.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:gray; padding: 15px;">No notifications yet 🔕</p>';
+                list.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding: 20px;">No notifications yet 🔕</p>';
             } else {
                 myNotifs.forEach((n) => {
                     const li = document.createElement("li");
@@ -872,14 +990,14 @@
     };
 
     const societyFooterHTML = `
-        <div style="text-align: center; padding: 30px 20px 20px; font-size: 11px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);">
-            <b style="color: var(--text-primary); font-size: 12px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br>
+        <div style="text-align: center; padding: 40px 20px 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-top: 30px; border-top: 1px solid var(--border-color);">
+            <b style="color: var(--text-primary); font-size: 13px;">Shree Batrishi Jain Co-Op Education Society Limited</b><br>
             Sheth Shri Hiralal Hargovandas Batrishi Hall<br>
             Near R.T.O Circle, Subhashbridge, Collector Kacheri<br>
             Ahmedabad - 380027<br><br>
             Phone: 079-27557668<br>
             Mobile: +91 95864 23232<br>
-            Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none;">32cedusociety@gmail.com</a><br><br>
+            Email: <a href="mailto:32cedusociety@gmail.com" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">32cedusociety@gmail.com</a><br><br>
             GSTIN: 24AAATS6070J1ZE<br>
             Reg No: GH/230<br>
             Reg Date: 10/10/1944
@@ -888,9 +1006,9 @@
 
     const committeeTableHTML = `
         <div class="card" style="margin-top: 25px;">
-            <h2>Committee Members Introduction</h2>
+            <h2 style="margin-bottom: 15px;">Committee Members Introduction</h2>
             <div class="table-container" style="margin-top: 10px; margin-bottom: 10px;">
-                <table style="width: 100%; min-width: 600px; font-family: 'Inter', sans-serif;">
+                <table style="width: 100%; min-width: 600px;">
                     <thead><tr><th>No</th><th>Name</th><th>Designation</th><th>Native</th><th>Mobile Number</th></tr></thead>
                     <tbody>
                         <tr><td>1</td><td>HITENDRABHAI JASHWANTLAL SHAH</td><td>PRESIDENT</td><td>BAHIYAL</td><td>9825698298</td></tr>
@@ -1045,7 +1163,7 @@
     function buildProgramHTML(update) {
         let imgHtml = update.imageUrl ? `<img src="${update.imageUrl}" class="update-img" onerror="this.style.display='none'" alt="Program Image">` : '';
         let vidHtml = generateVideoEmbed(update.videoUrl);
-        let titleHtml = update.title ? `<h3 style="margin-bottom: 12px; font-size: 18px; font-weight: 800; color: var(--accent-color);">${update.title}</h3>` : '';
+        let titleHtml = update.title ? `<h3 style="margin-bottom: 12px; font-size: 18px; font-weight: 700; color: var(--accent-color);">${update.title}</h3>` : '';
         return `<div class="update-card">${titleHtml}${imgHtml}${vidHtml}<div class="update-msg">${update.message}</div></div>`;
     }
 
@@ -1055,7 +1173,7 @@
         if (ytMatch && ytMatch[1]) {
             return `<div class="video-responsive-container"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
         } else if (url.includes('instagram.com/')) {
-            return `<a href="${url}" target="_blank" class="ig-fallback-btn"><i class="ph-fill ph-instagram-logo" style="font-size: 20px;"></i> Watch on Instagram</a>`;
+            return `<a href="${url}" target="_blank" class="ig-fallback-btn"><i class="ph-fill ph-instagram-logo" style="font-size: 22px;"></i> Watch on Instagram</a>`;
         } else if (url.includes('facebook.com/') || url.includes('fb.watch/')) {
             return `<div class="video-responsive-container"><iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=auto" scrolling="no" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
         } else {
@@ -1434,9 +1552,9 @@
         let html = '';
         for(let key in labList) {
             const lab = labList[key];
-            html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:8px 0;">
-                <div><b style="color:var(--accent-color)">${lab.name}</b><br><span style="font-size:11px; color:var(--text-secondary)">ID: ${lab.loginId} | Pfx: ${lab.prefix} | Pass: ${lab.password}</span></div>
-                <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteLab('${key}')"></i>
+            html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-light); padding:10px 0;">
+                <div><b style="color:var(--accent-color); font-size:14px;">${lab.name}</b><br><span style="font-size:12px; color:var(--text-secondary)">ID: ${lab.loginId} | Pfx: ${lab.prefix} | Pass: ${lab.password}</span></div>
+                <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="deleteLab('${key}')"></i>
             </div>`;
         }
         document.getElementById('admin-lab-list').innerHTML = html;
@@ -1472,11 +1590,11 @@
     function renderCommitteeList() {
         let html = '';
         committeeList.forEach((c, index) => {
-            html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:8px 0;">
-                <div><b style="color:var(--accent-color)">${c.name}</b><br><span style="font-size:11px; color:var(--text-secondary)">Mobile: ${c.username} | Pass: <span style="font-family:monospace; color:var(--text-primary)">${c.password}</span></span></div>
+            html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-light); padding:10px 0;">
+                <div><b style="color:var(--accent-color); font-size:14px;">${c.name}</b><br><span style="font-size:12px; color:var(--text-secondary)">Mobile: ${c.username} | Pass: <span style="font-family:monospace; color:var(--text-primary); font-weight: 500;">${c.password}</span></span></div>
                 <div style="display:flex; gap:15px;">
-                    <i class="ph-fill ph-key" style="color:var(--warning); cursor:pointer; font-size:24px;" onclick="resetCommitteePassword(${index})"></i>
-                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteCommittee(${index})"></i>
+                    <i class="ph-fill ph-key" style="color:var(--warning); cursor:pointer; font-size:24px; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="resetCommitteePassword(${index})"></i>
+                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="deleteCommittee(${index})"></i>
                 </div>
             </div>`;
         });
@@ -1603,19 +1721,19 @@
         const listDiv = document.getElementById('admin-program-list');
         if (!listDiv) return;
         if (batrisiUpdates.length === 0) {
-            listDiv.innerHTML = '<p style="text-align:center; color:var(--text-secondary); font-size:13px;">No programs added yet.</p>';
+            listDiv.innerHTML = '<p style="text-align:center; color:var(--text-secondary); font-size:13px; padding: 20px;">No programs added yet.</p>';
             return;
         }
         let html = '';
         batrisiUpdates.forEach(prog => {
             if (!prog.target || prog.target.includes(currentUser.role)) {
                 let dateStr = prog.createdAt ? new Date(prog.createdAt).toLocaleDateString('en-GB') : '-';
-                html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-color); padding:10px 0;">
+                html += `<div class="detail-row" style="align-items:center; border-bottom:1px solid var(--border-light); padding:12px 0;">
                     <div style="flex:1;">
                         <b style="color:var(--text-primary); font-size: 14px;">${prog.title || 'Untitled Program'}</b><br>
-                        <span style="font-size:11px; color:var(--text-secondary)">Posted on: ${dateStr}</span>
+                        <span style="font-size:12px; color:var(--text-secondary)">Posted on: ${dateStr}</span>
                     </div>
-                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px;" onclick="deleteBatrisiProgram('${prog.id}')"></i>
+                    <i class="ph-fill ph-trash" style="color:var(--danger); cursor:pointer; font-size:24px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="deleteBatrisiProgram('${prog.id}')"></i>
                 </div>`;
             }
         });
@@ -1740,9 +1858,9 @@
                 <form id="member-request-form">
                     <div class="form-group">
                         <label>Request Date</label>
-                        <input type="text" id="req-date" value="${todayDate}" readonly style="background:var(--bg-base); font-weight:600; color:var(--accent-color);">
+                        <input type="text" id="req-date" value="${todayDate}" readonly style="background:var(--border-light); font-weight:600; color:var(--text-primary);">
                     </div>
-                    <h3>Patient Details</h3>
+                    <h3 style="margin-top: 20px;">Patient Details</h3>
                     <div class="grid-2">
                         <div class="form-group">
                             <label>Name</label>
@@ -1753,7 +1871,7 @@
                             <input type="text" id="req-patient-middlename" placeholder="Middle Name" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
                         </div>
                     </div>
-                    <div class="grid-2" style="margin-top: 10px;">
+                    <div class="grid-2" style="margin-top: 5px;">
                         <div class="form-group">
                             <label>Relationship</label>
                             <select id="req-relation" required onchange="handleRelationChange()">
@@ -1779,7 +1897,7 @@
                             <option value="Yes">Yes</option>
                         </select>
                     </div>
-                    <h3 style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">Member Details</h3>
+                    <h3 style="margin-top: 20px; border-top: 1px solid var(--border-light); padding-top: 20px;">Member Details</h3>
                     <div class="grid-2">
                         <div class="form-group">
                             <label>Member Number</label>
@@ -1790,7 +1908,7 @@
                             <input type="text" value="${currentUser.name}" readonly>
                         </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 5px;">
                         <label>Address</label>
                         <textarea rows="2" readonly>${currentUser.address}</textarea>
                     </div>
@@ -1804,7 +1922,7 @@
                             <input type="text" value="${currentUser.mobile}" readonly>
                         </div>
                     </div>
-                    <h3 style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">Medical Details</h3>
+                    <h3 style="margin-top: 20px; border-top: 1px solid var(--border-light); padding-top: 20px;">Medical Details</h3>
                     <div class="form-group">
                         <label>Select Laboratory</label>
                         <select id="req-lab" required>
@@ -1818,15 +1936,15 @@
                     </div>
                     <div class="form-group">
                         <label>Doctor Description (Prescription)</label>
-                        <input type="file" id="req-prescription" accept="image/*" capture="environment" onchange="handlePrescriptionUpload(event)" style="background: transparent; padding: 0; border: none;" required>
+                        <input type="file" id="req-prescription" accept="image/*" capture="environment" onchange="handlePrescriptionUpload(event)" style="background: transparent; padding: 0; border: none; cursor: pointer;" required>
                         <img id="prescription-preview" class="img-preview" src="">
                     </div>
                     <div class="form-group">
                         <label>ID Card Photo (Optional)</label>
-                        <input type="file" id="req-photo" accept="image/*" onchange="handlePhotoUpload(event)" style="background: transparent; padding: 0; border: none;">
+                        <input type="file" id="req-photo" accept="image/*" onchange="handlePhotoUpload(event)" style="background: transparent; padding: 0; border: none; cursor: pointer;">
                         <img id="id-photo-preview" class="img-preview" src="">
                     </div>
-                    <h3 style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px;">Approval Routing</h3>
+                    <h3 style="margin-top: 25px; border-top: 1px solid var(--border-light); padding-top: 20px;">Approval Routing</h3>
                     <div class="form-group">
                         <label>Assign to Committee Member</label>
                         <select id="req-committee" required>
@@ -1834,7 +1952,7 @@
                             ${committeeOptions}
                         </select>
                     </div>
-                    <button type="submit" class="btn-gradient" style="margin-top: 20px;">Submit Request</button>
+                    <button type="submit" class="btn-gradient" style="margin-top: 25px; font-size: 16px;">Submit Request</button>
                 </form>
             </div>
         `;
@@ -1950,51 +2068,51 @@
         const usedThisMonth = getUsedGrantThisMonthLocal(currentUser.id);
         const remainingThisMonth = Math.max(0, 1000 - usedThisMonth);
         let html = `
-            <div class="card" style="background: linear-gradient(135deg, rgba(0, 149, 246, 0.05) 0%, rgba(188, 24, 136, 0.05) 100%); border: 1px solid var(--accent-color);">
-                <h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-primary);">Batrisi Monthly Grant Tracker</h3>
-                <div class="detail-row"><span class="detail-label">Monthly Limit:</span><span style="font-weight: bold; color: var(--text-primary);">₹ 1000.00</span></div>
-                <div class="detail-row"><span class="detail-label">Used Amount:</span><span style="font-weight: bold; color: var(--danger);">₹ ${usedThisMonth.toFixed(2)}</span></div>
-                <div class="detail-row" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px;"><span class="detail-label">Remaining Amount:</span><span style="font-weight: 800; color: var(--success); font-size: 16px;">₹ ${remainingThisMonth.toFixed(2)}</span></div>
+            <div class="card" style="background: linear-gradient(135deg, rgba(30, 136, 229, 0.05) 0%, rgba(67, 160, 71, 0.05) 100%); border: 1px solid var(--accent-color);">
+                <h3 style="margin-bottom: 15px; font-size: 16px; color: var(--text-primary);">Batrisi Monthly Grant Tracker</h3>
+                <div class="detail-row"><span class="detail-label">Monthly Limit:</span><span style="font-weight: 700; color: var(--text-primary);">₹ 1000.00</span></div>
+                <div class="detail-row"><span class="detail-label">Used Amount:</span><span style="font-weight: 700; color: var(--danger);">₹ ${usedThisMonth.toFixed(2)}</span></div>
+                <div class="detail-row" style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;"><span class="detail-label">Remaining Amount:</span><span style="font-weight: 800; color: var(--success); font-size: 16px;">₹ ${remainingThisMonth.toFixed(2)}</span></div>
             </div>
-            <h2>My Requests</h2>
+            <h2 style="margin-top: 20px;">My Requests</h2>
         `;
         if(myReqs.length === 0) {
-            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">No requests found.</p>`;
+            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px; font-weight:500;">No requests found.</p>`;
         } else {
             myReqs.forEach(req => {
                 let statusBadge = `<span class="badge ${req.status.toLowerCase()}">${req.status}</span>`;
                 let tokenHtml = '';
                 if(req.token) {
                     tokenHtml = `
-                        <div class="detail-row" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border-color); flex-direction:column; align-items:center; gap:10px;">
-                            <span class="detail-label">Your Lab Token:</span>
-                            <b style="color:var(--accent-color); font-size:20px; letter-spacing:1px;">${req.token}</b>
+                        <div class="detail-row" style="margin-top:15px; padding-top:20px; border-top:1px solid var(--border-light); flex-direction:column; align-items:center; gap:10px;">
+                            <span class="detail-label" style="font-size:13px; text-transform:uppercase; font-weight:600;">Your Lab Token</span>
+                            <b style="color:var(--accent-color); font-size:24px; letter-spacing:2px;">${req.token}</b>
                             <div class="qr-wrapper" id="qr-${req.id}"></div>
                         </div>
                     `;
                 }
-                let declineHtml = req.declineReason ? `<div class="detail-row" style="margin-top:10px; color:var(--danger); font-size:12px;">Reason: ${req.declineReason}</div>` : '';
+                let declineHtml = req.declineReason ? `<div class="detail-row" style="margin-top:12px; color:var(--danger); font-size:13px; font-weight:500; background: rgba(239, 68, 68, 0.05); padding: 10px; border-radius: 8px;">Reason: ${req.declineReason}</div>` : '';
                 let completedHtml = '';
                 if(req.status === 'Completed') {
-                    let invHtml = req.invoiceImage ? `<button class="btn-outline btn-small" style="margin-top:10px; width:100%; border-color:var(--accent-color); color:var(--accent-color);" onclick="viewFullPhoto('${req.invoiceImage}')"><i class="ph ph-receipt"></i> View Invoice</button>` : '';
+                    let invHtml = req.invoiceImage ? `<button class="btn-outline btn-small" style="margin-top:15px; width:100%; border-color:var(--accent-color); color:var(--accent-color);" onclick="viewFullPhoto('${req.invoiceImage}')"><i class="ph ph-receipt"></i> View Invoice</button>` : '';
                     completedHtml = `
-                        <div class="section-box" style="margin-top: 15px; border-color: var(--success); background: rgba(0, 186, 124, 0.05);">
-                            <h4 style="color: var(--success); margin-bottom: 10px;">Report Completed Details</h4>
-                            <div class="detail-row"><span class="detail-label">Close Date:</span><span>${displayDateTime(req.labClosedDate, req.labClosedTime)}</span></div>
-                            <div class="detail-row"><span class="detail-label">Member Name:</span><span>${req.memberName}</span></div>
-                            <div class="detail-row"><span class="detail-label">Patient Name:</span><span>${req.patientName}</span></div>
-                            <div class="detail-row"><span class="detail-label">Report Name:</span><span>${req.reportName || req.testName}</span></div>
-                            <div class="detail-row"><span class="detail-label">Report Amount:</span><span>₹${req.originalAmount}</span></div>
-                            <div class="detail-row"><span class="detail-label">Society Discount:</span><span style="color: var(--success); font-weight: bold;">₹${req.discountAmount}</span></div>
+                        <div class="section-box" style="margin-top: 20px; border-color: rgba(67, 160, 71, 0.3); background: rgba(67, 160, 71, 0.03);">
+                            <h4 style="color: var(--success); margin-bottom: 12px; font-size: 14px;">Report Completed Details</h4>
+                            <div class="detail-row"><span class="detail-label">Close Date:</span><span style="font-weight: 500;">${displayDateTime(req.labClosedDate, req.labClosedTime)}</span></div>
+                            <div class="detail-row"><span class="detail-label">Member Name:</span><span style="font-weight: 500;">${req.memberName}</span></div>
+                            <div class="detail-row"><span class="detail-label">Patient Name:</span><span style="font-weight: 500;">${req.patientName}</span></div>
+                            <div class="detail-row"><span class="detail-label">Report Name:</span><span style="font-weight: 500;">${req.reportName || req.testName}</span></div>
+                            <div class="detail-row"><span class="detail-label">Report Amount:</span><span style="font-weight: 500;">₹${req.originalAmount}</span></div>
+                            <div class="detail-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color);"><span class="detail-label">Society Discount:</span><span style="color: var(--success); font-weight: 700; font-size:15px;">₹${req.discountAmount}</span></div>
                             ${invHtml}
                         </div>
                     `;
                 }
-                let rxHtml = req.prescriptionImage ? `<button class="btn-outline btn-small" style="margin-top:10px; width:100%;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : '';
+                let rxHtml = req.prescriptionImage ? `<button class="btn-outline btn-small" style="margin-top:15px; width:100%;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : '';
                 html += `
                     <div class="card">
                         <div class="card-header">
-                            <span style="font-size:12px; color:var(--text-secondary)">${displayDateTime(req.dateApplied, req.timeApplied)}</span>
+                            <span style="font-size:12px; color:var(--text-secondary); font-weight: 500;">${displayDateTime(req.dateApplied, req.timeApplied)}</span>
                             ${statusBadge}
                         </div>
                         <div class="section-box">
@@ -2006,14 +2124,14 @@
                         </div>
                         <div class="section-box">
                             <h4 style="color: var(--warning);">Patient Details</h4>
-                            <div class="detail-row"><span class="detail-label">Patient:</span><span>${req.patientName}</span></div>
+                            <div class="detail-row"><span class="detail-label">Patient:</span><span style="font-weight:600;">${req.patientName}</span></div>
                             <div class="detail-row"><span class="detail-label">Age:</span><span>${req.patientAge}</span></div>
                             <div class="detail-row"><span class="detail-label">Relation:</span><span>${req.relation}</span></div>
                         </div>
-                        <div class="detail-row"><span class="detail-label">Lab:</span><span>${req.lab}</span></div>
+                        <div class="detail-row" style="margin-top: 15px;"><span class="detail-label">Lab:</span><span style="font-weight:600; color:var(--accent-color);">${req.lab}</span></div>
                         <div class="detail-row"><span class="detail-label">Doctor:</span><span>${req.doctorName || '-'}</span></div>
                         <div class="detail-row"><span class="detail-label">Assigned:</span><span style="text-align:right;">${req.assignedCommittee}</span></div>
-                        ${req.approverName ? `<div class="detail-row"><span class="detail-label">Approved By:</span><span style="text-align:right; color:var(--success);">${req.approverName}</span></div>` : ''}
+                        ${req.approverName ? `<div class="detail-row"><span class="detail-label">Approved By:</span><span style="text-align:right; color:var(--success); font-weight:600;">${req.approverName}</span></div>` : ''}
                         ${rxHtml}
                         ${completedHtml}
                         ${tokenHtml}
@@ -2029,8 +2147,8 @@
                 if(qrContainer && typeof QRCode !== 'undefined') {
                     new QRCode(qrContainer, {
                         text: req.token,
-                        width: 120,
-                        height: 120,
+                        width: 140,
+                        height: 140,
                         colorDark: "#000000",
                         colorLight: "#ffffff"
                     });
@@ -2052,7 +2170,7 @@
         }
         let html = `<h2 style="margin-bottom: 20px;">Batrisi Upcoming Program & Activity</h2>`;
         if(batrisiUpdates.length === 0) {
-            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">No upcoming programs at the moment.</p>`;
+            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px; font-weight:500;">No upcoming programs at the moment.</p>`;
         } else {
             batrisiUpdates.forEach(update => {
                 if (!update.target || update.target.includes(currentUser.role)) {
@@ -2106,11 +2224,11 @@
 
         let html = `<h2>Pending Approvals</h2>`;
         if(myTasks.length === 0) {
-            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">You're all caught up!</p>`;
+            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px; font-weight:500;">You're all caught up!</p>`;
         } else {
             myTasks.forEach(req => {
-                let photoBtn = req.idPhoto ? `<button class="btn-outline" style="padding: 8px; margin-bottom: 15px; font-size: 13px;" onclick="viewFullPhoto('${req.idPhoto}')"><i class="ph ph-image"></i> View ID Photo</button>` : '';
-                let rxBtn = req.prescriptionImage ? `<button class="btn-outline" style="padding: 8px; margin-bottom: 15px; font-size: 13px;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : '';
+                let photoBtn = req.idPhoto ? `<button class="btn-outline" style="padding: 10px; margin-bottom: 15px; font-size: 13px;" onclick="viewFullPhoto('${req.idPhoto}')"><i class="ph ph-image"></i> View ID Photo</button>` : '';
+                let rxBtn = req.prescriptionImage ? `<button class="btn-outline" style="padding: 10px; margin-bottom: 15px; font-size: 13px;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : '';
                 html += `
                     <div class="card">
                         <div class="card-header">
@@ -2121,19 +2239,19 @@
                             <div class="info-label">Patient Info</div>
                             <div class="info-value">Age: ${req.patientAge} | Relation: ${req.relation}</div>
                         </div>
-                        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
+                        <div style="border-top: 1px solid var(--border-light); margin: 15px 0;"></div>
                         <div class="info-group"><div class="info-label">Member Name</div><div class="info-value">${req.memberName} (${req.memberId})</div></div>
                         <div class="info-group"><div class="info-label">Mobile Number</div><div class="info-value">${req.mobile}</div></div>
-                        <div class="info-group"><div class="info-label">Address</div><div class="info-value" style="font-size:13px;">${req.address}</div></div>
+                        <div class="info-group"><div class="info-label">Address</div><div class="info-value" style="font-size:13px; line-height:1.5;">${req.address}</div></div>
                         <div class="info-group"><div class="info-label">Native Name</div><div class="info-value">${req.native}</div></div>
-                        <div style="border-top: 1px solid var(--border-color); margin: 15px 0;"></div>
-                        <div class="info-group"><div class="info-label">Laboratory Name</div><div class="info-value" style="color: var(--accent-color);">${req.lab}</div></div>
+                        <div style="border-top: 1px solid var(--border-light); margin: 15px 0;"></div>
+                        <div class="info-group"><div class="info-label">Laboratory Name</div><div class="info-value" style="color: var(--accent-color); font-weight:700;">${req.lab}</div></div>
                         <div class="info-group"><div class="info-label">Doctor Name</div><div class="info-value">${req.doctorName || '-'}</div></div>
-                        <div class="info-group"><div class="info-label">Request Date</div><div class="info-value" style="font-weight: 700;">${displayDateTime(req.dateApplied, req.timeApplied)}</div></div>
+                        <div class="info-group" style="margin-bottom:20px;"><div class="info-label">Request Date</div><div class="info-value" style="font-weight: 600;">${displayDateTime(req.dateApplied, req.timeApplied)}</div></div>
                         <div style="display:flex; gap:10px;">${photoBtn} ${rxBtn}</div>
                         <div class="btn-group">
                             <button class="btn-outline" onclick="openDeclineModal('${req.id}')" style="color:var(--danger); border-color:var(--danger);">Decline</button>
-                            <button class="btn-success" onclick="approveRequest('${req.id}')">Approve</button>
+                            <button class="btn-success" onclick="approveRequest('${req.id}')">Approve Request</button>
                         </div>
                     </div>
                 `;
@@ -2155,7 +2273,7 @@
         }
         let html = `<h2 style="margin-bottom: 20px;">Batrisi Upcoming Program & Activity</h2>`;
         if(batrisiUpdates.length === 0) {
-            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px;">No upcoming programs at the moment.</p>`;
+            html += `<p style="color:var(--text-secondary); text-align:center; margin-top:30px; font-weight:500;">No upcoming programs at the moment.</p>`;
         } else {
             batrisiUpdates.forEach(update => {
                 if (!update.target || update.target.includes(currentUser.role)) {
@@ -2315,19 +2433,19 @@
             document.getElementById('invoice-preview').src = '';
             document.getElementById('invoice-preview').style.display = 'none';
             const detailsHtml = `
-                <div class="card-header"><b style="font-size:18px; color:var(--accent-color);">${req.token}</b><i class="ph-fill ph-check-circle" style="color:var(--success); font-size:24px;"></i></div>
-                <div class="info-group"><div class="info-label">Patient Name</div><div class="info-value" style="font-size:18px; font-weight:700;">${req.patientName} <span style="font-size:12px; font-weight:400; color:var(--text-secondary)">(${req.relation}, ${req.patientAge}y)</span></div></div>
-                <div class="info-group"><div class="info-label">Request Date</div><div class="info-value" style="font-weight: 700;">${displayDateTime(req.dateApplied, req.timeApplied)}</div></div>
-                <div style="border-top: 1px solid var(--border-color); margin: 12px 0;"></div>
-                <div class="info-group"><div class="info-label">Member Name</div><div class="info-value">${req.memberName} (${req.memberId})</div></div>
+                <div class="card-header"><b style="font-size:22px; color:var(--accent-color); letter-spacing:1px;">${req.token}</b><i class="ph-fill ph-check-circle" style="color:var(--success); font-size:28px;"></i></div>
+                <div class="info-group"><div class="info-label">Patient Name</div><div class="info-value" style="font-size:18px; font-weight:700;">${req.patientName} <span style="font-size:13px; font-weight:500; color:var(--text-secondary)">(${req.relation}, ${req.patientAge}y)</span></div></div>
+                <div class="info-group"><div class="info-label">Request Date</div><div class="info-value" style="font-weight: 600;">${displayDateTime(req.dateApplied, req.timeApplied)}</div></div>
+                <div style="border-top: 1px solid var(--border-light); margin: 15px 0;"></div>
+                <div class="info-group"><div class="info-label">Member Name</div><div class="info-value">${req.memberName} <span style="color:var(--text-secondary); font-size:13px;">(${req.memberId})</span></div></div>
                 <div class="info-group"><div class="info-label">Mobile Number</div><div class="info-value">${req.mobile}</div></div>
-                <div class="info-group"><div class="info-label">Address</div><div class="info-value" style="font-size:13px;">${req.address}</div></div>
+                <div class="info-group"><div class="info-label">Address</div><div class="info-value" style="font-size:13px; line-height:1.5;">${req.address}</div></div>
                 <div class="info-group"><div class="info-label">Native Name</div><div class="info-value">${req.native}</div></div>
-                <div style="border-top: 1px solid var(--border-color); margin: 12px 0;"></div>
-                <div class="info-group"><div class="info-label">Laboratory Name</div><div class="info-value" style="color: var(--accent-color);">${req.lab}</div></div>
+                <div style="border-top: 1px solid var(--border-light); margin: 15px 0;"></div>
+                <div class="info-group"><div class="info-label">Laboratory Name</div><div class="info-value" style="color: var(--accent-color); font-weight:600;">${req.lab}</div></div>
                 <div class="info-group"><div class="info-label">Doctor Name</div><div class="info-value">${req.doctorName || '-'}</div></div>
-                ${req.prescriptionImage ? `<button class="btn-outline" style="margin: 10px 0; width: 100%;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : ''}
-                <div class="info-group"><div class="info-label">Approved By</div><div class="info-value">${req.approverName}</div></div>
+                ${req.prescriptionImage ? `<button class="btn-outline" style="margin: 15px 0; width: 100%;" onclick="viewFullPhoto('${req.prescriptionImage}')"><i class="ph ph-file-text"></i> View Prescription</button>` : ''}
+                <div class="info-group"><div class="info-label">Approved By</div><div class="info-value" style="font-weight:600; color:var(--success);">${req.approverName}</div></div>
                 <div class="info-group"><div class="info-label">Approval Date & Time</div><div class="info-value">${displayDateTime(req.approvalDate, req.approvalTime)}</div></div>
             `;
             document.getElementById('lab-request-details').innerHTML = detailsHtml;
@@ -2449,24 +2567,24 @@
         if (labTotalFinalEl) labTotalFinalEl.innerText = `₹ ${totalFinal.toFixed(2)}`;
         tbody.innerHTML = '';
         if(myReqs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-secondary);">No requests found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding: 20px;">No requests found.</td></tr>';
         } else {
             myReqs.forEach(req => {
                 let statusBadge = `<span class="badge ${req.status.toLowerCase()}">${req.status}</span>`;
                 let amountDisplay = '-';
                 if(req.status === 'Completed') {
                     amountDisplay = `
-                        <div style="font-size:11px; color:var(--text-secondary)">Bill Date: ${req.billingDate || '-'}</div>
-                        <span style="color:var(--text-secondary); text-decoration:line-through; font-size:11px;">₹${req.originalAmount}</span> 
-                        <b style="color:var(--success)">₹${req.finalAmount}</b>
+                        <div style="font-size:11px; color:var(--text-secondary); margin-bottom: 2px;">Bill Date: ${req.billingDate || '-'}</div>
+                        <span style="color:var(--text-secondary); text-decoration:line-through; font-size:12px;">₹${req.originalAmount}</span> 
+                        <b style="color:var(--success); font-size:14px; margin-left: 4px;">₹${req.finalAmount}</b>
                     `;
                 }
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><b style="color:var(--text-primary)">${req.token || '-'}</b><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span></td>
+                    <td><b style="color:var(--text-primary); font-size:14px;">${req.token || '-'}</b><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span></td>
                     <td>${statusBadge}</td>
-                    <td><b style="color:var(--accent-color)">${req.patientName}</b><br><span style="font-size:10px;">(${req.patientAge}y, ${req.relation})</span></td>
-                    <td><b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>${req.prescriptionImage ? `<br><button class="btn-small btn-outline" style="margin-top:5px; padding:4px 8px; font-size:10px;" onclick="viewFullPhoto('${req.prescriptionImage}')">View Rx</button>` : ''}${req.reportName ? `<br><span style="font-size:11px;">Rep: ${req.reportName}</span>` : ''}</td>
+                    <td><b style="color:var(--accent-color)">${req.patientName}</b><br><span style="font-size:11px; color:var(--text-secondary);">(${req.patientAge}y, ${req.relation})</span></td>
+                    <td><b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>${req.prescriptionImage ? `<br><button class="btn-small btn-outline" style="margin-top:6px; padding:4px 8px; font-size:11px;" onclick="viewFullPhoto('${req.prescriptionImage}')">View Rx</button>` : ''}${req.reportName ? `<br><span style="font-size:12px; margin-top:4px; display:block;">Rep: ${req.reportName}</span>` : ''}</td>
                     <td>${amountDisplay}</td>
                 `;
                 tbody.appendChild(tr);
@@ -2527,29 +2645,29 @@
                 let amountDisplay = '-';
                 if(req.status === 'Completed') {
                     amountDisplay = `
-                        <div style="font-size:11px; color:var(--text-secondary)">Bill Date: ${req.billingDate || '-'}</div>
-                        <span style="color:var(--text-secondary); text-decoration:line-through; font-size:11px;">₹${req.originalAmount}</span> 
-                        <b style="color:var(--success)">₹${req.finalAmount}</b>
+                        <div style="font-size:11px; color:var(--text-secondary); margin-bottom: 2px;">Bill Date: ${req.billingDate || '-'}</div>
+                        <span style="color:var(--text-secondary); text-decoration:line-through; font-size:12px;">₹${req.originalAmount}</span> 
+                        <b style="color:var(--success); font-size:14px; margin-left: 4px;">₹${req.finalAmount}</b>
                     `;
                 }
                 let actionHtml = '';
                 if (req.status === 'Pending') {
                     actionHtml += `
-                        <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:10px;">
-                            <button class="btn-success btn-small" style="padding:4px 8px; font-size:11px;" onclick="approveRequest('${req.id}')">Approve</button>
-                            <button class="btn-outline btn-small" style="padding:4px 8px; font-size:11px; color:var(--danger); border-color:var(--danger);" onclick="openDeclineModal('${req.id}')">Decline</button>
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+                            <button class="btn-success btn-small" style="padding:6px 10px; font-size:12px;" onclick="approveRequest('${req.id}')">Approve</button>
+                            <button class="btn-outline btn-small" style="padding:6px 10px; font-size:12px; color:var(--danger); border-color:var(--danger);" onclick="openDeclineModal('${req.id}')">Decline</button>
                         </div>
                     `;
                 }
-                actionHtml += `<button style="background:transparent; border:none; color:var(--danger); font-size:24px; cursor:pointer;" onclick="confirmDelete('${req.id}')"><i class="ph-fill ph-trash"></i></button>`;
+                actionHtml += `<button style="background:transparent; border:none; color:var(--danger); font-size:24px; cursor:pointer; width:100%; text-align:center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="confirmDelete('${req.id}')"><i class="ph-fill ph-trash"></i></button>`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><b style="color:var(--text-primary)">${req.token || '-'}</b><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span></td>
+                    <td><b style="color:var(--text-primary); font-size:14px;">${req.token || '-'}</b><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span></td>
                     <td>${statusBadge}</td>
-                    <td><b style="color:var(--accent-color)">${req.patientName}</b> <span style="font-size:10px;">(${req.patientAge}y, ${req.relation})</span><br><span style="font-size:11px; color:var(--text-secondary)">Mem: ${req.memberName} (${req.memberId})</span><br><span style="font-size:11px; color:var(--text-secondary)">📱 ${req.mobile} | 🏠 ${req.native}</span></td>
-                    <td><span style="color:var(--accent-color)">${req.lab}</span><br><b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>${req.prescriptionImage ? `<br><button class="btn-small btn-outline" style="margin-top:5px; padding:4px 8px; font-size:10px;" onclick="viewFullPhoto('${req.prescriptionImage}')">View Rx</button>` : ''}${req.invoiceImage ? `<br><button class="btn-small btn-outline" style="margin-top:5px; padding:4px 8px; font-size:10px; border-color:var(--accent-color); color:var(--accent-color);" onclick="viewFullPhoto('${req.invoiceImage}')">View Invoice</button>` : ''}${req.reportName ? `<br><span style="font-size:11px;">Rep: ${req.reportName}</span>` : ''}</td>
+                    <td><b style="color:var(--accent-color)">${req.patientName}</b> <span style="font-size:11px; color:var(--text-secondary);">(${req.patientAge}y, ${req.relation})</span><br><span style="font-size:12px; color:var(--text-secondary); margin-top: 4px; display:inline-block;">Mem: ${req.memberName} (${req.memberId})</span><br><span style="font-size:12px; color:var(--text-secondary)">📱 ${req.mobile} | 🏠 ${req.native}</span></td>
+                    <td><span style="color:var(--accent-color); font-weight: 600;">${req.lab}</span><br><b style="font-size:12px;">Dr: ${req.doctorName || '-'}</b>${req.prescriptionImage ? `<br><button class="btn-small btn-outline" style="margin-top:6px; padding:4px 8px; font-size:11px;" onclick="viewFullPhoto('${req.prescriptionImage}')">View Rx</button>` : ''}${req.invoiceImage ? `<br><button class="btn-small btn-outline" style="margin-top:6px; padding:4px 8px; font-size:11px; border-color:var(--accent-color); color:var(--accent-color);" onclick="viewFullPhoto('${req.invoiceImage}')">View Invoice</button>` : ''}${req.reportName ? `<br><span style="font-size:12px; margin-top:4px; display:inline-block;">Rep: ${req.reportName}</span>` : ''}</td>
                     <td>${amountDisplay}</td>
-                    <td><span style="font-size:12px;">${req.assignedCommittee}</span><br><span style="font-size:11px; color:var(--text-secondary)">Req Date: ${displayDateTime(req.dateApplied, req.timeApplied)}</span>${req.approvalDate ? `<br><span style="font-size:11px; color:var(--success)">Appr: ${displayDateTime(req.approvalDate, req.approvalTime)}</span>` : ''}</td>
+                    <td><span style="font-size:12px; font-weight:600;">${req.assignedCommittee}</span><br><span style="font-size:11px; color:var(--text-secondary)">Req: ${displayDateTime(req.dateApplied, req.timeApplied)}</span>${req.approvalDate ? `<br><span style="font-size:11px; color:var(--success); font-weight:500;">Appr: ${displayDateTime(req.approvalDate, req.approvalTime)}</span>` : ''}</td>
                     <td>${actionHtml}</td>
                 `;
                 tbody.appendChild(tr);
@@ -2761,8 +2879,8 @@
                 columns: columns,
                 body: exportData,
                 startY: 20,
-                styles: { fontSize: 6, cellPadding: 1, overflow: 'linebreak' },
-                headStyles: { fillColor:[0, 149, 246] },
+                styles: { fontSize: 6, cellPadding: 2, overflow: 'linebreak', font: 'helvetica' },
+                headStyles: { fillColor:[30, 136, 229] },
                 margin: { top: 20, left: 5, right: 5 },
                 theme: 'grid'
             });
