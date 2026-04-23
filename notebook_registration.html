@@ -1,1 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBJCESL - Notebook System</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root { --primary: #003366; --gold: #ffc107; --bg: #f4f7f9; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .header { background: var(--primary); color: white; padding: 20px; border-bottom: 5px solid var(--gold); text-align: center; }
+        .header img { height: 70px; margin-bottom: 10px; background: white; padding: 5px; border-radius: 8px; }
+        .card { border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        .btn-primary { background-color: var(--primary); border: none; }
+        .hidden { display: none !important; }
+        
+        input[type="text"], input[type="tel"], select { text-transform: uppercase; font-weight: 500; }
+        .password-container { position: relative; }
+        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #6c757d; font-size: 1.2rem; }
+        
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:10000; display:none; flex-direction:column; align-items:center; justify-content:center; }
+        .student-entry { background: #fff; border: 1px solid #dee2e6; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .nav-btn { cursor: pointer; padding: 10px 15px; font-weight: bold; border-radius: 8px; color: var(--primary); }
+        
+        .stat-box { padding: 15px; border-radius: 10px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .stat-members { background: #007bff; }
+        .stat-students { background: #fd7e14; }
+        .stat-delivered { background: #28a745; }
 
+        .details-scroll { max-height: 400px; overflow-y: auto; overflow-x: hidden; }
+        .details-scroll::-webkit-scrollbar { width: 6px; }
+        .details-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        
+        .table-action-btn { padding: 2px 8px; font-size: 14px; margin: 2px; }
+    </style>
+</head>
+<body onload="checkRememberMe()">
+
+<div id="loader">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 class="mt-3 fw-bold text-primary" id="loader-text">Processing...</h5>
+    <p class="text-muted small" id="loader-subtext">Please do not refresh the page.</p>
+</div>
+
+<!-- Header -->
+<div class="header shadow">
+    <img src="logo.png" alt="SBJCESL LOGO" onerror="this.src='https://via.placeholder.com/100x50?text=LOGO'">
+    <h4 class="fw-bold m-0">SHREE BATRISI JAIN CO-OP EDUCATION SOCIETY LTD.</h4>
+    <p class="m-0 small opacity-75">Ahmedabad | Notebook Portal</p>
+</div>
+
+<!-- Navigation -->
+<div class="container mt-3">
+    <div class="d-flex justify-content-center bg-white p-2 rounded shadow-sm border">
+        <div class="nav-btn mx-2" onclick="showSection('member-login-sec')">MEMBER LOGIN</div>
+        <div class="nav-btn mx-2 text-dark" onclick="showSection('comm-login-sec')">COMMITTEE</div>
+        <div class="nav-btn mx-2 text-danger" onclick="showSection('admin-login-sec')">ADMIN PANEL</div>
+    </div>
+</div>
+
+<div class="container pb-5">
+
+    <!-- 1. MEMBER LOGIN -->
+    <div id="member-login-sec" class="row justify-content-center section">
+        <div class="col-md-5">
+            <div class="card p-4 border-top border-4 border-primary">
+                <h5 class="text-center mb-4 fw-bold">Member Notebook Registration</h5>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">REGISTERED MOBILE NUMBER</label>
+                    <input type="tel" id="memMobile" class="form-control form-control-lg text-center fw-bold" maxlength="10" placeholder="Enter Mobile No">
+                </div>
+                <button class="btn btn-primary btn-lg w-100 fw-bold" onclick="doMemberLogin()">LOGIN & PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1.5. MEMBER STATUS DASHBOARD -->
+    <div id="member-status-sec" class="row justify-content-center section hidden">
+        <div class="col-md-7">
+            <div class="card p-4 shadow border-top border-4 border-success">
+                <h5 class="fw-bold text-dark border-bottom pb-2"><i class="bi bi-clock-history"></i> Your Application Status</h5>
+                <p class="text-muted small mb-3">Check the status of your submitted notebook forms and the students listed under them.</p>
+                
+                <div id="member-status-list" class="details-scroll pe-2"></div>
+                
+                <div class="mt-4 pt-3 border-top text-center">
+                    <p class="text-muted small mb-2">Want to apply for another student or re-apply for a declined one?</p>
+                    <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" onclick="openRegistrationForm()"><i class="bi bi-plus-circle"></i> FILL NEW FORM</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. REGISTRATION FORM -->
+    <div id="reg-form-sec" class="row justify-content-center section hidden">
+        <div class="col-md-11">
+            <div class="card p-4 shadow">
+                <h5 class="border-bottom pb-2 mb-3 fw-bold text-primary">Student Details Form</h5>
+                <div class="row g-3 p-3 bg-light rounded mb-4 border">
+                    <div class="col-md-2"><label class="small fw-bold">MEMBER NO:</label><input type="text" id="dispMNo" class="form-control bg-white" readonly></div>
+                    <div class="col-md-5"><label class="small fw-bold">FULL NAME:</label><input type="text" id="dispMName" class="form-control bg-white" readonly></div>
+                    <div class="col-md-2"><label class="small fw-bold">NATIVE:</label><input type="text" id="dispNative" class="form-control bg-white" readonly></div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold">ADDRESS:</label>
+                        <input type="text" id="dispAddr" class="form-control bg-white" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold text-danger">NO. OF STUDENTS (₹<span id="lblBasePrice">80</span> Each):</label>
+                        <select id="selCount" class="form-select border-danger fw-bold" onchange="createStudentForm()">
+                            <option value="">SELECT</option>
+                            <option value="1">1 STUDENT (₹80)</option><option value="2">2 STUDENTS (₹160)</option>
+                            <option value="3">3 STUDENTS (₹240)</option><option value="4">4 STUDENTS (₹320)</option>
+                            <option value="5">5 STUDENTS (₹400)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- NEW BLOCK: Other Family Member -->
+                <div class="row g-3 p-3 bg-white rounded mb-4 border border-warning shadow-sm">
+                    <div class="col-md-12">
+                        <label class="small fw-bold text-dark">Do you have any other member in your family?</label>
+                        <select id="otherMemberSelect" class="form-select border-warning fw-bold mt-1" onchange="toggleOtherMemberFields()">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                    <div id="otherMemberFields" class="row g-2 mt-2 hidden">
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted">Other Member Number</label>
+                            <input type="text" id="otherMNo" class="form-control" placeholder="Enter Member No" onblur="fetchOtherMemberName()">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted">Other Member Name</label>
+                            <input type="text" id="otherMName" class="form-control" placeholder="Auto-filled Name" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="student-list"></div>
+                
+                <div class="text-end mt-3"><h3 class="text-danger fw-bold">TOTAL: ₹ <span id="totalAmt">0</span></h3></div>
+                <button class="btn btn-success btn-lg w-100 mt-3 fw-bold" onclick="finalSubmit()">CONFIRM REGISTRATION</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ADMIN PANEL -->
+    <div id="admin-login-sec" class="row justify-content-center section hidden">
+        <div class="col-md-4">
+            <div class="card p-4 border-top border-4 border-danger">
+                <h5 class="text-center mb-4 text-danger fw-bold">Admin Master Access</h5>
+                <input type="text" id="admID" class="form-control mb-3" placeholder="Admin ID">
+                <div class="password-container mb-2">
+                    <input type="password" id="admPass" class="form-control" placeholder="Password">
+                    <i class="bi bi-eye-slash eye-icon" onclick="togglePassword('admPass', this)"></i>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="admRemember">
+                    <label class="form-check-label small fw-bold" for="admRemember">Remember Me</label>
+                </div>
+                <button class="btn btn-danger w-100 fw-bold" onclick="doAdminLogin()">LOGIN ADMIN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-dash-sec" class="row section hidden">
+        <div class="col-md-12">
+            <div class="card p-4 shadow">
+                <div class="d-flex justify-content-between border-bottom pb-3 mb-3">
+                    <h5 class="text-danger fw-bold">Admin Dashboard</h5>
+                    <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">LOGOUT</button>
+                </div>
+
+                <!-- Live Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-4"><div class="stat-box stat-members"><h6 class="mb-1">Total Reg. Forms</h6><h2 class="m-0 fw-bold adm-members-count">0</h2></div></div>
+                    <div class="col-md-4"><div class="stat-box stat-students"><h6 class="mb-1">Total Students</h6><h2 class="m-0 fw-bold adm-students-count">0</h2></div></div>
+                    <div class="col-md-4"><div class="stat-box stat-delivered"><h6 class="mb-1">Forms Delivered</h6><h2 class="m-0 fw-bold adm-delivered-count">0</h2></div></div>
+                </div>
+
+                <!-- ALL RECORDS MANAGEMENT -->
+                <div class="mt-4 p-3 border rounded bg-white shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-primary m-0"><i class="bi bi-list-check"></i> MANAGE REGISTRATIONS</h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="downloadFullExcel()"><i class="bi bi-file-excel"></i> EXPORT EXCEL</button>
+                            <input type="text" id="adminRecordSearch" onkeyup="filterRecords('adminRecordSearch', 'admin-table-body')" class="form-control form-control-sm" style="width: 250px;" placeholder="Search Mobile No or MNO...">
+                        </div>
+                    </div>
+                    <div class="table-responsive details-scroll border">
+                        <table class="table table-bordered table-hover text-center align-middle m-0" style="font-size: 13px;">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Member Details</th>
+                                    <th>Student Data</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body">
+                                <tr><td colspan="5" class="text-muted">Loading records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- ADMIN DISTRIBUTION SETTINGS & PRICE SETTING -->
+                <div class="p-4 bg-white border border-info rounded mt-4 shadow-sm">
+                    <h6 class="fw-bold text-info border-bottom pb-2 mb-3"><i class="bi bi-gear-fill"></i> SET DISTRIBUTION SCHEDULE & DYNAMIC PRICE</h6>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted">Distribution Date</label>
+                            <input type="text" id="adminDistDate" class="form-control fw-bold" placeholder="e.g., 28/04/2026">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted">Start Time</label>
+                            <input type="text" id="adminDistStart" class="form-control fw-bold" placeholder="e.g., 10:00 AM">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted">End Time</label>
+                            <input type="text" id="adminDistEnd" class="form-control fw-bold" placeholder="e.g., 02:00 PM">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-danger">Price Per Student (₹)</label>
+                            <input type="number" id="adminPrice" class="form-control fw-bold border-danger" placeholder="e.g., 80">
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <button class="btn btn-info w-100 fw-bold text-dark" onclick="saveDistributionSettings()">SAVE SCHEDULE & SYSTEM SETTINGS</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN TOKEN SEARCH & PRINT -->
+                <div class="p-4 bg-white border border-primary rounded mt-4 shadow-sm">
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3"><i class="bi bi-search"></i> SEARCH & PRINT TOKEN DETAILS</h6>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-8">
+                            <input type="text" id="admSearchTokenInput" class="form-control fw-bold" placeholder="Enter Token Number (e.g., BAT001)">
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100 fw-bold text-white" onclick="searchTokenAdmin()">SEARCH TOKEN</button>
+                        </div>
+                    </div>
+                    <div id="adm-token-res" class="mt-3 hidden bg-light p-3 rounded border"></div>
+                </div>
+
+                <!-- Update Mobile -->
+                <div class="p-4 bg-white border border-warning rounded mt-4 shadow-sm">
+                    <h6 class="fw-bold text-warning border-bottom pb-2 mb-3"><i class="bi bi-phone-vibrate"></i> UPDATE MEMBER MOBILE NUMBER</h6>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-8">
+                            <input type="text" id="searchMno" class="form-control fw-bold" placeholder="Enter Exact Member Number (MNO)">
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-warning w-100 fw-bold text-dark" onclick="searchMemberByMno()">SEARCH MEMBER</button>
+                        </div>
+                    </div>
+                    <div id="update-mob-res" class="mt-3 hidden bg-light p-3 rounded border"></div>
+                </div>
+
+                <div class="p-4 bg-light border rounded mt-4 text-center">
+                    <h6 class="fw-bold text-dark">⚡ INSTANT UPLOAD MASTER CSV</h6>
+                    <input type="file" id="masterCSV" class="form-control mb-3 mx-auto" style="max-width: 400px;" accept=".csv">
+                    <button class="btn btn-dark px-5 fw-bold" onclick="uploadMasterInstant()">🚀 UPLOAD FILE</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. COMMITTEE SECTION -->
+    <div id="comm-login-sec" class="row justify-content-center section hidden">
+        <div class="col-md-4">
+            <div class="card p-4 border-top border-4 border-dark">
+                <h5 class="text-center mb-4 fw-bold">Committee Login</h5>
+                <label class="small fw-bold text-muted">COMMITTEE MOBILE NUMBER</label>
+                <input type="tel" id="commMobile" class="form-control mb-3 text-center fw-bold" maxlength="10" placeholder="Mobile No">
+                <label class="small fw-bold text-muted">PASSWORD</label>
+                <div class="password-container mb-2">
+                    <input type="password" id="commPass" class="form-control text-center" placeholder="Password">
+                    <i class="bi bi-eye-slash eye-icon" onclick="togglePassword('commPass', this)"></i>
+                </div>
+                <div class="form-check mb-3 d-flex justify-content-center">
+                    <input class="form-check-input me-2" type="checkbox" id="commRemember">
+                    <label class="form-check-label small fw-bold" for="commRemember">Remember My Login</label>
+                </div>
+                <button class="btn btn-dark w-100 fw-bold" onclick="doCommitteeLogin()">LOGIN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="comm-dash-sec" class="row section hidden">
+        <div class="col-md-12">
+            <div class="card p-4">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                    <h5 class="fw-bold">Verification Panel <span id="logged-comm-name" class="fs-6 fw-normal text-muted ms-2"></span></h5>
+                    <button class="btn btn-outline-dark btn-sm" onclick="location.reload()">LOGOUT</button>
+                </div>
+
+                <!-- Committee Stats -->
+                <div class="row mb-4">
+                    <div class="col-md-4"><div class="stat-box stat-members"><h6 class="mb-1">Total Reg. Forms</h6><h3 class="m-0 fw-bold adm-members-count">0</h3></div></div>
+                    <div class="col-md-4"><div class="stat-box stat-students"><h6 class="mb-1">Total Students</h6><h3 class="m-0 fw-bold adm-students-count">0</h3></div></div>
+                    <div class="col-md-4"><div class="stat-box stat-delivered"><h6 class="mb-1">Forms Delivered</h6><h3 class="m-0 fw-bold adm-delivered-count">0</h3></div></div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-5 border-end">
+                        <div id="reader" style="width: 100%;"></div>
+                        <input type="text" id="manualToken" class="form-control mt-2 text-center fw-bold" placeholder="Manual Token Entry">
+                        <button class="btn btn-primary w-100 mt-2" onclick="searchByToken()">SEARCH TOKEN</button>
+                    </div>
+                    <div id="verify-res" class="col-md-7 p-3 text-center d-flex flex-column justify-content-center details-scroll bg-light rounded">
+                        <p class="text-muted m-auto">Scan QR or enter token to view full details here.</p>
+                    </div>
+                </div>
+
+                <!-- ALL RECORDS MANAGEMENT (Committee) -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-ul"></i> All Registrations</h5>
+                        <div class="d-flex gap-2 mt-2 mt-md-0">
+                            <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="downloadFullExcel()"><i class="bi bi-file-excel"></i> EXPORT EXCEL</button>
+                            <input type="text" id="commRecordSearch" onkeyup="filterRecords('commRecordSearch', 'comm-table-body')" class="form-control form-control-sm" style="width: 250px;" placeholder="Search Mobile No or Member No...">
+                        </div>
+                    </div>
+                    <div class="table-responsive details-scroll border mt-2">
+                        <table class="table table-bordered table-hover text-center align-middle m-0" style="font-size: 13px;">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Member Details</th>
+                                    <th>Student Data</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comm-table-body">
+                                <tr><td colspan="5" class="text-muted">Loading records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. SUCCESS SCREEN -->
+    <div id="success-sec" class="row justify-content-center section hidden">
+        <div class="col-md-6 text-center">
+            <div class="card p-5 border-success shadow-lg">
+                <h2 class="text-success fw-bold">SUCCESS!</h2>
+                <div id="qrcode" class="d-flex justify-content-center my-4"></div>
+                <h4 id="resToken" class="fw-bold mt-2 lh-base"></h4>
+                <h3 id="resAmt" class="text-primary mt-3 fw-bold"></h3>
+                <button class="btn btn-primary btn-lg mt-3" onclick="location.reload()">OK, FINISH</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Firebase & Libraries -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// --- IMGBB FREE API KEY ---
+const IMGBB_API_KEY = "4654a367d70c05d4433a54f79d8a600d"; 
+
+// --- FIREBASE SETUP ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU",
+    authDomain: "batrisi-latest-app.firebaseapp.com",
+    projectId: "batrisi-latest-app",
+    appId: "1:175592360155:web:ba95f9aba4558fda9d64fe"
+};
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+const db = firebase.firestore();
+
+// FULL COMMITTEE LIST ADDED
+const committeeMembers = [
+    { name: "HITENDRABHAI JASHWANTLAL SHAH", role: "PRESIDENT", native: "BAHIYAL", mobile: "9825698298" },
+    { name: "GUNWANTLAL CHANDULAL SHAH", role: "VICE PRESIDENT", native: "VALAD", mobile: "9825441916" },
+    { name: "MAYANKKUMAR RAMANLAL SHAH", role: "SECRETARY", native: "BAHIYAL", mobile: "9537714100" },
+    { name: "SRUJAL PANKAJKUMAR SHAH", role: "VICE SECRETARY", native: "VAHELAL", mobile: "9824010710" },
+    { name: "PRAGNESHBHAI RAMESHCHANDRA SHAH", role: "TREASURER", native: "PARDHOL", mobile: "9426083001" },
+    { name: "HIMANSHU MAHENDRAKUMAR SHAH", role: "EXECUTIVE MEMBER", native: "OGANAJ", mobile: "9426084338" },
+    { name: "ASHVINKUMAR PUNAMCHAND SHAH", role: "EXECUTIVE MEMBER", native: "BAHIYAL", mobile: "9426327144" },
+    { name: "BHAVESH BIPINCHANDRA SHAH", role: "EXECUTIVE MEMBER", native: "ADALAJ", mobile: "9824313180" },
+    { name: "CHIRAGBHAI RASIKLAL SHAH", role: "EXECUTIVE MEMBER", native: "OGANAJ", mobile: "9898986763" },
+    { name: "JAYESHKUMAR CHINUBHAI SHAH", role: "EXECUTIVE MEMBER", native: "VADODARA", mobile: "9825580044" },
+    { name: "NAYANKUMAR ARVINDKUMAR SHAH", role: "EXECUTIVE MEMBER", native: "NARODA", mobile: "9924446767" },
+    { name: "NAILESHBHAI JAYANTILAL SHAH", role: "EXECUTIVE MEMBER", native: "SANTEJ", mobile: "9824499844" },
+    { name: "PRAVINCHANDRA POPATLAL SHAH", role: "EXECUTIVE MEMBER", native: "PRANTIYA", mobile: "9898251001" },
+    { name: "SANDIP MAHENDARABHAI SHAH", role: "EXECUTIVE MEMBER", native: "PASUNJ", mobile: "9327054179" },
+    { name: "SAUMILKUMAR SOMCHAND SHAH", role: "EXECUTIVE MEMBER", native: "A. MUVADA", mobile: "9374005997" },
+    { name: "SHRENIKKUMAR SAKARCHAND SHAH", role: "EXECUTIVE MEMBER", native: "HARSOLI", mobile: "9879033203" },
+    { name: "MINESH DEVENDRABHAI SHAH", role: "EXECUTIVE MEMBER", native: "VALAD", mobile: "9327513549" },
+    { name: "RAKESH BHARATBHAI SHAH", role: "EXECUTIVE MEMBER", native: "MIROLI", mobile: "9825253932" },
+    { name: "MIHIR DINESHBHAI SHAH", role: "EXECUTIVE MEMBER", native: "KUBADTHAL", mobile: "9909902687" }
+];
+
+let globalPricePerStudent = 80;
+
+function setLoader(show, mainText="Processing...", subText="Please do not refresh the page.") { 
+    document.getElementById('loader').style.display = show ? 'flex' : 'none'; 
+    document.getElementById('loader-text').innerText = mainText;
+    document.getElementById('loader-subtext').innerText = subText;
+}
+
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function togglePassword(inputId, iconElement) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") { input.type = "text"; iconElement.classList.replace("bi-eye-slash", "bi-eye"); } 
+    else { input.type = "password"; iconElement.classList.replace("bi-eye", "bi-eye-slash"); }
+}
+
+function toggleOtherMemberFields() {
+    const sel = document.getElementById('otherMemberSelect').value;
+    const fields = document.getElementById('otherMemberFields');
+    if(sel === 'Yes') {
+        fields.classList.remove('hidden');
+    } else {
+        fields.classList.add('hidden');
+    }
+}
+
+async function fetchOtherMemberName() {
+    const mno = document.getElementById('otherMNo').value.trim().toUpperCase();
+    const nameInput = document.getElementById('otherMName');
+    if(!mno) { nameInput.value = ""; return; }
+
+    setLoader(true, "Searching Member...", "");
+    try {
+        const members = await fetchMasterDB();
+        const foundUser = members.find(m => m.mno === mno);
+        if(foundUser) {
+            nameInput.value = foundUser.name;
+        } else {
+            nameInput.value = "";
+            alert("Member not found in records");
+        }
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+    setLoader(false);
+}
+
+// --- LOAD STATISTICS & RECORDS TABLE ---
+async function loadStatistics() {
+    let adminGlobalPrice = 80;
+    try {
+        const distDoc = await db.collection("settings").doc("distribution_info").get();
+        if(distDoc.exists && distDoc.data().price) {
+            adminGlobalPrice = parseInt(distDoc.data().price);
+        }
+    } catch(e) {}
+
+    try {
+        const snap = await db.collection("registrations").orderBy("TokenId", "desc").get();
+        let totalMem = 0; let totalStu = 0; let totalDel = 0;
+        let tableHTML = ""; 
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            
+            if(!data.Student) return; // ignore old data
+
+            totalMem++; // Each document is 1 student form now
+            totalStu++;
+            if(data.Status === "DELIVERED") totalDel++;
+
+            let badgeColor = "warning text-dark"; 
+            if(data.Status === "DELIVERED") badgeColor = "success";
+            if(data.Status === "DECLINED") badgeColor = "danger";
+
+            let actionBtns = `
+                <button class="btn btn-success table-action-btn" onclick="executeApprove('${id}')" title="Approve"><i class="bi bi-check-lg"></i></button>
+                <button class="btn btn-danger table-action-btn" onclick="executeDecline('${id}')" title="Decline"><i class="bi bi-x-lg"></i></button>
+                <button class="btn btn-dark table-action-btn" onclick="executeDelete('${id}')" title="Delete"><i class="bi bi-trash"></i></button>
+            `;
+
+            // Member Details Box (Amount calculated dynamically everywhere as per instructions)
+            let displayAmount = adminGlobalPrice;
+            let memDetailsHTML = `
+                <div class="text-start" style="font-size: 12px; line-height: 1.4;">
+                    <span class="fw-bold text-primary search-mno">MNO: ${data.MemberNo}</span><br>
+                    <span class="fw-bold">${data.MemberName}</span><br>
+                    <span class="text-muted">Native: ${data.Native || '-'}</span><br>
+                    <span class="search-mob text-muted">Mob: ${data.Mobile}</span><br>
+                    <span class="badge bg-warning text-dark mt-1 border border-secondary" style="font-size: 11px;">Amount: ₹ ${displayAmount}</span>
+                </div>
+            `;
+
+            // Single Student Box
+            let s = data.Student;
+            let stuDetailsHTML = `
+                <div class="text-start mb-1 pb-1" style="font-size: 12px; line-height: 1.4;">
+                    <span class="fw-bold text-dark">${s.StudentName} ${s.FatherName} ${s.Surname}</span><br>
+                    <span class="text-muted">Std: ${s.Standard} | School: ${s.SchoolCollege}</span><br>
+                    <a href="${s.MarksheetURL}" target="_blank" class="text-danger fw-bold text-decoration-none mt-1 d-inline-block"><i class="bi bi-file-earmark-image"></i> View Document</a>
+                </div>
+            `;
+
+            // Action By Detail (Who approved/rejected)
+            let actionInfoHTML = "";
+            if(data.ActionBy && (data.Status === "DELIVERED" || data.Status === "DECLINED")) {
+                let txtColor = data.Status === "DELIVERED" ? "text-success" : "text-danger";
+                actionInfoHTML = `<div style="font-size:10px; margin-top:4px;" class="fw-bold ${txtColor}">By: ${data.ActionBy.split(" ")[0]}</div>`;
+            }
+
+            tableHTML += `<tr class="record-row">
+                <td class="fw-bold align-middle">${data.Token}</td>
+                <td class="align-middle">${memDetailsHTML}</td>
+                <td class="align-middle">${stuDetailsHTML}</td>
+                <td class="align-middle">
+                    <span class="badge bg-${badgeColor}">${data.Status}</span>
+                    ${actionInfoHTML}
+                </td>
+                <td class="align-middle">${actionBtns}</td>
+            </tr>`;
+        });
+
+        document.querySelectorAll('.adm-members-count').forEach(e => e.innerText = totalMem);
+        document.querySelectorAll('.adm-students-count').forEach(e => e.innerText = totalStu);
+        document.querySelectorAll('.adm-delivered-count').forEach(e => e.innerText = totalDel);
+
+        const admTbody = document.getElementById('admin-table-body');
+        const commTbody = document.getElementById('comm-table-body');
+        const finalHTML = tableHTML || `<tr><td colspan="5" class="text-muted">No records found</td></tr>`;
+        
+        if(admTbody) admTbody.innerHTML = finalHTML;
+        if(commTbody) commTbody.innerHTML = finalHTML;
+
+    } catch(e) { console.error("Stats error", e); }
+}
+
+function filterRecords(inputId, tableBodyId) {
+    let input = document.getElementById(inputId).value.toUpperCase();
+    let rows = document.getElementById(tableBodyId).getElementsByClassName('record-row');
+    
+    for (let i = 0; i < rows.length; i++) {
+        let mnoSpan = rows[i].getElementsByClassName('search-mno')[0];
+        let mobSpan = rows[i].getElementsByClassName('search-mob')[0];
+        
+        let mnoCol = mnoSpan ? mnoSpan.innerText.toUpperCase() : "";
+        let mobCol = mobSpan ? mobSpan.innerText.toUpperCase() : "";
+        
+        if (mnoCol.includes(input) || mobCol.includes(input)) {
+            rows[i].style.display = "";
+        } else {
+            rows[i].style.display = "none";
+        }
+    }
+}
+
+async function executeApprove(id) {
+    if(!confirm("Are you sure you want to APPROVE this record?")) return;
+    setLoader(true, "Approving...");
+    
+    const actionByName = localStorage.getItem('loggedName') || "Admin";
+    const actionByMob = localStorage.getItem('loggedMobile') || "";
+
+    await db.collection("registrations").doc(id).update({
+        Status: "DELIVERED",
+        ActionBy: actionByName,
+        ActionByMobile: actionByMob
+    });
+    alert("Record Approved successfully!");
+    setLoader(false);
+    loadStatistics();
+}
+
+async function executeDecline(id) {
+    let reason = prompt("Please enter the REASON for declining this application (e.g., Document not clear):");
+    if(reason === null || reason.trim() === "") return alert("Action Cancelled. Reason is mandatory to decline!");
+    
+    setLoader(true, "Declining...");
+    const actionByName = localStorage.getItem('loggedName') || "Admin";
+    const actionByMob = localStorage.getItem('loggedMobile') || "";
+
+    await db.collection("registrations").doc(id).update({ 
+        Status: "DECLINED", 
+        DeclineReason: reason.trim(),
+        ActionBy: actionByName,
+        ActionByMobile: actionByMob
+    });
+    alert("Record Declined successfully.");
+    setLoader(false);
+    loadStatistics();
+}
+
+async function executeDelete(id) {
+    if(!confirm("WARNING! Are you sure you want to PERMANENTLY DELETE this record?")) return;
+    setLoader(true, "Deleting...");
+    await db.collection("registrations").doc(id).delete();
+    alert("Record Deleted successfully!");
+    setLoader(false);
+    loadStatistics();
+}
+
+async function uploadMasterInstant() {
+    const file = document.getElementById('masterCSV').files[0];
+    if(!file) return alert("Please Select CSV File!");
+    
+    setLoader(true, "Packing & Uploading Instantly...", "Uploading in 1 Second!");
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const lines = e.target.result.split(/\r?\n/);
+            let membersArray = [];
+            for(let i=0; i<lines.length; i++) {
+                const d = lines[i].split(",");
+                const mnoClean = d[0] ? d[0].replace(/['"]/g, '').trim().toUpperCase() : "";
+                if(mnoClean && d.length >= 2) {
+                    membersArray.push({
+                        mno: mnoClean, name: d[1] ? d[1].replace(/['"]/g, '').trim() : "",
+                        native: d[2] ? d[2].replace(/['"]/g, '').trim() : "",
+                        mobile: d[3] ? d[3].replace(/['"]/g, '').trim() : "",
+                        addr: d[4] ? d[4].replace(/['"]/g, '').trim() : ""
+                    });
+                }
+            }
+            await db.collection("settings").doc("master_db").set({ data: JSON.stringify(membersArray) });
+            alert(`⚡ UPLOAD SUCCESSFUL! ${membersArray.length} Members Uploaded Instantly in 1 Second.`);
+        } catch(err) { alert("Upload Error: " + err.message); }
+        setLoader(false);
+    };
+    reader.readAsText(file);
+}
+
+let currentMnoToUpdate = null;
+let cachedDBData = null;
+let globalMemberData = null;
+
+async function fetchMasterDB() {
+    const doc = await db.collection("settings").doc("master_db").get();
+    if(doc.exists) return JSON.parse(doc.data().data);
+    return [];
+}
+
+async function searchMemberByMno() {
+    const mno = document.getElementById('searchMno').value.replace(/['"]/g, '').trim().toUpperCase();
+    if(!mno) return alert("Enter Member Number!");
+    setLoader(true, "Searching Fast Database...", "");
+    try {
+        const members = await fetchMasterDB();
+        const foundUser = members.find(m => m.mno === mno);
+        if(!foundUser) {
+            alert("Member Number '" + mno + "' not found! Make sure you entered it correctly.");
+            document.getElementById('update-mob-res').classList.add('hidden');
+        } else {
+            currentMnoToUpdate = mno; cachedDBData = members;
+            document.getElementById('update-mob-res').classList.remove('hidden');
+            document.getElementById('update-mob-res').innerHTML = `
+                <div class="d-flex justify-content-between align-items-center"><div><h6 class="mb-1 fw-bold text-primary">NAME: ${foundUser.name}</h6><h6 class="mb-0 fw-bold text-danger">OLD MOBILE: ${foundUser.mobile || "NOT SET"}</h6></div></div><hr>
+                <label class="small fw-bold text-muted">NEW MOBILE NUMBER</label>
+                <div class="input-group mt-1"><input type="tel" id="newMobileInput" class="form-control fw-bold" maxlength="10" placeholder="Enter New 10-Digit Mobile"><button class="btn btn-success fw-bold px-4" onclick="updateMobileData()">UPDATE NUMBER</button></div>
+            `;
+        }
+    } catch(e) { alert("Error: " + e.message); }
+    setLoader(false);
+}
+
+async function updateMobileData() {
+    const newMob = document.getElementById('newMobileInput').value.trim();
+    if(newMob.length !== 10) return alert("Enter valid 10-digit mobile number!");
+    setLoader(true, "Updating Mobile Number Instantly...", "");
+    try {
+        let userIndex = cachedDBData.findIndex(m => m.mno === currentMnoToUpdate);
+        cachedDBData[userIndex].mobile = newMob;
+        await db.collection("settings").doc("master_db").update({ data: JSON.stringify(cachedDBData) });
+        alert("Success! Mobile Number Updated. Member can now login.");
+        document.getElementById('update-mob-res').classList.add('hidden'); document.getElementById('searchMno').value = "";
+    } catch(e) { alert("Error updating: " + e.message); }
+    setLoader(false);
+}
+
+async function saveDistributionSettings() {
+    const date = document.getElementById('adminDistDate').value.trim();
+    const start = document.getElementById('adminDistStart').value.trim();
+    const end = document.getElementById('adminDistEnd').value.trim();
+    const price = document.getElementById('adminPrice').value.trim() || 80;
+    setLoader(true, "Saving Settings...");
+    try {
+        await db.collection("settings").doc("distribution_info").set({
+            date: date,
+            start: start,
+            end: end,
+            price: price
+        });
+        alert("Settings Saved Successfully!");
+    } catch(e) { alert("Error: " + e.message); }
+    setLoader(false);
+}
+
+async function loadDistributionSettings() {
+    try {
+        const doc = await db.collection("settings").doc("distribution_info").get();
+        if(doc.exists) {
+            const data = doc.data();
+            if(document.getElementById('adminDistDate')) document.getElementById('adminDistDate').value = data.date || "";
+            if(document.getElementById('adminDistStart')) document.getElementById('adminDistStart').value = data.start || "";
+            if(document.getElementById('adminDistEnd')) document.getElementById('adminDistEnd').value = data.end || "";
+            if(document.getElementById('adminPrice')) document.getElementById('adminPrice').value = data.price || 80;
+            if(data.price) globalPricePerStudent = parseInt(data.price);
+        }
+    } catch(e) {}
+}
+
+function updateDynamicPricingUI() {
+    document.getElementById('lblBasePrice').innerText = globalPricePerStudent;
+    const sel = document.getElementById('selCount');
+    sel.innerHTML = '<option value="">SELECT</option>';
+    for(let i=1; i<=5; i++) {
+        sel.innerHTML += `<option value="${i}">${i} STUDENT(S) (₹${i * globalPricePerStudent})</option>`;
+    }
+}
+
+// FIXED: MEMBER DASHBOARD LOGIN SYSTEM
+async function doMemberLogin() {
+    const mob = document.getElementById('memMobile').value.trim();
+    if(mob.length < 10) return alert("Enter valid 10-digit Mobile Number!");
+    setLoader(true, "Loading Profile...", "");
+    
+    try {
+        const members = await fetchMasterDB();
+        globalMemberData = members.find(m => m.mobile === mob);
+        
+        if(!globalMemberData) {
+            alert("Mobile Number NOT FOUND in List! Please check or contact Admin.");
+            setLoader(false); return;
+        }
+
+        let distDate = "TBA", distStart = "TBA", distEnd = "TBA";
+        try {
+            const distDoc = await db.collection("settings").doc("distribution_info").get();
+            if(distDoc.exists) {
+                distDate = distDoc.data().date || "TBA";
+                distStart = distDoc.data().start || "TBA";
+                distEnd = distDoc.data().end || "TBA";
+                if(distDoc.data().price) globalPricePerStudent = parseInt(distDoc.data().price);
+            }
+        } catch(e) {}
+
+        const reg = await db.collection("registrations").where("Mobile", "==", mob).get();
+        
+        if(!reg.empty) {
+            let records = [];
+            reg.forEach(doc => records.push(doc.data()));
+            
+            // Sort data manually using JavaScript logic (Client-side sorting)
+            records.sort((a, b) => b.TokenId - a.TokenId);
+
+            let html = "";
+            records.forEach(d => {
+                if(!d.Student) return; // ignore old data structure
+                
+                let displayStatus = d.Status;
+                if(d.Status === 'DELIVERED') displayStatus = 'Approved'; 
+
+                let stuName = `<span class="text-primary fw-bold">Student: ${d.Student.StudentName} ${d.Student.FatherName} ${d.Student.Surname}</span> <br><span class="text-muted small fw-bold">STD: ${d.Student.Standard}</span>`;
+                let badge = d.Status === 'DELIVERED' ? 'success' : (d.Status === 'DECLINED' ? 'danger' : 'warning text-dark');
+                let reasonBox = d.Status === 'DECLINED' ? `<div class="bg-white border border-danger text-danger p-2 mt-2 rounded small"><b>Declined Reason:</b> ${d.DeclineReason}</div>` : "";
+                
+                let distInfoBox = "";
+                if(d.Status === 'DELIVERED') {
+                    distInfoBox = `
+                    <div class="mt-2 pt-2 border-top border-success text-dark small fw-bold">
+                        Distribution Date: ${distDate}<br>
+                        Time: ${distStart} – ${distEnd}
+                    </div>`;
+                }
+
+                html += `
+                <div class="border border-${badge} bg-light p-3 rounded mb-3 shadow-sm text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                        <h6 class="fw-bold text-dark m-0">Token: ${d.Token}</h6>
+                        <span class="badge bg-${badge} px-3 py-2 shadow-sm text-uppercase">Status: ${displayStatus}</span>
+                    </div>
+                    <div class="mb-1 lh-sm">${stuName}</div>
+                    ${reasonBox}
+                    ${distInfoBox}
+                </div>`;
+            });
+
+            let totalAmount = records.length * globalPricePerStudent;
+            let summaryBox = `
+            <div class="alert alert-info border-info text-center shadow-sm p-3 mb-4 rounded">
+                <h5 class="fw-bold m-0 text-dark">TOTAL AMOUNT PAYABLE</h5>
+                <h3 class="text-primary fw-bold mt-1 mb-2">₹ ${totalAmount}</h3>
+                <span class="small text-muted fw-bold">${records.length} Student(s) Registered × ₹${globalPricePerStudent} per student</span>
+            </div>`;
+
+            if(html !== "") {
+                document.getElementById('member-status-list').innerHTML = summaryBox + html;
+                showSection('member-status-sec');
+            } else {
+                openRegistrationForm();
+            }
+        } else {
+            openRegistrationForm();
+        }
+    } catch(e) { alert("System Error: " + e.message); }
+    
+    setLoader(false);
+}
+
+function openRegistrationForm() {
+    if(!globalMemberData) return alert("Session Expired. Please login again.");
+    document.getElementById('dispMNo').value = globalMemberData.mno;
+    document.getElementById('dispMName').value = globalMemberData.name;
+    document.getElementById('dispNative').value = globalMemberData.native;
+    document.getElementById('dispAddr').value = globalMemberData.addr;
+    updateDynamicPricingUI();
+    showSection('reg-form-sec');
+}
+
+function createStudentForm() {
+    const c = document.getElementById('selCount').value;
+    document.getElementById('totalAmt').innerText = c * globalPricePerStudent;
+    const list = document.getElementById('student-list'); list.innerHTML = "";
+    for(let i=1; i<=c; i++) {
+        list.innerHTML += `
+        <div class="student-entry">
+            <h6 class="text-primary fw-bold border-bottom pb-2">STUDENT ${i} DETAILS</h6>
+            <div class="row g-2 mt-1">
+                <div class="col-md-4"><label class="small text-muted fw-bold">STUDENT NAME</label><input type="text" class="form-control s-name" placeholder="Name"></div>
+                <div class="col-md-4"><label class="small text-muted fw-bold">FATHER NAME</label><input type="text" class="form-control s-fname" placeholder="Father Name"></div>
+                <div class="col-md-4"><label class="small text-muted fw-bold">SURNAME</label><input type="text" class="form-control s-surname" placeholder="Surname"></div>
+                <div class="col-md-3 mt-2"><label class="small text-muted fw-bold">STANDARD</label><input type="text" class="form-control s-std" placeholder="Std (e.g. 10th)"></div>
+                <div class="col-md-5 mt-2"><label class="small text-muted fw-bold">SCHOOL/COLLEGE</label><input type="text" class="form-control s-school" placeholder="School Name"></div>
+                <div class="col-md-4 mt-2"><label class="small text-muted fw-bold text-danger">Last Year Marksheet Or Fees Receipt</label><input type="file" class="form-control s-file border-danger" accept="image/*"></div>
+            </div>
+        </div>`;
+    }
+}
+
+async function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image(); img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Increased width for much better clarity (was 800)
+                const MAX_WIDTH = 1600; 
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                // Increased quality to 90% (0.9) for clear readability
+                canvas.toBlob((blob) => { resolve(blob); }, 'image/jpeg', 0.9); 
+            };
+        };
+        reader.onerror = error => reject(error);
+    });
+}
+
+async function finalSubmit() {
+    const entries = document.querySelectorAll('.student-entry');
+    if(entries.length === 0) return alert("Please select number of students!");
+    
+    const memNameValue = document.getElementById('dispMName').value.trim().toUpperCase();
+    const memFirstName = memNameValue.split(" ")[0];
+
+    const uploadPromises = [];
+    for(let entry of entries) {
+        const file = entry.querySelector('.s-file').files[0];
+        const sName = entry.querySelector('.s-name').value.trim().toUpperCase();
+        const fName = entry.querySelector('.s-fname').value.trim().toUpperCase();
+        
+        if(!file || !sName || !fName) return alert("Please fill Student Name, Father Name, and Upload Document for all students!");
+
+        // --- NEW: FATHER NAME STRICT VALIDATION ---
+        const fNameFirst = fName.split(" ")[0];
+        if (!memFirstName.includes(fNameFirst) && !fNameFirst.includes(memFirstName)) {
+            alert("Father name does not match member records. Please correct it.");
+            return; // BLOCK submission completely
+        }
+    }
+
+    // --- NEW STRICT DUPLICATE PREVENTION LOGIC ---
+    setLoader(true, "Verifying Duplicates...", "Please wait...");
+    try {
+        const memMobileValue = document.getElementById('memMobile').value.trim();
+        const memNoValue = document.getElementById('dispMNo').value.trim();
+        
+        // Check for duplicates within the current form
+        let currentFormNames = [];
+        for(let entry of entries) {
+            const sName = entry.querySelector('.s-name').value.trim().toUpperCase();
+            const fName = entry.querySelector('.s-fname').value.trim().toUpperCase();
+            const surname = entry.querySelector('.s-surname').value.trim().toUpperCase();
+            const formFullName = `${sName} ${fName} ${surname}`.trim().toUpperCase();
+            if(currentFormNames.includes(formFullName) && formFullName !== "") {
+                alert(`This student is already entered in the current form: ${formFullName}\nPlease remove duplicate entries.`);
+                setLoader(false); return;
+            }
+            currentFormNames.push(formFullName);
+        }
+        
+        const allRegsSnap = await db.collection("registrations").get();
+        let allRegs = [];
+        allRegsSnap.forEach(d => allRegs.push(d.data()));
+
+        for(let reg of allRegs) {
+            // 3. Student Full Name Check (First priority for exact student match)
+            if(reg.Student) {
+                const regFullName = `${reg.Student.StudentName} ${reg.Student.FatherName} ${reg.Student.Surname}`.trim().toUpperCase();
+                for(let entry of entries) {
+                    const sName = entry.querySelector('.s-name').value.trim().toUpperCase();
+                    const fName = entry.querySelector('.s-fname').value.trim().toUpperCase();
+                    const surname = entry.querySelector('.s-surname').value.trim().toUpperCase();
+                    const formFullName = `${sName} ${fName} ${surname}`.trim().toUpperCase();
+                    if(regFullName === formFullName && formFullName !== "") {
+                        alert(`This student is already registered.\nYour Token Number: ${reg.Token}`);
+                        setLoader(false); return;
+                    }
+                }
+            }
+            
+            // 2. Member No Check
+            if(reg.MemberNo === memNoValue) {
+                alert(`Your registration has already been completed.\nYour Token Number: ${reg.Token}`);
+                setLoader(false); return;
+            }
+
+            // 1. Mobile Check
+            if(reg.Mobile === memMobileValue) {
+                alert(`This mobile number is already registered.\nYour Token Number: ${reg.Token}`);
+                setLoader(false); return;
+            }
+        }
+    } catch(e) {
+        console.error("Duplicate Check Error: ", e);
+    }
+    // --- END DUPLICATE PREVENTION LOGIC ---
+    
+    setLoader(true, "Generating Individual Tokens...", "Uploading Documents. Please wait...");
+    try {
+        for(let entry of entries) {
+            const file = entry.querySelector('.s-file').files[0];
+            const sName = entry.querySelector('.s-name').value.toUpperCase();
+            const compressedBlob = await compressImage(file);
+            
+            const formData = new FormData(); formData.append("image", compressedBlob, sName+".jpg");
+            const task = fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(result => {
+                  if(result.success) {
+                      return {
+                          StudentName: sName, FatherName: entry.querySelector('.s-fname').value.toUpperCase(),
+                          Surname: entry.querySelector('.s-surname').value.toUpperCase(), Standard: entry.querySelector('.s-std').value.toUpperCase(),
+                          SchoolCollege: entry.querySelector('.s-school').value.toUpperCase(), MarksheetURL: result.data.url
+                      };
+                  } else throw new Error("Image Upload Failed");
+              });
+            uploadPromises.push(task);
+        }
+        
+        const studentData = await Promise.all(uploadPromises);
+        let generatedTokens = [];
+
+        // --- SEQUENTIAL TOKEN GENERATION FOR EACH STUDENT ---
+        const counterRef = db.collection("settings").doc("token_counter");
+        
+        const otherFamilyMember = document.getElementById('otherMemberSelect') ? document.getElementById('otherMemberSelect').value : "No";
+        let otherMemberData = null;
+        if (otherFamilyMember === "Yes") {
+            otherMemberData = {
+                MemberNo: document.getElementById('otherMNo').value.trim().toUpperCase(),
+                MemberName: document.getElementById('otherMName').value.trim().toUpperCase()
+            };
+        }
+
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const regDateStr = `${dd}/${mm}/${yyyy}`;
+
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; 
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        const regTimeStr = `${hours}:${minutes} ${ampm}`;
+
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(counterRef);
+            let nextNum = 1;
+            if (doc.exists && doc.data().lastNumber) {
+                nextNum = doc.data().lastNumber + 1;
+            }
+            
+            for(let i=0; i<studentData.length; i++) {
+                const token = "BAT" + String(nextNum).padStart(3, '0');
+                generatedTokens.push(token);
+                
+                const newDocRef = db.collection("registrations").doc();
+                transaction.set(newDocRef, {
+                    Token: token, 
+                    TokenId: nextNum, 
+                    Amount: globalPricePerStudent, // DYNAMIC PRICE USED
+                    Mobile: document.getElementById('memMobile').value,
+                    MemberName: document.getElementById('dispMName').value, 
+                    MemberNo: document.getElementById('dispMNo').value,
+                    Native: document.getElementById('dispNative').value,
+                    Student: studentData[i], 
+                    Status: "PENDING", 
+                    Date: new Date().toISOString(),
+                    RegDate: regDateStr,
+                    RegTime: regTimeStr,
+                    OtherFamilyMember: otherFamilyMember,
+                    OtherMemberDetails: otherMemberData
+                });
+                nextNum++;
+            }
+            transaction.set(counterRef, { lastNumber: nextNum - 1 }, { merge: true });
+        });
+
+        showSuccess(generatedTokens, studentData.length * globalPricePerStudent);
+    } catch(e) { console.error(e); alert("Registration Failed! Something went wrong."); } 
+    finally { setLoader(false); }
+}
+
+function doAdminLogin() {
+    const id = document.getElementById('admID').value.toUpperCase(); const pass = document.getElementById('admPass').value; const remember = document.getElementById('admRemember').checked;
+    if(id === "BATRISI" && pass === "Bat@3232") {
+        if(remember) { localStorage.setItem('admID', id); localStorage.setItem('admPass', pass); localStorage.setItem('admRemember', 'true'); } 
+        else { localStorage.removeItem('admID'); localStorage.removeItem('admPass'); localStorage.removeItem('admRemember'); }
+        
+        localStorage.setItem('loggedName', 'Admin (Master)');
+        localStorage.setItem('loggedMobile', 'Admin');
+
+        showSection('admin-dash-sec'); loadStatistics();
+        loadDistributionSettings();
+    } else alert("Wrong Admin Credentials");
+}
+
+function doCommitteeLogin() {
+    const commMobile = document.getElementById('commMobile').value.trim(); const commPass = document.getElementById('commPass').value; const remember = document.getElementById('commRemember').checked;
+    
+    const member = committeeMembers.find(m => m.mobile === commMobile);
+    if(!member) return alert("Access Denied! Mobile not in Committee List.");
+
+    if(commPass === "Bat@3232") {
+        if(remember) { localStorage.setItem('commMobile', commMobile); localStorage.setItem('commPass', commPass); localStorage.setItem('commRemember', 'true'); } 
+        else { localStorage.removeItem('commMobile'); localStorage.removeItem('commPass'); localStorage.removeItem('commRemember'); }
+        
+        localStorage.setItem('loggedName', member.name);
+        localStorage.setItem('loggedMobile', member.mobile);
+        document.getElementById('logged-comm-name').innerText = `(${member.name})`;
+
+        showSection('comm-dash-sec'); loadStatistics();
+        new Html5Qrcode("reader").start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => searchByToken(t));
+    } else alert("Wrong Password!");
+}
+
+function checkRememberMe() {
+    if(localStorage.getItem('admRemember') === 'true') { 
+        document.getElementById('admID').value = localStorage.getItem('admID'); 
+        document.getElementById('admPass').value = localStorage.getItem('admPass'); 
+        document.getElementById('admRemember').checked = true; 
+    }
+    if(localStorage.getItem('commRemember') === 'true') { 
+        document.getElementById('commMobile').value = localStorage.getItem('commMobile'); 
+        document.getElementById('commPass').value = localStorage.getItem('commPass'); 
+        document.getElementById('commRemember').checked = true; 
+    }
+}
+
+let currentSearchedTokenData = null;
+
+async function executeTokenSearch(tokenText, containerId) {
+    if(!tokenText) return alert("Please enter a Token Number!");
+    setLoader(true, "Fetching Details...", "");
+    
+    try {
+        const res = await db.collection("registrations").where("Token", "==", tokenText).get();
+        if(res.empty) {
+            document.getElementById(containerId).classList.remove('hidden');
+            document.getElementById(containerId).innerHTML = `<h5 class="text-danger fw-bold mt-3"><i class="bi bi-x-circle"></i> Token Not Found!</h5>`;
+            setLoader(false); return;
+        }
+        
+        const docId = res.docs[0].id;
+        const d = res.docs[0].data();
+        currentSearchedTokenData = d;
+        
+        let s = d.Student;
+        let stuHtml = `<div class="mt-3 text-start"><h6 class="fw-bold border-bottom border-secondary pb-1 text-dark">STUDENT DETAILS:</h6>
+            <div class="p-2 border border-secondary rounded bg-white mb-2 shadow-sm" style="font-size: 0.9rem;">
+                <div class="fw-bold text-primary">${s.StudentName} ${s.FatherName} ${s.Surname}</div>
+                <div class="text-muted mb-1">Std: <b>${s.Standard}</b> | School: <b>${s.SchoolCollege}</b></div>
+                <a href="${s.MarksheetURL}" target="_blank" class="btn btn-sm btn-outline-primary w-100 fw-bold"><i class="bi bi-image"></i> VIEW MARKSHEET / RECEIPT</a>
+            </div></div>`;
+        
+        let actionBtn = "";
+        if(d.Status === "DELIVERED") {
+            actionBtn = `<button class="btn btn-success w-100 py-2 fw-bold" disabled><i class="bi bi-check-circle-fill"></i> ALREADY DELIVERED / APPROVED</button>`;
+        } else if (d.Status === "DECLINED") {
+            actionBtn = `<button class="btn btn-danger w-100 py-2 fw-bold" disabled><i class="bi bi-x-octagon-fill"></i> APPLICATION DECLINED</button>`;
+        } else {
+            actionBtn = `<button class="btn btn-primary w-100 py-2 fw-bold shadow-lg" onclick="markDeliveredScanner('${docId}', '${containerId}')"><i class="bi bi-box-seam"></i> APPROVE & DELIVER BOOK</button>`;
+        }
+            
+        let printBtn = `<button class="btn btn-dark w-100 mt-2 py-2 fw-bold shadow" onclick="printTokenReceipt()"><i class="bi bi-printer"></i> PRINT RECEIPT</button>`;
+        let badgeColor = d.Status === 'DELIVERED' ? 'success' : (d.Status === 'DECLINED' ? 'danger' : 'warning text-dark');
+
+        document.getElementById(containerId).classList.remove('hidden');
+        document.getElementById(containerId).innerHTML = `
+            <div class="text-start bg-white p-3 rounded shadow-sm border border-primary">
+                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                    <h5 class="fw-bold text-primary m-0">TOKEN: ${d.Token}</h5>
+                    <span class="badge bg-${badgeColor} px-3 py-2" style="font-size:14px;">${d.Status}</span>
+                </div>
+                <div class="row g-2 mb-2" style="font-size: 0.95rem;">
+                    <div class="col-6"><span class="text-muted small">MNO:</span><br><b class="text-dark">${d.MemberNo}</b></div>
+                    <div class="col-6"><span class="text-muted small">MOBILE:</span><br><b class="text-dark">${d.Mobile}</b></div>
+                    <div class="col-12"><span class="text-muted small">MEMBER NAME:</span><br><b class="text-dark">${d.MemberName}</b></div>
+                </div>
+                ${stuHtml}
+                <div class="mt-3 border-top pt-3">${actionBtn} ${printBtn}</div>
+            </div>`;
+    } catch(e) { alert("Error: " + e.message); }
+    setLoader(false);
+}
+
+function searchByToken(tText = null) {
+    const t = tText || document.getElementById('manualToken').value.toUpperCase();
+    executeTokenSearch(t, 'verify-res');
+}
+
+function searchTokenAdmin() {
+    const t = document.getElementById('admSearchTokenInput').value.toUpperCase();
+    executeTokenSearch(t, 'adm-token-res');
+}
+
+async function markDeliveredScanner(id, containerId) {
+    if(!confirm("Are you sure you want to mark this book as DELIVERED?")) return;
+    setLoader(true, "Updating Status...");
+    
+    const actionByName = localStorage.getItem('loggedName') || "Admin";
+    const actionByMob = localStorage.getItem('loggedMobile') || "";
+
+    await db.collection("registrations").doc(id).update({
+        Status: "DELIVERED",
+        ActionBy: actionByName,
+        ActionByMobile: actionByMob
+    });
+    alert("Book Marked as Delivered!");
+    setLoader(false);
+    
+    executeTokenSearch(currentSearchedTokenData.Token, containerId);
+    loadStatistics(); 
+}
+
+function printTokenReceipt() {
+    if(!currentSearchedTokenData) return;
+    const d = currentSearchedTokenData;
+    let s = d.Student;
+    let stuHtml = `<div style="margin-bottom: 12px; padding: 10px; border: 1px dashed #444; background: #fafafa;">
+                <div style="font-size: 16px;"><b>${s.StudentName} ${s.FatherName} ${s.Surname}</b></div>
+                <div style="font-size: 14px; margin-top: 5px; color: #333;">Standard: <b>${s.Standard}</b> | School: <b>${s.SchoolCollege}</b></div>
+            </div>`;
+
+    const printWin = window.open('', '', 'width=800,height=600');
+    printWin.document.write(`
+        <html><head><title>Receipt - ${d.Token}</title>
+            <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #000; }
+                .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+                .header h2 { margin: 0; font-size: 22px; text-transform: uppercase; }
+                .token-box { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 10px 15px; border: 1px solid #000; font-size: 20px; font-weight: bold; }
+                .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                .info-table td { padding: 8px; border: 1px solid #ccc; font-size: 16px; }
+                .amt-box { text-align: right; font-size: 22px; font-weight: bold; margin-bottom: 20px; }
+            </style>
+        </head><body>
+            <div class="header"><h2>SHREE BATRISI JAIN CO-OP EDUCATION SOCIETY LTD.</h2><p style="margin:5px 0 0 0;">Ahmedabad | Registration Receipt</p></div>
+            <div class="token-box"><span>TOKEN NO: ${d.Token}</span><span>[ ${d.Status} ]</span></div>
+            <table class="info-table">
+                <tr><td><b>Member No:</b></td><td>${d.MemberNo}</td><td><b>Mobile No:</b></td><td>${d.Mobile}</td></tr>
+                <tr><td><b>Member Name:</b></td><td colspan="3">${d.MemberName}</td></tr>
+            </table>
+            <div class="amt-box">Amount: Rs. ${d.Amount}</div>
+            <h3 style="margin-bottom: 10px; border-bottom: 1px solid #000; display: inline-block;">Student Detail</h3>
+            ${stuHtml}
+            <div style="text-align: center; margin-top: 40px; font-size: 12px; border-top: 1px solid #ccc; padding-top: 10px;">Printed on: ${new Date().toLocaleString()}</div>
+            <script>window.onload = function() { window.print(); }<\/script>
+        </body></html>
+    `);
+    printWin.document.close();
+}
+
+function showSuccess(tokensArray, totalAmt) {
+    showSection('success-sec');
+    document.getElementById('resToken').innerHTML = "TOKENS GENERATED:<br><span class='text-primary mt-2 d-inline-block'>" + tokensArray.join("<br>") + "</span>";
+    document.getElementById('resAmt').innerText = "TOTAL PAYABLE: ₹ " + totalAmt;
+    document.getElementById('qrcode').innerHTML = "";
+    new QRCode(document.getElementById("qrcode"), { text: tokensArray.join(", "), width: 140, height: 140 });
+}
+
+// FIXED EXCEL DOWNLOAD FUNCTION
+async function downloadFullExcel() {
+    setLoader(true, "Generating Excel...", "Please wait a moment.");
+    try {
+        const snap = await db.collection("registrations").orderBy("TokenId", "desc").get();
+        let data = []; 
+        snap.forEach(d => {
+            let r = d.data();
+            if(r.Student) {
+                data.push({ 
+                    "TOKEN": r.Token,
+                    "REGISTRATION DATE": r.RegDate || "-",
+                    "REGISTRATION TIME": r.RegTime || "-",
+                    "MEMBER NO": r.MemberNo,
+                    "MEMBER NAME": r.MemberName,
+                    "NATIVE": r.Native || "-",
+                    "MOBILE": r.Mobile,
+                    "AMOUNT (₹)": r.Amount,
+                    "STUDENT FULL NAME": `${r.Student.StudentName} ${r.Student.FatherName} ${r.Student.Surname}`,
+                    "STANDARD": r.Student.Standard,
+                    "SCHOOL/COLLEGE": r.Student.SchoolCollege,
+                    "DOCUMENT LINK": r.Student.MarksheetURL,
+                    "STATUS": r.Status,
+                    "ACTION BY (NAME)": r.ActionBy || "-",
+                    "ACTION BY (MOBILE)": r.ActionByMobile || "-",
+                    "DECLINE REASON": r.DeclineReason || "-"
+                });
+            }
+        });
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Registrations");
+        XLSX.writeFile(wb, "All_Registrations_Report.xlsx");
+    } catch(e) {
+        alert("Excel Download Error: " + e.message);
+    }
+    setLoader(false);
+}
+
+</script>
+</body>
+</html>
