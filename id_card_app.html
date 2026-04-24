@@ -419,7 +419,7 @@
                     </div>
 
                     <div id="family-fields-container" style="display: none; flex-direction: column; gap: 10px;">
-                        <input type="text" id="reg-familyMemberNo" placeholder="MEMBER ID NO." class="uppercase-text" oninput="this.value = this.value.toUpperCase()">
+                        <input type="text" id="reg-familyMemberNo" placeholder="MEMBER ID NO." class="uppercase-text" oninput="this.value = this.value.toUpperCase()" onblur="fetchFamilyMemberName()">
                         <input type="text" id="reg-familyMemberName" placeholder="MEMBER FULL NAME" class="uppercase-text" oninput="this.value = this.value.toUpperCase()">
                     </div>
                 </div>
@@ -870,6 +870,21 @@
                 document.getElementById('reg-familyMemberNo').value = '';
                 document.getElementById('reg-familyMemberName').value = '';
             }
+        }
+
+        // Fetch Family Member Name Automatically from CSV (existingMembers collection)
+        function fetchFamilyMemberName() {
+            let memNo = document.getElementById('reg-familyMemberNo').value.trim().toUpperCase();
+            if(!memNo) {
+                document.getElementById('reg-familyMemberName').value = '';
+                return;
+            }
+            db.collection('existingMembers').doc(memNo).get().then(doc => {
+                if(doc.exists) {
+                    let data = doc.data();
+                    document.getElementById('reg-familyMemberName').value = data.name || "";
+                }
+            }).catch(err => console.error("Error fetching family member:", err));
         }
 
         function combineAndDisplayAdminName() {
@@ -1930,6 +1945,12 @@
                 let data = [];
                 snap.forEach(doc => {
                     let r = doc.data();
+                    
+                    // Get Committee Member Name instead of phone
+                    let commName = r.committeePhone;
+                    let commObj = committeeList.find(c => c.phone === r.committeePhone);
+                    if(commObj) commName = commObj.name;
+                    
                     data.push({
                         "DATE & TIME": formatDateTime12Hour(r.timestamp),
                         "NAME": r.name || "-",
@@ -1942,6 +1963,9 @@
                         "BLOOD GROUP": r.bloodGroup || "-",
                         "EDUCATION": r.education || "-",
                         "OCCUPATION": r.vyavsay || "-",
+                        "FAMILY MEMBER NO": r.familyMemberNo || "-",
+                        "FAMILY MEMBER NAME": r.familyMemberName || "-",
+                        "COMMITTEE MEMBER": commName || "-",
                         "STATUS": r.status || "-"
                     });
                 });
