@@ -186,6 +186,10 @@
             <button class="btn" style="background: var(--primary);" onclick="showMobileVerify()">
                 <i class="fa-solid fa-user-plus"></i> NEW MEMBER FORM
             </button>
+
+            <button class="btn" style="background: #10b981; margin-top: 10px;" onclick="showExistingMobileVerify()">
+                <i class="fa-solid fa-user-check"></i> EXISTING MEMBER FORM
+            </button>
         </div>
 
         <!-- MOBILE VERIFY (NEW MEMBER LOGIN) -->
@@ -199,6 +203,24 @@
             </div>
             
             <button id="verifyBtn" class="btn btn-save" onclick="verifyMobile()" style="margin-top: 15px;">
+                CONTINUE <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <button class="btn btn-clear" onclick="showMainLogin()" style="margin-top: 10px;">
+                <i class="fa-solid fa-arrow-left"></i> BACK
+            </button>
+        </div>
+
+        <!-- EXISTING MOBILE VERIFY (EXISTING MEMBER LOGIN) -->
+        <div class="login-box" id="existing-mobile-verify-box" style="display: none;">
+            <i class="fa-solid fa-id-card-clip" style="font-size: 40px; color: #10b981; margin-bottom: 15px;"></i>
+            <h2>Existing Member</h2>
+            <p>Enter your registered mobile number</p>
+            
+            <div class="form-group" style="text-align: left;">
+                <input type="number" id="existingVerifyMobileInput" placeholder="MOBILE NUMBER">
+            </div>
+            
+            <button class="btn btn-save" onclick="verifyExistingMobile()" style="margin-top: 15px;">
                 CONTINUE <i class="fa-solid fa-arrow-right"></i>
             </button>
             <button class="btn btn-clear" onclick="showMainLogin()" style="margin-top: 10px;">
@@ -418,6 +440,96 @@
 
 
     <!-- ========================================================================= -->
+    <!-- EXISTING MEMBER REGISTRATION FORM -->
+    <!-- ========================================================================= -->
+    <div id="existing-registration-wrapper" style="display: none;">
+        <div class="app-content">
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="logo.png" alt="Logo" style="height: 60px;">
+                <h2 style="color: #10b981; margin: 10px 0 5px 0; font-size: 18px; text-transform: uppercase;">Existing Member Update</h2>
+                <p style="color: var(--text-light); font-size: 12px; margin: 0;">Update your existing records and generate ID Card.</p>
+            </div>
+
+            <div class="form-panel">
+                
+                <!-- MEMBER NO SEARCH -->
+                <div class="form-group" style="background: #e0f2fe; padding: 15px; border-radius: 12px; border: 1px solid #7dd3fc;">
+                    <label style="color: #0284c7;">ENTER YOUR MEMBER NUMBER *</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="exist-reg-memberNo" placeholder="MEMBER NO." class="uppercase-text" oninput="this.value = this.value.toUpperCase()" style="flex:1;">
+                        <button class="btn btn-print" onclick="fetchExistingMemberData()" style="width: auto; padding: 0 15px;"><i class="fa-solid fa-magnifying-glass"></i> FETCH</button>
+                    </div>
+                </div>
+
+                <!-- PHOTO UPLOAD -->
+                <div class="form-group">
+                    <label>PASSPORT SIZE PHOTO *</label>
+                    <div class="photo-upload-container">
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <label class="btn btn-print" style="cursor:pointer; flex:1; margin:0; font-size: 13px;">
+                                <i class="fa-solid fa-upload"></i> UPLOAD
+                                <input type="file" id="exist-reg-photo-upload" accept="image/*" style="display:none;" onchange="handleExistPhotoUpload(event)">
+                            </label>
+                            <button type="button" class="btn btn-download-card" style="flex:1; margin:0; font-size: 13px;" onclick="openExistCameraModal()">
+                                <i class="fa-solid fa-camera"></i> SELFIE
+                            </button>
+                        </div>
+                        <div id="exist-reg-photo-preview-box" style="display:none; margin-top: 15px;">
+                            <img id="exist-reg-photo-preview" src="" style="width: 100px; height: 130px; object-fit: cover; border-radius: 8px; border: 2px solid var(--secondary);">
+                            <p style="font-size: 11px; color: #10b981; font-weight: bold; margin: 5px 0 0 0;"><i class="fa-solid fa-check-circle"></i> PHOTO READY</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- READ ONLY FIELDS -->
+                <div class="form-group">
+                    <label>MEMBER FULL NAME (LOCKED)</label>
+                    <input type="text" id="exist-reg-name" readonly style="background:#e2e8f0; color: #64748b; font-weight: bold;">
+                </div>
+
+                <div class="form-group">
+                    <label>NATIVE VILLAGE (LOCKED)</label>
+                    <input type="text" id="exist-reg-nativeName" readonly style="background:#e2e8f0; color: #64748b; font-weight: bold;">
+                </div>
+
+                <!-- EDITABLE FIELDS -->
+                <div class="form-group">
+                    <label>RESIDENCE ADDRESS *</label>
+                    <textarea id="exist-reg-address" rows="3" placeholder="FULL ADDRESS" class="uppercase-text" oninput="this.value = this.value.toUpperCase()"></textarea>
+                </div>
+                
+                <div class="name-grid">
+                    <div class="form-group">
+                        <label>MOBILE NO *</label>
+                        <input type="number" id="exist-reg-mobile" placeholder="MOBILE NO">
+                    </div>
+                    <div class="form-group">
+                        <label>DATE OF BIRTH *</label>
+                        <input type="text" id="exist-reg-dob" placeholder="DD/MM/YYYY">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>BLOOD GROUP *</label>
+                    <select id="exist-reg-bloodgroup">
+                        <option value="-">SELECT</option>
+                        <option value="A+">A+</option> <option value="A-">A-</option>
+                        <option value="B+">B+</option> <option value="B-">B-</option>
+                        <option value="O+">O+</option> <option value="O-">O-</option>
+                        <option value="AB+">AB+</option> <option value="AB-">AB-</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn btn-save" onclick="submitExistingForm()" style="margin-top: 10px; font-size: 16px;">
+                    <i class="fa-solid fa-floppy-disk"></i> SAVE DATA & GENERATE CARD
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
     <!-- WORKFLOW DASHBOARD (COMMITTEE / APPROVERS) -->
     <!-- ========================================================================= -->
     <div id="workflow-dashboard-wrapper" style="display: none;">
@@ -564,7 +676,18 @@
                     <h3 style="margin: 0; color: var(--primary); text-transform: uppercase;"><i class="fa-solid fa-database"></i> Database</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="searchInput" placeholder="SEARCH NAME / MOBILE..." onkeyup="searchRecords()" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #ccc; outline: none; text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
-                        <button class="btn-sm" style="background: #10b981;" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> EXCEL</button>
+                        
+                        <!-- CSV Upload Added Here -->
+                        <input type="file" id="csvUpload" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" style="display:none;" onchange="handleCSVUpload(event)">
+                        <button id="btn-upload-csv" class="btn-sm" style="background: #8b5cf6;" onclick="document.getElementById('csvUpload').click()">
+                            <i class="fa-solid fa-upload"></i> UPLOAD CSV
+                        </button>
+                        
+                        <!-- Added 2 specific EXCEL export buttons & keeping the old one to preserve logic -->
+                        <button class="btn-sm" style="background: #0284c7;" onclick="exportNewMembersExcel()"><i class="fa-solid fa-file-excel"></i> EXCEL (NEW)</button>
+                        <button class="btn-sm" style="background: #d97706;" onclick="exportExistingUpdatesExcel()"><i class="fa-solid fa-file-excel"></i> EXCEL (UPDATED)</button>
+                        
+                        <button class="btn-sm" style="background: #10b981;" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> EXCEL (ALL)</button>
                         <button class="btn-sm" style="background: #ef4444;" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                     </div>
                 </div>
@@ -581,7 +704,7 @@
     <!-- MODALS -->
     <!-- ========================================================================= -->
 
-    <!-- SELFIE CAMERA -->
+    <!-- SELFIE CAMERA (For New Member & Admin) -->
     <div id="cameraModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 350px; text-align: center;">
             <h3 style="color:var(--primary); margin-top:0; text-transform: uppercase;"><i class="fa-solid fa-camera"></i> Take Selfie</h3>
@@ -589,6 +712,18 @@
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-clear" onclick="closeCamera()">CANCEL</button>
                 <button class="btn btn-print" onclick="captureSelfie()"><i class="fa-solid fa-camera-retro"></i> CAPTURE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SELFIE CAMERA (For Existing Member Form safely separated) -->
+    <div id="existCameraModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 350px; text-align: center;">
+            <h3 style="color:var(--primary); margin-top:0; text-transform: uppercase;"><i class="fa-solid fa-camera"></i> Take Selfie</h3>
+            <video id="exist-camera-stream" autoplay playsinline style="width: 100%; transform: scaleX(-1); border-radius: 12px; background: #000; margin-bottom: 15px;"></video>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-clear" onclick="closeExistCamera()">CANCEL</button>
+                <button class="btn btn-print" onclick="captureExistSelfie()"><i class="fa-solid fa-camera-retro"></i> CAPTURE</button>
             </div>
         </div>
     </div>
@@ -793,6 +928,7 @@
             document.getElementById('auth-bg').style.display = 'flex';
             document.getElementById('main-login-box').style.display = 'block';
             document.getElementById('mobile-verify-box').style.display = 'none';
+            document.getElementById('existing-mobile-verify-box').style.display = 'none';
         }
 
         function performLogin() {
@@ -825,6 +961,7 @@
         function routeUser() {
             hideAllAuth();
             document.getElementById('public-registration-wrapper').style.display = 'none';
+            document.getElementById('existing-registration-wrapper').style.display = 'none';
             document.getElementById('member-status-wrapper').style.display = 'none';
             document.getElementById('main-app-header').style.display = 'flex';
             
@@ -1566,6 +1703,277 @@
         function initializeSystem() {
             fetchFirebaseData(); 
             ['mobile','dob'].forEach(id => document.getElementById(id).addEventListener('input', function() { updateField(id, 'val-'+id); }));
+        }
+
+        // ==============================================================
+        // EXISTING MEMBER LOGIC & CSV SYSTEM (ADDED NEW FEATURES)
+        // ==============================================================
+        
+        function showExistingMobileVerify() {
+            document.getElementById('main-login-box').style.display = 'none';
+            document.getElementById('existing-mobile-verify-box').style.display = 'block';
+        }
+
+        function verifyExistingMobile() {
+            let mob = document.getElementById('existingVerifyMobileInput').value.trim();
+            if(!mob) return alert('ENTER MOBILE NUMBER');
+            
+            // Go directly to existing form screen
+            hideAllAuth();
+            document.getElementById('main-app-header').style.display = 'flex';
+            document.getElementById('header-title-text').innerText = "Existing Member Update";
+            document.getElementById('header-settings-btn').style.display = 'none';
+            document.getElementById('existing-registration-wrapper').style.display = 'block';
+            document.getElementById('exist-reg-mobile').value = mob;
+        }
+
+        // CSV Upload in Admin Panel
+        function handleCSVUpload(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, {type: 'array'});
+                let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                let json = XLSX.utils.sheet_to_json(sheet);
+                
+                if(json.length === 0) return alert("Empty file!");
+                
+                let btn = document.getElementById('btn-upload-csv');
+                let oldText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> UPLOADING...';
+                
+                let batches = [];
+                let batch = db.batch();
+                let count = 0;
+                let total = 0;
+
+                json.forEach(row => {
+                    let memNo = row['Member Number'] || row['MEMBER NO'] || row['memberNo'] || row['Member No'];
+                    if(memNo) {
+                        let docRef = db.collection('existingMembers').doc(String(memNo).toUpperCase());
+                        batch.set(docRef, {
+                            memberNo: String(memNo).toUpperCase(),
+                            name: row['Name'] || row['NAME'] || '',
+                            address: row['Address'] || row['ADDRESS'] || '',
+                            native: row['Native'] || row['NATIVE'] || '',
+                            mobile: row['Mobile'] || row['MOBILE'] || '',
+                            dob: row['DOB'] || row['Date of Birth'] || '',
+                            bloodGroup: row['Blood Group'] || row['BLOOD GROUP'] || ''
+                        });
+                        count++;
+                        total++;
+                        
+                        // Firestore batch limit is 500
+                        if(count === 490) {
+                            batches.push(batch.commit());
+                            batch = db.batch();
+                            count = 0;
+                        }
+                    }
+                });
+
+                if(count > 0) batches.push(batch.commit());
+
+                Promise.all(batches).then(() => {
+                    btn.innerHTML = oldText;
+                    alert(total + " Records Uploaded Successfully to Database!");
+                    document.getElementById('csvUpload').value = "";
+                }).catch(err => {
+                    btn.innerHTML = oldText;
+                    alert("Error: " + err.message);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        let currentExistingOriginalData = null;
+        
+        function fetchExistingMemberData() {
+            let memNo = document.getElementById('exist-reg-memberNo').value.trim().toUpperCase();
+            if(!memNo) return alert("Please enter Member Number first.");
+            
+            db.collection('existingMembers').doc(memNo).get().then(doc => {
+                if(doc.exists) {
+                    let data = doc.data();
+                    currentExistingOriginalData = data;
+                    document.getElementById('exist-reg-name').value = data.name || "";
+                    document.getElementById('exist-reg-nativeName').value = data.native || "";
+                    document.getElementById('exist-reg-address').value = data.address || "";
+                    document.getElementById('exist-reg-mobile').value = data.mobile || document.getElementById('exist-reg-mobile').value;
+                    document.getElementById('exist-reg-dob').value = data.dob || "";
+                    document.getElementById('exist-reg-bloodgroup').value = data.bloodGroup || "-";
+                    alert("Member Data Fetched Successfully!");
+                } else {
+                    alert("Member Number not found in uploaded CSV records.");
+                }
+            }).catch(err => alert("Error fetching data: " + err.message));
+        }
+
+        // Photo Handlers for Existing Form
+        let existRegPhotoBase64 = "";
+
+        function handleExistPhotoUpload(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const img = new Image(); const url = URL.createObjectURL(file);
+            img.onload = function() {
+                existRegPhotoBase64 = processAndCropImage(img, false);
+                document.getElementById('exist-reg-photo-preview').src = existRegPhotoBase64;
+                document.getElementById('exist-reg-photo-preview-box').style.display = 'block';
+                URL.revokeObjectURL(url);
+            }
+            img.src = url;
+        }
+
+        async function openExistCameraModal() {
+            document.getElementById('existCameraModal').style.display = 'flex';
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                document.getElementById('exist-camera-stream').srcObject = cameraStream;
+            } catch (err) { alert("Camera access denied!"); closeExistCamera(); }
+        }
+        
+        function closeExistCamera() {
+            document.getElementById('existCameraModal').style.display = 'none';
+            if(cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
+        }
+        
+        function captureExistSelfie() {
+            const video = document.getElementById('exist-camera-stream'); if(!video.videoWidth) return;
+            existRegPhotoBase64 = processAndCropImage(video, true);
+            document.getElementById('exist-reg-photo-preview').src = existRegPhotoBase64;
+            document.getElementById('exist-reg-photo-preview-box').style.display = 'block';
+            closeExistCamera();
+        }
+
+        function submitExistingForm() {
+            if(!existRegPhotoBase64) return alert("PLEASE UPLOAD A PHOTO OR TAKE A SELFIE.");
+            if(!currentExistingOriginalData) return alert("PLEASE FETCH MEMBER DATA USING YOUR MEMBER NUMBER FIRST.");
+            
+            const memNo = document.getElementById('exist-reg-memberNo').value.trim().toUpperCase();
+            const address = document.getElementById('exist-reg-address').value.trim();
+            const mobile = document.getElementById('exist-reg-mobile').value.trim();
+            const dob = document.getElementById('exist-reg-dob').value.trim();
+            const bg = document.getElementById('exist-reg-bloodgroup').value;
+
+            if(!address || !mobile || !dob) return alert("PLEASE FILL ALL REQUIRED FIELDS.");
+
+            let btn = document.querySelector('#existing-registration-wrapper .btn-save');
+            let oldText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SAVING DATA...'; btn.disabled = true;
+
+            const timestamp = Date.now();
+
+            const finalData = {
+                memberNo: memNo,
+                name: currentExistingOriginalData.name,
+                hometown: currentExistingOriginalData.native,
+                address: address.toUpperCase(),
+                mobile: mobile,
+                dob: dob,
+                bloodgroup: bg,
+                photo: existRegPhotoBase64,
+                timestamp: timestamp,
+                isExistingUpdate: true
+            };
+
+            const updateLog = {
+                memberNo: memNo,
+                name: currentExistingOriginalData.name,
+                oldAddress: currentExistingOriginalData.address,
+                newAddress: address.toUpperCase(),
+                oldMobile: currentExistingOriginalData.mobile,
+                newMobile: mobile,
+                oldDob: currentExistingOriginalData.dob,
+                newDob: dob,
+                oldBloodGroup: currentExistingOriginalData.bloodGroup,
+                newBloodGroup: bg,
+                timestamp: timestamp
+            };
+
+            // Save directly to generated idCards and create an update log
+            db.collection("idCards").add(finalData).then((docRef) => {
+                db.collection("existingUpdates").add(updateLog).then(() => {
+                    alert("DATA SAVED AND ID CARD GENERATED SUCCESSFULLY!");
+                    hideAllAuth();
+                    document.getElementById('existing-registration-wrapper').style.display = 'none';
+                    document.getElementById('main-app-header').style.display = 'flex';
+                    document.getElementById('header-title-text').innerText = "Card Status";
+                    showMemberStatus({ status: 'card_generated', idCardData: finalData });
+                });
+            }).catch(err => { alert("Error: " + err.message); btn.innerHTML = oldText; btn.disabled = false; });
+        }
+
+        // Date & Time Formatter (DD/MM/YYYY 12-hour AM/PM)
+        function formatDateTime12Hour(timestamp) {
+            if(!timestamp) return "-";
+            let d = new Date(timestamp);
+            let dd = String(d.getDate()).padStart(2, '0');
+            let mm = String(d.getMonth() + 1).padStart(2, '0');
+            let yyyy = d.getFullYear();
+            
+            let hours = d.getHours();
+            let minutes = String(d.getMinutes()).padStart(2, '0');
+            let ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            
+            let strTime = hours + ':' + minutes + ' ' + ampm;
+            return `${dd}/${mm}/${yyyy} ${strTime}`;
+        }
+
+        function exportNewMembersExcel() {
+            db.collection("memberRequests").get().then(snap => {
+                if(snap.empty) return alert("NO NEW MEMBER REGISTRATION DATA FOUND!");
+                let data = [];
+                snap.forEach(doc => {
+                    let r = doc.data();
+                    data.push({
+                        "DATE & TIME": formatDateTime12Hour(r.timestamp),
+                        "NAME": r.name || "-",
+                        "FATHER NAME": r.fatherName || "-",
+                        "MOBILE": r.mobile || "-",
+                        "NATIVE": r.nativeName || "-",
+                        "ADDRESS": r.address || "-",
+                        "PINCODE": r.pincode || "-",
+                        "DOB": r.dob || "-",
+                        "BLOOD GROUP": r.bloodGroup || "-",
+                        "EDUCATION": r.education || "-",
+                        "OCCUPATION": r.vyavsay || "-",
+                        "STATUS": r.status || "-"
+                    });
+                });
+                let wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "New Members");
+                XLSX.writeFile(wb, "New_Members_Registration.xlsx");
+            });
+        }
+
+        function exportExistingUpdatesExcel() {
+            db.collection("existingUpdates").get().then(snap => {
+                if(snap.empty) return alert("NO EXISTING MEMBER UPDATES FOUND!");
+                let data = [];
+                snap.forEach(doc => {
+                    let r = doc.data();
+                    data.push({
+                        "DATE & TIME": formatDateTime12Hour(r.timestamp),
+                        "MEMBER NO": r.memberNo || "-",
+                        "NAME": r.name || "-",
+                        "NEW MOBILE": r.newMobile || "-",
+                        "OLD MOBILE": r.oldMobile || "-",
+                        "NEW ADDRESS": r.newAddress || "-",
+                        "OLD ADDRESS": r.oldAddress || "-",
+                        "NEW DOB": r.newDob || "-",
+                        "OLD DOB": r.oldDob || "-",
+                        "NEW BLOOD GROUP": r.newBloodGroup || "-",
+                        "OLD BLOOD GROUP": r.oldBloodGroup || "-"
+                    });
+                });
+                let wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Existing Updates");
+                XLSX.writeFile(wb, "Existing_Member_Updates.xlsx");
+            });
         }
 
         window.onload = function() {
