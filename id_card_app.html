@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Batrisi Jain ID Card App</title>
     
-    <!-- Google Fonts: Added Nunito Sans for Title & Poppins for App -->
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,800;6..12,900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Poppins for App UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Preload Custom Avengenz Font for ID Cards -->
+    <link rel="preload" href="Avengenz.ttf" as="font" type="font/ttf" crossorigin>
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,6 +30,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+        /* =======================================================
+           CUSTOM AVENGENZ FONT DECLARATION
+           ======================================================= */
+        @font-face {
+            font-family: 'Avengenz';
+            src: url('Avengenz.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box; }
 
         :root { --primary: #0f3460; --secondary: #2563eb; --text-dark: #1e293b; --text-light: #64748b; --bg-body: #f1f5f9; --card-w: 428px; --card-h: 270px; }
@@ -74,22 +88,26 @@
         .card-scaler { transform-origin: top center; box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-radius: 16px; margin-bottom: 20px;}
         @media(min-width: 600px) { .card-scaler { transform: scale(1.1); margin-bottom: 40px; } }
         
-        .id-card { width: var(--card-w); height: var(--card-h); background: #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #cbd5e1; position: relative; overflow: hidden; font-family: 'Poppins', sans-serif; box-sizing: border-box;}
+        .id-card { width: var(--card-w); height: var(--card-h); background: #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #cbd5e1; position: relative; overflow: hidden; box-sizing: border-box;}
+        
+        /* APPLY AVENGENZ FONT STRICTLY TO THE ENTIRE CARD */
+        .id-card, .id-card * { font-family: 'Avengenz', sans-serif !important; }
+
         .card-header { text-align: center; border-bottom: 3px solid var(--secondary); padding: 6px 10px 4px 10px; background: #ffffff; flex-shrink: 0; }
-        
-        /* FONT APPLIED TO ID CARD TITLE */
-        .card-header h2 { margin: 0 0 2px 0; font-size: 11.5px; color: var(--primary); font-family: 'Nunito Sans', sans-serif; font-weight: 900; letter-spacing: 0.3px; line-height: 1.2; text-transform: uppercase;}
-        
+        .card-header h2 { margin: 0 0 2px 0; font-size: 11.5px; color: var(--primary); font-weight: 900; letter-spacing: 0.3px; line-height: 1.2; text-transform: uppercase;}
         .card-header .address { margin: 0 0 2px 0; font-size: 6px; color: #000000; font-weight: 600; line-height: 1.2; text-transform: uppercase;}
         .card-header .contact { margin: 0; font-size: 6.5px; color: #dc2626; font-weight: 700; }
-        .card-body { background: #e2e8f0; display: grid; grid-template-columns: 50px 1fr 65px; gap: 10px; align-items: start; padding: 8px 12px; flex-grow: 1; }
+        
+        /* Optimized Spacing & Layout to accommodate long addresses smoothly */
+        .card-body { background: #e2e8f0; display: grid; grid-template-columns: 50px 1fr 65px; gap: 8px; align-items: start; padding: 4px 12px; flex-grow: 1; }
         .logo-box { width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; }
         .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .details-box { display: flex; flex-direction: column; gap: 3.5px; width: 100%; }
+        .details-box { display: flex; flex-direction: column; gap: 1.5px; width: 100%; }
         .detail-item { display: flex; align-items: stretch; gap: 4px; }
-        .detail-label-box { background-color: #cbd5e1; border-left: 3px solid #0f3460; color: #0f3460; padding: 1.5px 4px; border-radius: 2px 4px 4px 2px; width: 80px; flex-shrink: 0; display: flex; align-items: center; font-weight: 700; font-size: 8px; text-transform: uppercase;}
+        .detail-label-box { background-color: #cbd5e1; border-left: 3px solid #0f3460; color: #0f3460; padding: 2px 4px; border-radius: 2px 4px 4px 2px; width: 80px; flex-shrink: 0; display: flex; align-items: center; font-weight: 700; font-size: 8px; text-transform: uppercase; line-height: 1.15;}
         .detail-colon { color: #0f3460; font-weight: bold; font-size: 8px; display: flex; align-items: center; }
-        .detail-value-box { background-color: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; color: #0f3460; font-weight: 700; flex: 1; padding: 1.5px 5px; display: flex; align-items: center; min-height: 16px; font-size: 8.5px; text-transform: uppercase;}
+        .detail-value-box { background-color: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; color: #0f3460; font-weight: 700; flex: 1; padding: 2px 5px; display: flex; align-items: center; min-height: 14px; font-size: 8.5px; text-transform: uppercase; line-height: 1.15; word-break: break-word;}
+        
         .blood-group-val { color: #dc2626 !important; font-weight: 800; font-size: 10px !important; }
         .photo-box { width: 65px; height: 85px; border-radius: 8px; border: 2px solid var(--secondary); background: #ffffff; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .photo-box img { width: 100%; height: 100%; object-fit: cover; }
@@ -964,23 +982,25 @@
 
         function printMemberCard() {
             const cardHTML = document.getElementById('member-print-card').outerHTML;
+            const fontUrl = new URL('Avengenz.ttf', document.baseURI).href; // Ensures font is pulled correctly in print tab
             let printWin = window.open('', '_blank'); 
             printWin.document.write(`<html><head>
-            <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
             <style>
+            @font-face { font-family: 'Avengenz'; src: url('${fontUrl}') format('truetype'); font-weight: normal; font-style: normal; }
             * { box-sizing: border-box; }
-            body{font-family:'Poppins',sans-serif; margin:0;} 
+            body{font-family:'Avengenz',sans-serif; margin:0;} 
             @media print { 
                 @page{margin:0;} html,body{width:100vw;height:100vh;margin:0;} 
-                #member-print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1px solid #cbd5e1;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff;} 
+                #member-print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1px solid #cbd5e1;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff; font-family: 'Avengenz', sans-serif !important;} 
+                #member-print-card * { font-family: 'Avengenz', sans-serif !important; }
                 .card-header{text-align:center;border-bottom:3px solid #2563eb;padding:6px 10px 4px;background:#fff;flex-shrink:0;} 
-                .card-header h2{margin:0 0 2px;font-size:11.5px;color:#0f3460;font-family:'Nunito Sans',sans-serif;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;} 
+                .card-header h2{margin:0 0 2px;font-size:11.5px;color:#0f3460;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;} 
                 .card-header p{margin:0;font-size:6px;font-weight:600;text-transform:uppercase;} 
-                .card-body{background:#e2e8f0;display:grid;grid-template-columns:50px 1fr 65px;gap:10px;padding:8px 12px;flex-grow:1;overflow:hidden;} 
-                .detail-item{display:flex;gap:4px;margin-bottom:3.5px;} 
-                .detail-label-box{background:#cbd5e1;border-left:3px solid #0f3460;color:#0f3460;padding:1.5px 4px;font-size:8px;font-weight:700;width:80px;} 
-                .detail-colon{font-size:8px;font-weight:bold;color:#0f3460;} 
-                .detail-value-box{background:#fff;border:1px solid #94a3b8;flex:1;padding:1.5px 5px;font-size:8.5px;font-weight:700;} 
+                .card-body{background:#e2e8f0;display:grid;grid-template-columns:50px 1fr 65px;gap:8px;padding:4px 12px;flex-grow:1;overflow:hidden;} 
+                .detail-item{display:flex;gap:4px;margin-bottom:1.5px;} 
+                .detail-label-box{background:#cbd5e1;border-left:3px solid #0f3460;color:#0f3460;padding:2px 4px;font-size:8px;font-weight:700;width:80px;line-height:1.15;display:flex;align-items:center;} 
+                .detail-colon{font-size:8px;font-weight:bold;color:#0f3460;display:flex;align-items:center;} 
+                .detail-value-box{background:#fff;border:1px solid #94a3b8;flex:1;padding:2px 5px;font-size:8.5px;font-weight:700;line-height:1.15;word-break:break-word;min-height:14px;display:flex;align-items:center;} 
                 .photo-box{width:65px;height:85px;border:2px solid #2563eb;background:#fff;} 
                 .photo-box img{width:100%;height:100%;object-fit:cover;} 
                 .logo-box img{max-width:100%;max-height:100%;object-fit:contain !important;} 
@@ -995,11 +1015,15 @@
 
         function downloadMemberCardPDF() {
             const card = document.getElementById('member-print-card'); const scalerBox = document.getElementById('member-card-scaler-box'); scalerBox.style.transform = 'scale(1)';
-            html2canvas(card, { scale: 4, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-                const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 54);
-                let n = document.getElementById('m-val-name').innerText.trim(); pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_ID_Card.pdf");
-                if(window.innerWidth > 600) scalerBox.style.transform = 'scale(1.1)';
+            
+            // Promise ensures font is fully loaded so PDF prints in Avengenz flawlessly
+            document.fonts.ready.then(() => {
+                html2canvas(card, { scale: 4, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+                    const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 54);
+                    let n = document.getElementById('m-val-name').innerText.trim(); pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_ID_Card.pdf");
+                    if(window.innerWidth > 600) scalerBox.style.transform = 'scale(1.1)';
+                });
             });
         }
 
@@ -1492,23 +1516,25 @@
         function printFromTable(docId) { editRecord(docId); setTimeout(printCard, 800); }
         function printCard() {
             const cardHTML = document.getElementById('print-card').outerHTML; 
+            const fontUrl = new URL('Avengenz.ttf', document.baseURI).href; // Ensures font is pulled correctly in print tab
             let printWin = window.open('', '_blank'); 
             printWin.document.write(`<html><head>
-            <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
             <style>
+            @font-face { font-family: 'Avengenz'; src: url('${fontUrl}') format('truetype'); font-weight: normal; font-style: normal; }
             * { box-sizing: border-box; }
-            body{font-family:'Poppins',sans-serif; margin:0;} 
+            body{font-family:'Avengenz',sans-serif; margin:0;} 
             @media print { 
                 @page{margin:0;} html,body{width:100vw;height:100vh;margin:0;} 
-                #print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1px solid #cbd5e1;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff;} 
+                #print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1px solid #cbd5e1;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff; font-family: 'Avengenz', sans-serif !important;} 
+                #print-card * { font-family: 'Avengenz', sans-serif !important; }
                 .card-header{text-align:center;border-bottom:3px solid #2563eb;padding:6px 10px 4px;background:#fff;flex-shrink:0;} 
-                .card-header h2{margin:0 0 2px;font-size:11.5px;color:#0f3460;font-family:'Nunito Sans',sans-serif;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;} 
+                .card-header h2{margin:0 0 2px;font-size:11.5px;color:#0f3460;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;} 
                 .card-header p{margin:0;font-size:6px;font-weight:600;text-transform:uppercase;} 
-                .card-body{background:#e2e8f0;display:grid;grid-template-columns:50px 1fr 65px;gap:10px;padding:8px 12px;flex-grow:1;overflow:hidden;} 
-                .detail-item{display:flex;gap:4px;margin-bottom:3.5px;} 
-                .detail-label-box{background:#cbd5e1;border-left:3px solid #0f3460;color:#0f3460;padding:1.5px 4px;font-size:8px;font-weight:700;width:80px;} 
-                .detail-colon{font-size:8px;font-weight:bold;color:#0f3460;} 
-                .detail-value-box{background:#fff;border:1px solid #94a3b8;flex:1;padding:1.5px 5px;font-size:8.5px;font-weight:700;} 
+                .card-body{background:#e2e8f0;display:grid;grid-template-columns:50px 1fr 65px;gap:8px;padding:4px 12px;flex-grow:1;overflow:hidden;} 
+                .detail-item{display:flex;gap:4px;margin-bottom:1.5px;} 
+                .detail-label-box{background:#cbd5e1;border-left:3px solid #0f3460;color:#0f3460;padding:2px 4px;font-size:8px;font-weight:700;width:80px;line-height:1.15;display:flex;align-items:center;} 
+                .detail-colon{font-size:8px;font-weight:bold;color:#0f3460;display:flex;align-items:center;} 
+                .detail-value-box{background:#fff;border:1px solid #94a3b8;flex:1;padding:2px 5px;font-size:8.5px;font-weight:700;line-height:1.15;word-break:break-word;min-height:14px;display:flex;align-items:center;} 
                 .photo-box{width:65px;height:85px;border:2px solid #2563eb;background:#fff;} 
                 .photo-box img{width:100%;height:100%;object-fit:cover;} 
                 .logo-box img{max-width:100%;max-height:100%;object-fit:contain !important;} 
@@ -1524,11 +1550,15 @@
             if (docId) editRecord(docId);
             setTimeout(() => {
                 const card = document.getElementById('print-card'); const scalerBox = document.getElementById('card-scaler-box'); scalerBox.style.transform = 'scale(1)';
-                html2canvas(card, { scale: 4, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-                    const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
-                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 54);
-                    let n = document.getElementById('val-name').innerText.trim(); pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_ID_Card.pdf");
-                    if(window.innerWidth > 600) scalerBox.style.transform = 'scale(1.1)';
+                
+                // Promise ensures font is fully loaded so PDF prints in Avengenz flawlessly
+                document.fonts.ready.then(() => {
+                    html2canvas(card, { scale: 4, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+                        const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
+                        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 54);
+                        let n = document.getElementById('val-name').innerText.trim(); pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_ID_Card.pdf");
+                        if(window.innerWidth > 600) scalerBox.style.transform = 'scale(1.1)';
+                    });
                 });
             }, docId ? 800 : 100); 
         }
