@@ -1750,15 +1750,16 @@
                 let total = 0;
 
                 json.forEach(row => {
-                    let memNo = row['Member Number'] || row['MEMBER NO'] || row['memberNo'] || row['Member No'];
+                    // EXACT HEADER MATCHING FOR: MemberNo, MemberName, Native, MobileNumber, Address
+                    let memNo = row['MemberNo'] || row['Member Number'] || row['MEMBER NO'];
                     if(memNo) {
                         let docRef = db.collection('existingMembers').doc(String(memNo).toUpperCase());
                         batch.set(docRef, {
                             memberNo: String(memNo).toUpperCase(),
-                            name: row['Name'] || row['NAME'] || '',
+                            name: row['MemberName'] || row['Name'] || row['NAME'] || '',
                             address: row['Address'] || row['ADDRESS'] || '',
                             native: row['Native'] || row['NATIVE'] || '',
-                            mobile: row['Mobile'] || row['MOBILE'] || '',
+                            mobile: row['MobileNumber'] || row['Mobile'] || row['MOBILE'] || '',
                             dob: row['DOB'] || row['Date of Birth'] || '',
                             bloodGroup: row['Blood Group'] || row['BLOOD GROUP'] || ''
                         });
