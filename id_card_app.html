@@ -453,12 +453,31 @@
 
             <div class="form-panel">
                 
-                <!-- MEMBER NO SEARCH -->
-                <div class="form-group" style="background: #e0f2fe; padding: 15px; border-radius: 12px; border: 1px solid #7dd3fc;">
-                    <label style="color: #0284c7;">ENTER YOUR MEMBER NUMBER *</label>
+                <!-- ADVANCED MEMBER SEARCH -->
+                <div class="form-group" style="background: #e0f2fe; padding: 15px; border-radius: 12px; border: 1px solid #7dd3fc; margin-bottom: 0;">
+                    <label style="color: #0284c7; margin-bottom: 8px; display: block;">FIND YOUR RECORD (VIA MOBILE) *</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                        <input type="number" id="exist-search-mobile" placeholder="REGISTERED MOBILE NO." style="flex:1;">
+                        <button class="btn btn-print" onclick="searchByMobile()" style="width: auto; padding: 0 15px; background: #0284c7;"><i class="fa-solid fa-search"></i> SEARCH</button>
+                    </div>
+
+                    <div style="position: relative; text-align: center; margin: 15px 0;">
+                        <span style="background: #e0f2fe; padding: 0 10px; font-size: 11px; font-weight: 800; color: #0284c7; z-index: 1; position: relative;">OR MANUAL SEARCH</span>
+                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #7dd3fc; z-index: 0;"></div>
+                    </div>
+
+                    <label style="color: #0284c7; margin-bottom: 8px; display: block; font-size: 11px;">IF MOBILE NOT UPDATED, ENTER MEMBER NUMBER</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="exist-reg-memberNo" placeholder="MEMBER NO." class="uppercase-text" oninput="this.value = this.value.toUpperCase()" style="flex:1;">
-                        <button class="btn btn-print" onclick="fetchExistingMemberData()" style="width: auto; padding: 0 15px;"><i class="fa-solid fa-magnifying-glass"></i> FETCH</button>
+                        <input type="text" id="exist-reg-memberNo" placeholder="MEMBER NO. (e.g. 1001)" class="uppercase-text" oninput="this.value = this.value.toUpperCase()" style="flex:1;">
+                        <button class="btn btn-print" onclick="fetchExistingMemberData()" style="width: auto; padding: 0 15px; background: #0284c7;"><i class="fa-solid fa-magnifying-glass"></i> FETCH</button>
+                    </div>
+                </div>
+
+                <!-- MEMBER SELECTION LIST -->
+                <div id="exist-member-list-container" style="display: none; background: white; padding: 15px; border-radius: 12px; border: 2px solid #3b82f6; margin-top: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);">
+                    <label style="color: #2563eb; font-size: 13px; margin-bottom: 10px; display: block; font-weight: 800;"><i class="fa-solid fa-list-check"></i> SELECT YOUR RECORD:</label>
+                    <div id="exist-member-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 5px;">
+                        <!-- Auto-populated -->
                     </div>
                 </div>
 
@@ -1739,8 +1758,91 @@
             document.getElementById('header-title-text').innerText = "Existing Member Update";
             document.getElementById('header-settings-btn').style.display = 'none';
             document.getElementById('existing-registration-wrapper').style.display = 'block';
-            document.getElementById('exist-reg-mobile').value = mob;
+            
+            // Pre-fill fields and trigger automatic search
+            document.getElementById('exist-search-mobile').value = mob;
+            searchByMobile(mob);
         }
+
+        // --- NEW FEATURE: MULTI-MEMBER MOBILE SEARCH ---
+        let tempExistingMembers = [];
+
+        function searchByMobile(mobNo) {
+            let mob = mobNo || document.getElementById('exist-search-mobile').value.trim();
+            if(!mob) return alert("Please enter Mobile Number to search.");
+
+            let listContainer = document.getElementById('exist-member-list-container');
+            let listDiv = document.getElementById('exist-member-list');
+            listDiv.innerHTML = '<div style="text-align:center; padding:15px; font-weight:bold; color:var(--primary);"><i class="fa-solid fa-spinner fa-spin" style="font-size:20px; margin-bottom:10px; display:block;"></i> Searching Database...</div>';
+            listContainer.style.display = 'block';
+
+            const renderList = (snap) => {
+                tempExistingMembers = [];
+                listDiv.innerHTML = '';
+                snap.forEach(doc => tempExistingMembers.push(doc.data()));
+                
+                tempExistingMembers.forEach((data, index) => {
+                    let itemHtml = `
+                    <div style="border: 2px solid #cbd5e1; border-radius: 8px; padding: 12px; cursor: pointer; background: #f8fafc; transition: 0.2s;" onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.backgroundColor='#f8fafc';" onclick="selectExistingMember(${index})">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:800; color:var(--primary); font-size:14px; text-transform:uppercase;">${data.name || 'UNKNOWN NAME'}</div>
+                            <div style="background:var(--secondary); color:white; font-size:10px; padding:4px 8px; border-radius:4px; font-weight:bold;">SELECT <i class="fa-solid fa-arrow-right"></i></div>
+                        </div>
+                        <div style="font-size:12px; color:#475569; margin-top:6px; font-weight:600;">
+                            <span style="color:#0f3460;">MEMBER NO:</span> ${data.memberNo || '-'} &nbsp;|&nbsp; <span style="color:#0f3460;">NATIVE:</span> ${data.native || '-'}
+                        </div>
+                        <div style="font-size:11px; color:#64748b; margin-top:4px; font-weight:500;"><b>ADDRESS:</b> ${(data.address || '-').substring(0, 50)}...</div>
+                    </div>`;
+                    listDiv.innerHTML += itemHtml;
+                });
+            };
+
+            // Checking both String and Number matching safely to prevent missing records imported differently via Excel
+            db.collection('existingMembers').where('mobile', '==', String(mob)).get().then(snapStr => {
+                if (snapStr.empty) {
+                    db.collection('existingMembers').where('mobile', '==', Number(mob)).get().then(snapNum => {
+                        if(snapNum.empty) {
+                            listDiv.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-weight:bold; background:#fee2e2; border-radius:8px; border:1px dashed #ef4444;">No members found with Mobile: ${mob}. <br><br>If your mobile is not updated in the system, please search manually using your Member Number below.</div>`;
+                        } else {
+                            renderList(snapNum);
+                        }
+                    }).catch(err => listDiv.innerHTML = `<div style="text-align:center; padding:10px; color:#ef4444;">Error: ${err.message}</div>`);
+                } else {
+                    renderList(snapStr);
+                }
+            }).catch(err => listDiv.innerHTML = `<div style="text-align:center; padding:10px; color:#ef4444;">Error: ${err.message}</div>`);
+        }
+
+        function selectExistingMember(index) {
+            let data = tempExistingMembers[index];
+            if(!data) return;
+
+            currentExistingOriginalData = data;
+            document.getElementById('exist-reg-memberNo').value = data.memberNo || "";
+            document.getElementById('exist-reg-name').value = data.name || "";
+            document.getElementById('exist-reg-nativeName').value = data.native || "";
+            document.getElementById('exist-reg-address').value = data.address || "";
+            document.getElementById('exist-reg-mobile').value = data.mobile || document.getElementById('exist-search-mobile').value;
+            document.getElementById('exist-reg-dob').value = data.dob || "";
+            document.getElementById('exist-reg-bloodgroup').value = data.bloodGroup || "-";
+
+            document.getElementById('exist-member-list-container').style.display = 'none';
+            
+            // Auto scroll to pre-filled section with brief flash indicator
+            document.getElementById('exist-reg-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            ['exist-reg-name', 'exist-reg-nativeName', 'exist-reg-address', 'exist-reg-memberNo'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) {
+                    let oldBg = el.style.backgroundColor;
+                    el.style.transition = 'background-color 0.5s';
+                    el.style.backgroundColor = '#dcfce7'; 
+                    setTimeout(() => el.style.backgroundColor = oldBg, 1200);
+                }
+            });
+        }
+        // --- END NEW FEATURE ---
+
 
         // CSV Upload in Admin Panel
         function handleCSVUpload(event) {
