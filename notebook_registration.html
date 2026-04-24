@@ -35,6 +35,8 @@
         .details-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
         
         .table-action-btn { padding: 2px 8px; font-size: 14px; margin: 2px; }
+
+        .member-card-select:hover { border-color: var(--primary) !important; background-color: #f8f9fa !important; }
     </style>
 </head>
 <body onload="checkRememberMe()">
@@ -73,6 +75,20 @@
                     <input type="tel" id="memMobile" class="form-control form-control-lg text-center fw-bold" maxlength="10" placeholder="Enter Mobile No">
                 </div>
                 <button class="btn btn-primary btn-lg w-100 fw-bold" onclick="doMemberLogin()">LOGIN & PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1.1. MULTIPLE MEMBER SELECTION (NEW ADDITION) -->
+    <div id="member-selection-sec" class="row justify-content-center section hidden">
+        <div class="col-md-6">
+            <div class="card p-4 shadow border-top border-4 border-info">
+                <h5 class="fw-bold text-dark border-bottom pb-2"><i class="bi bi-people-fill"></i> Select Family Member</h5>
+                <p class="text-muted small mb-3">Multiple members are registered with this mobile number. Please choose the correct member to proceed:</p>
+                
+                <div id="multiple-members-list" class="d-flex flex-column gap-3 details-scroll pe-2"></div>
+                
+                <button class="btn btn-secondary mt-3 w-100 fw-bold shadow-sm" onclick="showSection('member-login-sec')">GO BACK</button>
             </div>
         </div>
     </div>
@@ -411,6 +427,7 @@ const committeeMembers = [
 ];
 
 let globalPricePerStudent = 80;
+let tempMatchingMembers = []; // Stores members temporarily for selection
 
 function setLoader(show, mainText="Processing...", subText="Please do not refresh the page.") { 
     document.getElementById('loader').style.display = show ? 'flex' : 'none'; 
@@ -732,7 +749,7 @@ function updateDynamicPricingUI() {
     }
 }
 
-// FIXED: MEMBER DASHBOARD LOGIN SYSTEM
+// FIXED: MEMBER DASHBOARD LOGIN SYSTEM (MULTI-MEMBER SUPPORT ADDED)
 async function doMemberLogin() {
     const mob = document.getElementById('memMobile').value.trim();
     if(mob.length < 10) return alert("Enter valid 10-digit Mobile Number!");
@@ -740,13 +757,48 @@ async function doMemberLogin() {
     
     try {
         const members = await fetchMasterDB();
-        globalMemberData = members.find(m => m.mobile === mob);
+        // Filtering all members associated with this mobile number
+        tempMatchingMembers = members.filter(m => m.mobile === mob);
         
-        if(!globalMemberData) {
+        if(tempMatchingMembers.length === 0) {
             alert("Mobile Number NOT FOUND in List! Please check or contact Admin.");
             setLoader(false); return;
+        } else if (tempMatchingMembers.length === 1) {
+            // Only 1 member found, proceed normally
+            globalMemberData = tempMatchingMembers[0];
+            await proceedWithSelectedMember(mob);
+        } else {
+            // Multiple members found, render selection list
+            let html = "";
+            tempMatchingMembers.forEach((m, index) => {
+                html += `
+                    <div class="p-3 border rounded shadow-sm bg-white member-card-select" style="cursor: pointer; transition: 0.2s;" onclick="selectMember(${index}, '${mob}')">
+                        <h6 class="fw-bold text-primary mb-1">${m.name}</h6>
+                        <div class="small text-muted mb-2"><b>Member No:</b> ${m.mno} | <b>Native:</b> ${m.native}</div>
+                        <button class="btn btn-sm btn-outline-primary w-100 fw-bold">SELECT & PROCEED <i class="bi bi-arrow-right"></i></button>
+                    </div>
+                `;
+            });
+            document.getElementById('multiple-members-list').innerHTML = html;
+            showSection('member-selection-sec');
+            setLoader(false);
         }
+    } catch(e) { 
+        alert("System Error: " + e.message); 
+        setLoader(false);
+    }
+}
 
+// Helper function to handle user's manual selection
+async function selectMember(index, mob) {
+    globalMemberData = tempMatchingMembers[index];
+    setLoader(true, "Loading Profile...", "");
+    await proceedWithSelectedMember(mob);
+}
+
+// The core logic extracted to handle exactly chosen member
+async function proceedWithSelectedMember(mob) {
+    try {
         let distDate = "TBA", distStart = "TBA", distEnd = "TBA";
         try {
             const distDoc = await db.collection("settings").doc("distribution_info").get();
@@ -762,54 +814,63 @@ async function doMemberLogin() {
         
         if(!reg.empty) {
             let records = [];
-            reg.forEach(doc => records.push(doc.data()));
-            
-            // Sort data manually using JavaScript logic (Client-side sorting)
-            records.sort((a, b) => b.TokenId - a.TokenId);
-
-            let html = "";
-            records.forEach(d => {
-                if(!d.Student) return; // ignore old data structure
-                
-                let displayStatus = d.Status;
-                if(d.Status === 'DELIVERED') displayStatus = 'Approved'; 
-
-                let stuName = `<span class="text-primary fw-bold">Student: ${d.Student.StudentName} ${d.Student.FatherName} ${d.Student.Surname}</span> <br><span class="text-muted small fw-bold">STD: ${d.Student.Standard}</span>`;
-                let badge = d.Status === 'DELIVERED' ? 'success' : (d.Status === 'DECLINED' ? 'danger' : 'warning text-dark');
-                let reasonBox = d.Status === 'DECLINED' ? `<div class="bg-white border border-danger text-danger p-2 mt-2 rounded small"><b>Declined Reason:</b> ${d.DeclineReason}</div>` : "";
-                
-                let distInfoBox = "";
-                if(d.Status === 'DELIVERED') {
-                    distInfoBox = `
-                    <div class="mt-2 pt-2 border-top border-success text-dark small fw-bold">
-                        Distribution Date: ${distDate}<br>
-                        Time: ${distStart} – ${distEnd}
-                    </div>`;
+            reg.forEach(doc => {
+                // IMPORTANT: Filter by specifically selected Member No to avoid crossing multi-member records
+                if(doc.data().MemberNo === globalMemberData.mno) {
+                    records.push(doc.data());
                 }
-
-                html += `
-                <div class="border border-${badge} bg-light p-3 rounded mb-3 shadow-sm text-start">
-                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
-                        <h6 class="fw-bold text-dark m-0">Token: ${d.Token}</h6>
-                        <span class="badge bg-${badge} px-3 py-2 shadow-sm text-uppercase">Status: ${displayStatus}</span>
-                    </div>
-                    <div class="mb-1 lh-sm">${stuName}</div>
-                    ${reasonBox}
-                    ${distInfoBox}
-                </div>`;
             });
+            
+            if(records.length > 0) {
+                // Sort data manually using JavaScript logic (Client-side sorting)
+                records.sort((a, b) => b.TokenId - a.TokenId);
 
-            let totalAmount = records.length * globalPricePerStudent;
-            let summaryBox = `
-            <div class="alert alert-info border-info text-center shadow-sm p-3 mb-4 rounded">
-                <h5 class="fw-bold m-0 text-dark">TOTAL AMOUNT PAYABLE</h5>
-                <h3 class="text-primary fw-bold mt-1 mb-2">₹ ${totalAmount}</h3>
-                <span class="small text-muted fw-bold">${records.length} Student(s) Registered × ₹${globalPricePerStudent} per student</span>
-            </div>`;
+                let html = "";
+                records.forEach(d => {
+                    if(!d.Student) return; // ignore old data structure
+                    
+                    let displayStatus = d.Status;
+                    if(d.Status === 'DELIVERED') displayStatus = 'Approved'; 
 
-            if(html !== "") {
-                document.getElementById('member-status-list').innerHTML = summaryBox + html;
-                showSection('member-status-sec');
+                    let stuName = `<span class="text-primary fw-bold">Student: ${d.Student.StudentName} ${d.Student.FatherName} ${d.Student.Surname}</span> <br><span class="text-muted small fw-bold">STD: ${d.Student.Standard}</span>`;
+                    let badge = d.Status === 'DELIVERED' ? 'success' : (d.Status === 'DECLINED' ? 'danger' : 'warning text-dark');
+                    let reasonBox = d.Status === 'DECLINED' ? `<div class="bg-white border border-danger text-danger p-2 mt-2 rounded small"><b>Declined Reason:</b> ${d.DeclineReason}</div>` : "";
+                    
+                    let distInfoBox = "";
+                    if(d.Status === 'DELIVERED') {
+                        distInfoBox = `
+                        <div class="mt-2 pt-2 border-top border-success text-dark small fw-bold">
+                            Distribution Date: ${distDate}<br>
+                            Time: ${distStart} – ${distEnd}
+                        </div>`;
+                    }
+
+                    html += `
+                    <div class="border border-${badge} bg-light p-3 rounded mb-3 shadow-sm text-start">
+                        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                            <h6 class="fw-bold text-dark m-0">Token: ${d.Token}</h6>
+                            <span class="badge bg-${badge} px-3 py-2 shadow-sm text-uppercase">Status: ${displayStatus}</span>
+                        </div>
+                        <div class="mb-1 lh-sm">${stuName}</div>
+                        ${reasonBox}
+                        ${distInfoBox}
+                    </div>`;
+                });
+
+                let totalAmount = records.length * globalPricePerStudent;
+                let summaryBox = `
+                <div class="alert alert-info border-info text-center shadow-sm p-3 mb-4 rounded">
+                    <h5 class="fw-bold m-0 text-dark">TOTAL AMOUNT PAYABLE</h5>
+                    <h3 class="text-primary fw-bold mt-1 mb-2">₹ ${totalAmount}</h3>
+                    <span class="small text-muted fw-bold">${records.length} Student(s) Registered × ₹${globalPricePerStudent} per student</span>
+                </div>`;
+
+                if(html !== "") {
+                    document.getElementById('member-status-list').innerHTML = summaryBox + html;
+                    showSection('member-status-sec');
+                } else {
+                    openRegistrationForm();
+                }
             } else {
                 openRegistrationForm();
             }
