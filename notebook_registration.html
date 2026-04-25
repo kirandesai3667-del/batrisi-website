@@ -429,6 +429,10 @@ const committeeMembers = [
 let globalPricePerStudent = 80;
 let tempMatchingMembers = []; // Stores members temporarily for selection
 
+// --- PERMANENT YEAR-WISE RENEWAL DATA TRACKERS ---
+let globalPastStudents = [];
+let globalPastOtherMember = { used: false, val: "No", details: null };
+
 function setLoader(show, mainText="Processing...", subText="Please do not refresh the page.") { 
     document.getElementById('loader').style.display = show ? 'flex' : 'none'; 
     document.getElementById('loader-text').innerText = mainText;
@@ -541,8 +545,12 @@ async function loadStatistics() {
                 actionInfoHTML = `<div style="font-size:10px; margin-top:4px;" class="fw-bold ${txtColor}">By: ${data.ActionBy.split(" ")[0]}</div>`;
             }
 
+            // --- PERMANENT YEAR TRACKING BADGE FOR ADMIN ---
+            let dYear = data.RegYear || (data.RegDate ? parseInt(data.RegDate.split('/')[2]) : "");
+            let yearBadge = dYear ? `<br><span class="badge bg-secondary mt-1 shadow-sm" style="font-size:10px;">YEAR: ${dYear}</span>` : "";
+
             tableHTML += `<tr class="record-row">
-                <td class="fw-bold align-middle">${data.Token}</td>
+                <td class="fw-bold align-middle">${data.Token} ${yearBadge}</td>
                 <td class="align-middle">${memDetailsHTML}</td>
                 <td class="align-middle">${stuDetailsHTML}</td>
                 <td class="align-middle">
@@ -798,6 +806,10 @@ async function selectMember(index, mob) {
 
 // The core logic extracted to handle exactly chosen member
 async function proceedWithSelectedMember(mob) {
+    // --- NEW FEATURE: PERMANENT YEAR-WISE AUTO RENEWAL TRACKING ---
+    globalPastStudents = [];
+    globalPastOtherMember = { used: false, val: "No", details: null };
+
     try {
         let distDate = "TBA", distStart = "TBA", distEnd = "TBA";
         try {
@@ -825,10 +837,39 @@ async function proceedWithSelectedMember(mob) {
                 // Sort data manually using JavaScript logic (Client-side sorting)
                 records.sort((a, b) => b.TokenId - a.TokenId);
 
+                // --- NEW FEATURE: EXTRACT PAST STUDENTS DATA FOR AUTO-RENEWAL AUTO-FILL ---
+                let foundStudentNames = new Set();
+                for(let d of records) {
+                    if(!d.Student) continue;
+                    let fullName = `${d.Student.StudentName} ${d.Student.FatherName} ${d.Student.Surname}`.trim().toUpperCase();
+                    if(!foundStudentNames.has(fullName)) {
+                        foundStudentNames.add(fullName);
+                        globalPastStudents.push({
+                            sName: d.Student.StudentName || "",
+                            fName: d.Student.FatherName || "",
+                            surname: d.Student.Surname || ""
+                        });
+                    }
+                    if(!globalPastOtherMember.used && d.OtherFamilyMember) {
+                        globalPastOtherMember.used = true;
+                        globalPastOtherMember.val = d.OtherFamilyMember;
+                        globalPastOtherMember.details = d.OtherMemberDetails || null;
+                    }
+                }
+                // --- END NEW FEATURE ---
+
                 let html = "";
+                let currentYear = new Date().getFullYear();
+                let hasCurrentYearRecord = false; // NEW FEATURE
+
                 records.forEach(d => {
                     if(!d.Student) return; // ignore old data structure
                     
+                    // --- NEW FEATURE: IDENTIFY REGISTRATION YEAR ---
+                    let dYear = d.RegYear || (d.RegDate ? parseInt(d.RegDate.split('/')[2]) : new Date(d.Date).getFullYear());
+                    if (dYear === currentYear) hasCurrentYearRecord = true;
+                    // --- END ---
+
                     let displayStatus = d.Status;
                     if(d.Status === 'DELIVERED') displayStatus = 'Approved'; 
 
@@ -848,7 +889,7 @@ async function proceedWithSelectedMember(mob) {
                     html += `
                     <div class="border border-${badge} bg-light p-3 rounded mb-3 shadow-sm text-start">
                         <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
-                            <h6 class="fw-bold text-dark m-0">Token: ${d.Token}</h6>
+                            <h6 class="fw-bold text-dark m-0">Token: ${d.Token} <span class="badge bg-secondary ms-2">Year: ${dYear}</span></h6>
                             <span class="badge bg-${badge} px-3 py-2 shadow-sm text-uppercase">Status: ${displayStatus}</span>
                         </div>
                         <div class="mb-1 lh-sm">${stuName}</div>
@@ -857,13 +898,29 @@ async function proceedWithSelectedMember(mob) {
                     </div>`;
                 });
 
-                let totalAmount = records.length * globalPricePerStudent;
+                // Focus calculated sum dynamically strictly on current year for true UI logic representation
+                let currentYearRecords = records.filter(d => {
+                    let dY = d.RegYear || (d.RegDate ? parseInt(d.RegDate.split('/')[2]) : new Date(d.Date).getFullYear());
+                    return dY === currentYear;
+                });
+                
+                let totalAmount = currentYearRecords.length * globalPricePerStudent;
                 let summaryBox = `
                 <div class="alert alert-info border-info text-center shadow-sm p-3 mb-4 rounded">
-                    <h5 class="fw-bold m-0 text-dark">TOTAL AMOUNT PAYABLE</h5>
+                    <h5 class="fw-bold m-0 text-dark">CURRENT YEAR AMOUNT PAYABLE (${currentYear})</h5>
                     <h3 class="text-primary fw-bold mt-1 mb-2">₹ ${totalAmount}</h3>
-                    <span class="small text-muted fw-bold">${records.length} Student(s) Registered × ₹${globalPricePerStudent} per student</span>
+                    <span class="small text-muted fw-bold">${currentYearRecords.length} Student(s) Registered in ${currentYear} × ₹${globalPricePerStudent} per student</span>
                 </div>`;
+
+                // --- NEW FEATURE: RENEWAL / EXPIRED PROMPT SUMMARY BOX ---
+                if(!hasCurrentYearRecord) {
+                    summaryBox = `
+                    <div class="alert alert-warning border-warning text-center shadow-sm p-3 mb-4 rounded">
+                        <h5 class="fw-bold m-0 text-dark"><i class="bi bi-exclamation-triangle-fill"></i> NO REGISTRATION FOR CURRENT YEAR (${currentYear})</h5>
+                        <p class="small mb-2 mt-1">Your previous year records are shown below. Please click the <b>FILL NEW FORM</b> button below to securely renew and auto-fill your registration for ${currentYear}.</p>
+                    </div>` + summaryBox;
+                }
+                // --- END NEW FEATURE ---
 
                 if(html !== "") {
                     document.getElementById('member-status-list').innerHTML = summaryBox + html;
@@ -889,6 +946,31 @@ function openRegistrationForm() {
     document.getElementById('dispNative').value = globalMemberData.native;
     document.getElementById('dispAddr').value = globalMemberData.addr;
     updateDynamicPricingUI();
+
+    // --- NEW FEATURE: AUTO-FILL PREVIOUS STUDENT & OTHER MEMBER DATA ---
+    if(globalPastStudents && globalPastStudents.length > 0) {
+        let countToSelect = globalPastStudents.length > 5 ? 5 : globalPastStudents.length;
+        document.getElementById('selCount').value = countToSelect.toString();
+        
+        if(globalPastOtherMember && globalPastOtherMember.used) {
+            let sel = document.getElementById('otherMemberSelect');
+            if(sel) {
+                sel.value = globalPastOtherMember.val;
+                if(globalPastOtherMember.val === "Yes" && globalPastOtherMember.details) {
+                    document.getElementById('otherMemberFields').classList.remove('hidden');
+                    document.getElementById('otherMNo').value = globalPastOtherMember.details.MemberNo || "";
+                    document.getElementById('otherMName').value = globalPastOtherMember.details.MemberName || "";
+                }
+            }
+        }
+        
+        createStudentForm();
+    } else {
+        document.getElementById('selCount').value = "";
+        document.getElementById('student-list').innerHTML = "";
+    }
+    // --- END NEW FEATURE ---
+
     showSection('reg-form-sec');
 }
 
@@ -897,16 +979,29 @@ function createStudentForm() {
     document.getElementById('totalAmt').innerText = c * globalPricePerStudent;
     const list = document.getElementById('student-list'); list.innerHTML = "";
     for(let i=1; i<=c; i++) {
+        
+        // --- NEW FEATURE: INJECT PREVIOUSLY SAVED DATA SAFELY ---
+        let preSName = "";
+        let preFName = "";
+        let preSurname = "";
+        
+        if(globalPastStudents && globalPastStudents[i-1]) {
+            preSName = globalPastStudents[i-1].sName;
+            preFName = globalPastStudents[i-1].fName;
+            preSurname = globalPastStudents[i-1].surname;
+        }
+        // --- END NEW FEATURE ---
+
         list.innerHTML += `
         <div class="student-entry">
             <h6 class="text-primary fw-bold border-bottom pb-2">STUDENT ${i} DETAILS</h6>
             <div class="row g-2 mt-1">
-                <div class="col-md-4"><label class="small text-muted fw-bold">STUDENT NAME</label><input type="text" class="form-control s-name" placeholder="Name"></div>
-                <div class="col-md-4"><label class="small text-muted fw-bold">FATHER NAME</label><input type="text" class="form-control s-fname" placeholder="Father Name"></div>
-                <div class="col-md-4"><label class="small text-muted fw-bold">SURNAME</label><input type="text" class="form-control s-surname" placeholder="Surname"></div>
-                <div class="col-md-3 mt-2"><label class="small text-muted fw-bold">STANDARD</label><input type="text" class="form-control s-std" placeholder="Std (e.g. 10th)"></div>
-                <div class="col-md-5 mt-2"><label class="small text-muted fw-bold">SCHOOL/COLLEGE</label><input type="text" class="form-control s-school" placeholder="School Name"></div>
-                <div class="col-md-4 mt-2"><label class="small text-muted fw-bold text-danger">Last Year Marksheet Or Fees Receipt</label><input type="file" class="form-control s-file border-danger" accept="image/*"></div>
+                <div class="col-md-4"><label class="small text-muted fw-bold">STUDENT NAME</label><input type="text" class="form-control s-name" placeholder="Name" value="${preSName}"></div>
+                <div class="col-md-4"><label class="small text-muted fw-bold">FATHER NAME</label><input type="text" class="form-control s-fname" placeholder="Father Name" value="${preFName}"></div>
+                <div class="col-md-4"><label class="small text-muted fw-bold">SURNAME</label><input type="text" class="form-control s-surname" placeholder="Surname" value="${preSurname}"></div>
+                <div class="col-md-3 mt-2"><label class="small text-muted fw-bold">STANDARD (NEW CLASS)</label><input type="text" class="form-control s-std" placeholder="Std (e.g. 10th)"></div>
+                <div class="col-md-5 mt-2"><label class="small text-muted fw-bold">SCHOOL/COLLEGE (UPDATE)</label><input type="text" class="form-control s-school" placeholder="School Name"></div>
+                <div class="col-md-4 mt-2"><label class="small text-muted fw-bold text-danger">Upload New Marksheet/Receipt</label><input type="file" class="form-control s-file border-danger" accept="image/*"></div>
             </div>
         </div>`;
     }
@@ -988,32 +1083,42 @@ async function finalSubmit() {
         let allRegs = [];
         allRegsSnap.forEach(d => allRegs.push(d.data()));
 
+        const currentYearForDuplicate = new Date().getFullYear();
+
         for(let reg of allRegs) {
-            // 3. Student Full Name Check (First priority for exact student match)
-            if(reg.Student) {
-                const regFullName = `${reg.Student.StudentName} ${reg.Student.FatherName} ${reg.Student.Surname}`.trim().toUpperCase();
-                for(let entry of entries) {
-                    const sName = entry.querySelector('.s-name').value.trim().toUpperCase();
-                    const fName = entry.querySelector('.s-fname').value.trim().toUpperCase();
-                    const surname = entry.querySelector('.s-surname').value.trim().toUpperCase();
-                    const formFullName = `${sName} ${fName} ${surname}`.trim().toUpperCase();
-                    if(regFullName === formFullName && formFullName !== "") {
-                        alert(`This student is already registered.\nYour Token Number: ${reg.Token}`);
-                        setLoader(false); return;
-                    }
-                }
-            }
-            
-            // 2. Member No Check
-            if(reg.MemberNo === memNoValue) {
-                alert(`Your registration has already been completed.\nYour Token Number: ${reg.Token}`);
-                setLoader(false); return;
+            // --- NEW FEATURE: ISOLATE VALIDATION TO STRICTLY CURRENT YEAR ---
+            let regYear = reg.RegYear || (reg.RegDate ? parseInt(reg.RegDate.split('/')[2]) : null);
+            if (!regYear && reg.Date) {
+                regYear = new Date(reg.Date).getFullYear();
             }
 
-            // 1. Mobile Check
-            if(reg.Mobile === memMobileValue) {
-                alert(`This mobile number is already registered.\nYour Token Number: ${reg.Token}`);
-                setLoader(false); return;
+            if (regYear === currentYearForDuplicate) {
+                // 3. Student Full Name Check (First priority for exact student match)
+                if(reg.Student) {
+                    const regFullName = `${reg.Student.StudentName} ${reg.Student.FatherName} ${reg.Student.Surname}`.trim().toUpperCase();
+                    for(let entry of entries) {
+                        const sName = entry.querySelector('.s-name').value.trim().toUpperCase();
+                        const fName = entry.querySelector('.s-fname').value.trim().toUpperCase();
+                        const surname = entry.querySelector('.s-surname').value.trim().toUpperCase();
+                        const formFullName = `${sName} ${fName} ${surname}`.trim().toUpperCase();
+                        if(regFullName === formFullName && formFullName !== "") {
+                            alert(`This student is already registered for ${currentYearForDuplicate}.\nYour Token Number: ${reg.Token}`);
+                            setLoader(false); return;
+                        }
+                    }
+                }
+                
+                // 2. Member No Check
+                if(reg.MemberNo === memNoValue) {
+                    alert(`Your registration has already been completed for ${currentYearForDuplicate}.\nYour Token Number: ${reg.Token}`);
+                    setLoader(false); return;
+                }
+
+                // 1. Mobile Check
+                if(reg.Mobile === memMobileValue) {
+                    alert(`This mobile number is already registered for ${currentYearForDuplicate}.\nYour Token Number: ${reg.Token}`);
+                    setLoader(false); return;
+                }
             }
         }
     } catch(e) {
@@ -1071,6 +1176,7 @@ async function finalSubmit() {
         hours = hours ? hours : 12; 
         minutes = minutes < 10 ? '0' + minutes : minutes;
         const regTimeStr = `${hours}:${minutes} ${ampm}`;
+        const currentYearToSave = now.getFullYear(); // TRACKING PERMANENT YEAR 
 
         await db.runTransaction(async (transaction) => {
             const doc = await transaction.get(counterRef);
@@ -1097,6 +1203,7 @@ async function finalSubmit() {
                     Date: new Date().toISOString(),
                     RegDate: regDateStr,
                     RegTime: regTimeStr,
+                    RegYear: currentYearToSave, // --- NEW FEATURE INTEGRATED SAFELY ---
                     OtherFamilyMember: otherFamilyMember,
                     OtherMemberDetails: otherMemberData
                 });
@@ -1299,6 +1406,7 @@ async function downloadFullExcel() {
             if(r.Student) {
                 data.push({ 
                     "TOKEN": r.Token,
+                    "YEAR": r.RegYear || (r.RegDate ? parseInt(r.RegDate.split('/')[2]) : "-"), // --- NEW EXCEL YEAR FEATURE ---
                     "REGISTRATION DATE": r.RegDate || "-",
                     "REGISTRATION TIME": r.RegTime || "-",
                     "MEMBER NO": r.MemberNo,
