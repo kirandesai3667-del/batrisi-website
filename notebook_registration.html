@@ -740,6 +740,15 @@ async function loadDistributionSettings() {
     } catch(e) {}
 }
 
+function updateDynamicPricingUI() {
+    document.getElementById('lblBasePrice').innerText = globalPricePerStudent;
+    const sel = document.getElementById('selCount');
+    sel.innerHTML = '<option value="">SELECT</option>';
+    for(let i=1; i<=5; i++) {
+        sel.innerHTML += `<option value="${i}">${i} STUDENT(S) (₹${i * globalPricePerStudent})</option>`;
+    }
+}
+
 // FIXED: MEMBER DASHBOARD LOGIN SYSTEM (MULTI-MEMBER SUPPORT ADDED)
 async function doMemberLogin() {
     const mob = document.getElementById('memMobile').value.trim();
