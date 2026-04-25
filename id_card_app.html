@@ -88,7 +88,7 @@
         .card-scaler { transform-origin: top center; box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-radius: 16px; margin-bottom: 20px;}
         @media(min-width: 600px) { .card-scaler { transform: scale(1.1); margin-bottom: 40px; } }
         
-        .id-card { width: var(--card-w); height: var(--card-h); background: #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #cbd5e1; position: relative; overflow: hidden; box-sizing: border-box;}
+        .id-card { width: var(--card-w); height: var(--card-h); background: #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1.5px solid #cbd5e1; position: relative; overflow: hidden; box-sizing: border-box;}
         
         /* APPLY AVENGENZ FONT STRICTLY TO THE ENTIRE CARD */
         .id-card, .id-card * { font-family: 'Avengenz', sans-serif !important; }
@@ -278,8 +278,9 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; width: 100%; max-width: 400px; flex-direction: column;">
-                    <button class="btn btn-print" onclick="printMemberCard()"><i class="fa-solid fa-print"></i> PRINT CARD</button>
-                    <button class="btn btn-download-card" onclick="downloadMemberCardPDF()"><i class="fa-solid fa-download"></i> DOWNLOAD PDF</button>
+                    <button class="btn btn-print" onclick="printMemberCard()"><i class="fa-solid fa-print"></i> PRINT DIRECT</button>
+                    <!-- PERFECT A4 PDF DOWNLOAD BUTTON -->
+                    <button class="btn btn-download-card" onclick="downloadMemberCardA4PDF()"><i class="fa-solid fa-file-pdf"></i> DOWNLOAD A4 PDF</button>
                 </div>
             </div>
         </div>
@@ -524,13 +525,13 @@
                         <input type="number" id="exist-reg-mobile" placeholder="MOBILE NO">
                     </div>
                     <div class="form-group">
-                        <label>DATE OF BIRTH *</label>
+                        <label>DATE OF BIRTH</label>
                         <input type="text" id="exist-reg-dob" placeholder="DD/MM/YYYY">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>BLOOD GROUP *</label>
+                    <label>BLOOD GROUP</label>
                     <select id="exist-reg-bloodgroup">
                         <option value="-">SELECT</option>
                         <option value="A+">A+</option> <option value="A-">A-</option>
@@ -683,8 +684,9 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; width: 100%; max-width: 428px;">
-                        <button type="button" class="btn btn-print" onclick="printCard()"><i class="fa-solid fa-print"></i> PRINT</button>
-                        <button type="button" class="btn btn-download-card" onclick="downloadIndividualCardPDF()"><i class="fa-solid fa-download"></i> PDF</button>
+                        <button type="button" class="btn btn-print" onclick="printCard()"><i class="fa-solid fa-print"></i> PRINT DIRECT</button>
+                        <!-- PERFECT A4 PDF DOWNLOAD BUTTON -->
+                        <button type="button" class="btn btn-download-card" onclick="downloadIndividualCardA4PDF()"><i class="fa-solid fa-file-pdf"></i> A4 PDF</button>
                     </div>
                 </div>
             </div>
@@ -1162,7 +1164,7 @@
             body{font-family:'Avengenz',sans-serif; margin:0;} 
             @media print { 
                 @page{margin:0;} html,body{width:100vw;height:100vh;margin:0;} 
-                #member-print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1px solid #cbd5e1;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff; font-family: 'Avengenz', sans-serif !important;} 
+                #member-print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1.5px solid #cbd5e1 !important;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff; font-family: 'Avengenz', sans-serif !important;} 
                 #member-print-card * { font-family: 'Avengenz', sans-serif !important; }
                 .card-header{text-align:center;border-bottom:3px solid #2563eb;padding:6px 10px 4px;background:#fff;flex-shrink:0;} 
                 .card-header h2{margin:0 0 2px;font-size:11.5px;color:#0f3460;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;} 
@@ -1184,18 +1186,80 @@
             printWin.document.close();
         }
 
-        function downloadMemberCardPDF() {
-            const card = document.getElementById('member-print-card'); const scalerBox = document.getElementById('member-card-scaler-box'); scalerBox.style.transform = 'scale(1)';
+        // ==============================================================
+        // HIGH QUALITY NATIVE A4 PDF EXPORTER (AADHAAR STYLE PRINT)
+        // ==============================================================
+        function downloadHighQualityA4PDF(cardId, nameElementId) {
+            const originalCard = document.getElementById(cardId);
             
-            // Promise ensures font is fully loaded so PDF prints in Avengenz flawlessly
+            // 1. Create a wrapper off-screen
+            const cloneContainer = document.createElement('div');
+            cloneContainer.style.position = 'fixed';
+            cloneContainer.style.top = '-9999px';
+            cloneContainer.style.left = '-9999px';
+            cloneContainer.style.backgroundColor = '#ffffff'; 
+            cloneContainer.style.padding = '0';
+            document.body.appendChild(cloneContainer);
+            
+            // 2. Clone the card exactly
+            const clonedCard = originalCard.cloneNode(true);
+            clonedCard.style.transform = 'none'; 
+            clonedCard.style.width = '428px';    
+            clonedCard.style.height = '270px';   
+            clonedCard.style.margin = '0';
+            clonedCard.style.boxShadow = 'none';
+            
+            // VITAL FIX: Make CSS border transparent
+            // (Isse corners break nahi honge, perfection pdf engine se laayenge)
+            clonedCard.style.borderColor = 'transparent';
+            clonedCard.style.borderRadius = '16px';
+            clonedCard.style.overflow = 'hidden';
+
+            cloneContainer.appendChild(clonedCard);
+
             document.fonts.ready.then(() => {
-                html2canvas(card, { scale: 4, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-                    const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
-                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 54);
-                    let n = document.getElementById('m-val-name').innerText.trim(); pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_ID_Card.pdf");
-                    if(window.innerWidth > 600) scalerBox.style.transform = 'scale(1.1)';
+                html2canvas(clonedCard, { 
+                    scale: 6, // High resolution for ultimate crispness
+                    useCORS: true, 
+                    allowTaint: true,
+                    backgroundColor: "#ffffff",
+                    logging: false
+                }).then(canvas => {
+                    const { jsPDF } = window.jspdf; 
+                    
+                    // Create A4 Portrait Document
+                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                    
+                    // A4 standard sizes
+                    const a4Width = 210;
+                    const a4Height = 297;
+                    
+                    // Standard CR80 Card Size (Aadhaar / PAN proportion)
+                    const cardWidth = 85.6;
+                    const cardHeight = 54;
+                    
+                    // Calculate Exact Center Position of the A4 Page
+                    const xCenter = (a4Width - cardWidth) / 2;
+                    const yCenter = (a4Height - cardHeight) / 2;
+                    
+                    // Add the high-res card image to exactly center
+                    pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', xCenter, yCenter, cardWidth, cardHeight);
+                    
+                    // PREMIUM FINISH FIX: Draw crisp native vector border directly in PDF!
+                    pdf.setDrawColor(203, 213, 225); 
+                    pdf.setLineWidth(0.3); 
+                    pdf.roundedRect(xCenter, yCenter, cardWidth, cardHeight, 3.2, 3.2, 'S'); 
+                    
+                    let n = document.getElementById(nameElementId).innerText.trim(); 
+                    pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_A4_Print.pdf");
+                    
+                    document.body.removeChild(cloneContainer);
                 });
             });
+        }
+
+        function downloadMemberCardA4PDF() {
+            downloadHighQualityA4PDF('member-print-card', 'm-val-name');
         }
 
 
@@ -1432,7 +1496,13 @@
             const userName = sessionStorage.getItem('userName');
             const docRef = db.collection("memberRequests").doc(docId);
             
-            if(action === 'approve_committee') docRef.update({ status: 'pending_approvers', committeeApprovedBy: `${userName}` });
+            if(action === 'approve_committee') {
+                docRef.update({ 
+                    status: 'pending_approvers', 
+                    committeeApprovedBy: `${userName}`,
+                    committeeApprovalTimestamp: Date.now() 
+                });
+            }
             
             if(action === 'reject_committee' || action === 'reject_approver') {
                 let reason = prompt("PLEASE ENTER REASON FOR REJECTION:");
@@ -1676,6 +1746,7 @@
             let exportData = records.map(r => ({ "MEMBER NO": r.memberNo||"-", "FULL NAME": r.name||"-", "ADDRESS": r.address||"-", "NATIVE": r.hometown||"-", "DOB": r.dob||"-", "MOBILE": r.mobile||"-", "EMAIL": r.email||"-", "BLOOD GROUP": r.bloodgroup||"-" }));
             let wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportData), "Members"); XLSX.writeFile(wb, "Members.xlsx");
         }
+        
         function exportToPDF() {
             if(records.length === 0) return alert("NO DATA!");
             let tempDiv = document.createElement('div'); tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.style.background = 'white'; tempDiv.style.padding = '30px'; tempDiv.style.width = '1000px';
@@ -1684,10 +1755,12 @@
             tempDiv.innerHTML = html + `</table>`; document.body.appendChild(tempDiv);
             html2canvas(tempDiv, { scale: 2 }).then(canvas => { const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 10, pdf.internal.pageSize.getWidth(), (canvas.height * pdf.internal.pageSize.getWidth()) / canvas.width); pdf.save("Members.pdf"); document.body.removeChild(tempDiv); });
         }
+        
         function printFromTable(docId) { editRecord(docId); setTimeout(printCard, 800); }
+        
         function printCard() {
             const cardHTML = document.getElementById('print-card').outerHTML; 
-            const fontUrl = new URL('Avengenz.ttf', document.baseURI).href; // Ensures font is pulled correctly in print tab
+            const fontUrl = new URL('Avengenz.ttf', document.baseURI).href; 
             let printWin = window.open('', '_blank'); 
             printWin.document.write(`<html><head>
             <style>
@@ -1696,7 +1769,7 @@
             body{font-family:'Avengenz',sans-serif; margin:0;} 
             @media print { 
                 @page{margin:0;} html,body{width:100vw;height:100vh;margin:0;} 
-                #print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1px solid #cbd5e1;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff; font-family: 'Avengenz', sans-serif !important;} 
+                #print-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:428px;height:270px;border:1.5px solid #cbd5e1 !important;border-radius:16px !important;overflow:hidden !important;box-shadow:none;margin:0;display:flex;flex-direction:column;justify-content:space-between;background:#fff; font-family: 'Avengenz', sans-serif !important;} 
                 #print-card * { font-family: 'Avengenz', sans-serif !important; }
                 .card-header{text-align:center;border-bottom:3px solid #2563eb;padding:6px 10px 4px;background:#fff;flex-shrink:0;} 
                 .card-header h2{margin:0 0 2px;font-size:11.5px;color:#0f3460;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;} 
@@ -1717,20 +1790,11 @@
             </style></head><body>${cardHTML}<script>window.onload=function(){setTimeout(()=>{window.print();window.close();},800);}<\/script></body></html>`); 
             printWin.document.close();
         }
-        function downloadIndividualCardPDF(docId = null) {
+
+        function downloadIndividualCardA4PDF(docId = null) {
             if (docId) editRecord(docId);
             setTimeout(() => {
-                const card = document.getElementById('print-card'); const scalerBox = document.getElementById('card-scaler-box'); scalerBox.style.transform = 'scale(1)';
-                
-                // Promise ensures font is fully loaded so PDF prints in Avengenz flawlessly
-                document.fonts.ready.then(() => {
-                    html2canvas(card, { scale: 4, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-                        const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
-                        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 85.6, 54);
-                        let n = document.getElementById('val-name').innerText.trim(); pdf.save((n === "XXXX XXXX" ? "ID_Card" : n) + "_ID_Card.pdf");
-                        if(window.innerWidth > 600) scalerBox.style.transform = 'scale(1.1)';
-                    });
-                });
+                downloadHighQualityA4PDF('print-card', 'val-name');
             }, docId ? 800 : 100); 
         }
 
@@ -1740,7 +1804,7 @@
         }
 
         // ==============================================================
-        // EXISTING MEMBER LOGIC & CSV SYSTEM (ADDED NEW FEATURES)
+        // EXISTING MEMBER LOGIC & CSV SYSTEM
         // ==============================================================
         
         function showExistingMobileVerify() {
@@ -1764,7 +1828,7 @@
             searchByMobile(mob);
         }
 
-        // --- NEW FEATURE: MULTI-MEMBER MOBILE SEARCH ---
+        // --- MULTI-MEMBER MOBILE SEARCH ---
         let tempExistingMembers = [];
 
         function searchByMobile(mobNo) {
@@ -1797,7 +1861,6 @@
                 });
             };
 
-            // Checking both String and Number matching safely to prevent missing records imported differently via Excel
             db.collection('existingMembers').where('mobile', '==', String(mob)).get().then(snapStr => {
                 if (snapStr.empty) {
                     db.collection('existingMembers').where('mobile', '==', Number(mob)).get().then(snapNum => {
@@ -1828,7 +1891,6 @@
 
             document.getElementById('exist-member-list-container').style.display = 'none';
             
-            // Auto scroll to pre-filled section with brief flash indicator
             document.getElementById('exist-reg-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             ['exist-reg-name', 'exist-reg-nativeName', 'exist-reg-address', 'exist-reg-memberNo'].forEach(id => {
@@ -1841,8 +1903,6 @@
                 }
             });
         }
-        // --- END NEW FEATURE ---
-
 
         // CSV Upload in Admin Panel
         function handleCSVUpload(event) {
@@ -1867,7 +1927,6 @@
                 let total = 0;
 
                 json.forEach(row => {
-                    // EXACT HEADER MATCHING FOR: MemberNo, MemberName, Native, MobileNumber, Address
                     let memNo = row['MemberNo'] || row['Member Number'] || row['MEMBER NO'];
                     if(memNo) {
                         let docRef = db.collection('existingMembers').doc(String(memNo).toUpperCase());
@@ -1883,7 +1942,6 @@
                         count++;
                         total++;
                         
-                        // Firestore batch limit is 500
                         if(count === 490) {
                             batches.push(batch.commit());
                             batch = db.batch();
@@ -1972,10 +2030,11 @@
             const memNo = document.getElementById('exist-reg-memberNo').value.trim().toUpperCase();
             const address = document.getElementById('exist-reg-address').value.trim();
             const mobile = document.getElementById('exist-reg-mobile').value.trim();
+            // DOB and BG remain locked from their initial fetched values
             const dob = document.getElementById('exist-reg-dob').value.trim();
             const bg = document.getElementById('exist-reg-bloodgroup').value;
 
-            if(!address || !mobile || !dob) return alert("PLEASE FILL ALL REQUIRED FIELDS.");
+            if(!address || !mobile) return alert("PLEASE FILL ALL REQUIRED FIELDS.");
 
             let btn = document.querySelector('#existing-registration-wrapper .btn-save');
             let oldText = btn.innerHTML;
@@ -2048,13 +2107,27 @@
                 snap.forEach(doc => {
                     let r = doc.data();
                     
-                    // Get Committee Member Name instead of phone
                     let commName = r.committeePhone;
                     let commObj = committeeList.find(c => c.phone === r.committeePhone);
                     if(commObj) commName = commObj.name;
                     
+                    // Approval Time Logic Setup
+                    let appDate = "-";
+                    let appTime = "-";
+                    if(r.committeeApprovalTimestamp) {
+                        let d = new Date(r.committeeApprovalTimestamp);
+                        appDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                        
+                        let hours = d.getHours();
+                        let minutes = String(d.getMinutes()).padStart(2, '0');
+                        let ampm = hours >= 12 ? 'PM' : 'AM';
+                        hours = hours % 12;
+                        hours = hours ? hours : 12;
+                        appTime = `${hours}:${minutes} ${ampm}`;
+                    }
+
                     data.push({
-                        "DATE & TIME": formatDateTime12Hour(r.timestamp),
+                        "REGISTRATION DATE": formatDateTime12Hour(r.timestamp),
                         "NAME": r.name || "-",
                         "FATHER NAME": r.fatherName || "-",
                         "MOBILE": r.mobile || "-",
@@ -2068,7 +2141,10 @@
                         "FAMILY MEMBER NO": r.familyMemberNo || "-",
                         "FAMILY MEMBER NAME": r.familyMemberName || "-",
                         "COMMITTEE MEMBER": commName || "-",
-                        "STATUS": r.status || "-"
+                        "STATUS": r.status || "-",
+                        "APPROVED BY": r.committeeApprovedBy || "-",
+                        "APPROVAL DATE": appDate,
+                        "APPROVAL TIME": appTime
                     });
                 });
                 let wb = XLSX.utils.book_new();
@@ -2080,26 +2156,60 @@
         function exportExistingUpdatesExcel() {
             db.collection("existingUpdates").get().then(snap => {
                 if(snap.empty) return alert("NO EXISTING MEMBER UPDATES FOUND!");
-                let data = [];
+                
+                let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body>';
+                html += '<table border="1"><thead><tr>' +
+                    '<th style="background-color: #0f3460; color: white;">DATE & TIME</th>' +
+                    '<th style="background-color: #0f3460; color: white;">MEMBER NO</th>' +
+                    '<th style="background-color: #0f3460; color: white;">NAME</th>' +
+                    '<th style="background-color: #0f3460; color: white;">MOBILE (UPDATED)</th>' +
+                    '<th style="background-color: #0f3460; color: white;">OLD MOBILE</th>' +
+                    '<th style="background-color: #0f3460; color: white;">ADDRESS (UPDATED)</th>' +
+                    '<th style="background-color: #0f3460; color: white;">OLD ADDRESS</th>' +
+                    '<th style="background-color: #0f3460; color: white;">DOB</th>' +
+                    '<th style="background-color: #0f3460; color: white;">OLD DOB</th>' +
+                    '<th style="background-color: #0f3460; color: white;">BLOOD GROUP</th>' +
+                    '<th style="background-color: #0f3460; color: white;">OLD BLOOD GROUP</th>' +
+                    '</tr></thead><tbody>';
+
                 snap.forEach(doc => {
                     let r = doc.data();
-                    data.push({
-                        "DATE & TIME": formatDateTime12Hour(r.timestamp),
-                        "MEMBER NO": r.memberNo || "-",
-                        "NAME": r.name || "-",
-                        "NEW MOBILE": r.newMobile || "-",
-                        "OLD MOBILE": r.oldMobile || "-",
-                        "NEW ADDRESS": r.newAddress || "-",
-                        "OLD ADDRESS": r.oldAddress || "-",
-                        "NEW DOB": r.newDob || "-",
-                        "OLD DOB": r.oldDob || "-",
-                        "NEW BLOOD GROUP": r.newBloodGroup || "-",
-                        "OLD BLOOD GROUP": r.oldBloodGroup || "-"
-                    });
+                    
+                    let mobileChanged = (r.newMobile && r.oldMobile && r.newMobile !== r.oldMobile);
+                    let addressChanged = (r.newAddress && r.oldAddress && r.newAddress !== r.oldAddress);
+                    let dobChanged = (r.newDob && r.oldDob && r.newDob !== r.oldDob);
+                    let bgChanged = (r.newBloodGroup && r.oldBloodGroup && r.newBloodGroup !== r.oldBloodGroup);
+                    
+                    let mobileStyle = mobileChanged ? 'style="background-color: #ffcccc; color: #cc0000; font-weight: bold;"' : '';
+                    let addressStyle = addressChanged ? 'style="background-color: #ffcccc; color: #cc0000; font-weight: bold;"' : '';
+                    let dobStyle = dobChanged ? 'style="background-color: #ffcccc; color: #cc0000; font-weight: bold;"' : '';
+                    let bgStyle = bgChanged ? 'style="background-color: #ffcccc; color: #cc0000; font-weight: bold;"' : '';
+
+                    html += `<tr>
+                        <td>${formatDateTime12Hour(r.timestamp)}</td>
+                        <td>${r.memberNo || "-"}</td>
+                        <td>${r.name || "-"}</td>
+                        <td ${mobileStyle}>${r.newMobile || "-"}</td>
+                        <td>${r.oldMobile || "-"}</td>
+                        <td ${addressStyle}>${r.newAddress || "-"}</td>
+                        <td>${r.oldAddress || "-"}</td>
+                        <td ${dobStyle}>${r.newDob || "-"}</td>
+                        <td>${r.oldDob || "-"}</td>
+                        <td ${bgStyle}>${r.newBloodGroup || "-"}</td>
+                        <td>${r.oldBloodGroup || "-"}</td>
+                    </tr>`;
                 });
-                let wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Existing Updates");
-                XLSX.writeFile(wb, "Existing_Member_Updates.xlsx");
+                
+                html += '</tbody></table></body></html>';
+
+                let blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = 'Existing_Member_Updates.xls';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             });
         }
 
