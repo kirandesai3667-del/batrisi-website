@@ -740,15 +740,6 @@ async function loadDistributionSettings() {
     } catch(e) {}
 }
 
-function updateDynamicPricingUI() {
-    document.getElementById('lblBasePrice').innerText = globalPricePerStudent;
-    const sel = document.getElementById('selCount');
-    sel.innerHTML = '<option value="">SELECT</option>';
-    for(let i=1; i<=5; i++) {
-        sel.innerHTML += `<option value="${i}">${i} STUDENT(S) (₹${i * globalPricePerStudent})</option>`;
-    }
-}
-
 // FIXED: MEMBER DASHBOARD LOGIN SYSTEM (MULTI-MEMBER SUPPORT ADDED)
 async function doMemberLogin() {
     const mob = document.getElementById('memMobile').value.trim();
@@ -937,7 +928,7 @@ async function finalSubmit() {
     if(entries.length === 0) return alert("Please select number of students!");
     
     const memNameValue = document.getElementById('dispMName').value.trim().toUpperCase();
-    const memFirstName = memNameValue.split(" ")[0];
+    const memNameParts = memNameValue.split(" "); // Used for advanced male/female father name validation
 
     const uploadPromises = [];
     for(let entry of entries) {
@@ -947,9 +938,18 @@ async function finalSubmit() {
         
         if(!file || !sName || !fName) return alert("Please fill Student Name, Father Name, and Upload Document for all students!");
 
-        // --- NEW: FATHER NAME STRICT VALIDATION ---
+        // --- NEW: FATHER NAME VALIDATION (UPDATED FOR MALE/FEMALE MEMBERS) ---
         const fNameFirst = fName.split(" ")[0];
-        if (!memFirstName.includes(fNameFirst) && !fNameFirst.includes(memFirstName)) {
+        let isFatherNameValid = false;
+        
+        for (let part of memNameParts) {
+            if (part && (part.includes(fNameFirst) || fNameFirst.includes(part))) {
+                isFatherNameValid = true;
+                break;
+            }
+        }
+
+        if (!isFatherNameValid) {
             alert("Father name does not match member records. Please correct it.");
             return; // BLOCK submission completely
         }
