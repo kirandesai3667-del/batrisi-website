@@ -287,10 +287,6 @@
                                 <div class="detail-item"><div class="detail-label-box">D.O.B.</div><div class="detail-colon">:</div><div class="detail-value-box" id="m-val-dob"></div></div>
                                 <div class="detail-item"><div class="detail-label-box">MOBILE NO.</div><div class="detail-colon">:</div><div class="detail-value-box" id="m-val-mobile"></div></div>
                                 <div class="detail-item"><div class="detail-label-box">BLOOD GROUP</div><div class="detail-colon">:</div><div class="detail-value-box blood-group-val" id="m-val-bloodgroup"></div></div>
-                                <!-- ADDED THARAV FIELDS START -->
-                                <div class="detail-item"><div class="detail-label-box">THARAV NO.</div><div class="detail-colon">:</div><div class="detail-value-box" id="m-val-tharavNo"></div></div>
-                                <div class="detail-item"><div class="detail-label-box">THARAV DATE</div><div class="detail-colon">:</div><div class="detail-value-box" id="m-val-tharavDate"></div></div>
-                                <!-- ADDED THARAV FIELDS END -->
                             </div>
                             <div class="photo-box"><img id="m-img-photo" src="" alt="Photo"></div>
                         </div>
@@ -456,19 +452,6 @@
                     </select>
                 </div>
 
-                <!-- ADDED THARAV FIELDS START -->
-                <div class="name-grid">
-                    <div class="form-group">
-                        <label>THARAV NO</label>
-                        <input type="text" id="reg-tharavNo" placeholder="THARAV NUMBER" class="uppercase-text" oninput="this.value = this.value.toUpperCase()">
-                    </div>
-                    <div class="form-group">
-                        <label>THARAV DATE</label>
-                        <input type="date" id="reg-tharavDate">
-                    </div>
-                </div>
-                <!-- ADDED THARAV FIELDS END -->
-
                 <button type="button" class="btn btn-save" onclick="submitPublicForm()" style="margin-top: 10px; font-size: 16px;">
                     <i class="fa-solid fa-paper-plane"></i> SUBMIT FORM
                 </button>
@@ -578,19 +561,6 @@
                     </select>
                 </div>
 
-                <!-- ADDED THARAV FIELDS START -->
-                <div class="name-grid">
-                    <div class="form-group">
-                        <label>THARAV NO</label>
-                        <input type="text" id="exist-reg-tharavNo" placeholder="THARAV NUMBER" class="uppercase-text" oninput="this.value = this.value.toUpperCase()">
-                    </div>
-                    <div class="form-group">
-                        <label>THARAV DATE</label>
-                        <input type="date" id="exist-reg-tharavDate">
-                    </div>
-                </div>
-                <!-- ADDED THARAV FIELDS END -->
-
                 <button type="button" class="btn btn-save" onclick="submitExistingForm()" style="margin-top: 10px; font-size: 16px;">
                     <i class="fa-solid fa-floppy-disk"></i> SAVE DATA & GENERATE CARD
                 </button>
@@ -687,23 +657,21 @@
                             </select>
                         </div>
                     </div>
-                    
-                    <!-- ADDED THARAV FIELDS START -->
-                    <div class="name-grid">
-                        <div class="form-group">
-                            <label>THARAV NO.</label>
-                            <input type="text" id="tharavNo" placeholder="THARAV NUMBER" class="uppercase-text" oninput="this.value = this.value.toUpperCase(); updateField('tharavNo', 'val-tharavNo');">
-                        </div>
-                        <div class="form-group">
-                            <label>THARAV DATE</label>
-                            <input type="date" id="tharavDate" oninput="updateTharavDateDisplay();">
-                        </div>
-                    </div>
-                    <!-- ADDED THARAV FIELDS END -->
 
                     <div class="form-group">
                         <label>EMAIL ID (OPTIONAL)</label>
                         <input type="email" id="email" placeholder="EMAIL" class="uppercase-text" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+
+                    <div class="name-grid">
+                        <div class="form-group">
+                            <label>THARAV NUMBER</label>
+                            <input type="text" id="tharavNo" placeholder="E.G. TH-123" class="uppercase-text" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="form-group">
+                            <label>THARAV DATE</label>
+                            <input type="text" id="tharavDate" placeholder="DD/MM/YYYY">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -739,10 +707,6 @@
                                     <div class="detail-item"><div class="detail-label-box">D.O.B.</div><div class="detail-colon">:</div><div class="detail-value-box" id="val-dob">XX/XX/XXXX</div></div>
                                     <div class="detail-item"><div class="detail-label-box">MOBILE NO.</div><div class="detail-colon">:</div><div class="detail-value-box" id="val-mobile">XXXXX XXXXX</div></div>
                                     <div class="detail-item"><div class="detail-label-box">BLOOD GROUP</div><div class="detail-colon">:</div><div class="detail-value-box blood-group-val" id="val-bloodgroup">-</div></div>
-                                    <!-- ADDED THARAV FIELDS START -->
-                                    <div class="detail-item"><div class="detail-label-box">THARAV NO.</div><div class="detail-colon">:</div><div class="detail-value-box" id="val-tharavNo">XXXX</div></div>
-                                    <div class="detail-item"><div class="detail-label-box">THARAV DATE</div><div class="detail-colon">:</div><div class="detail-value-box" id="val-tharavDate">XX/XX/XXXX</div></div>
-                                    <!-- ADDED THARAV FIELDS END -->
                                 </div>
                                 <div class="photo-box"><img id="img-photo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Photo"></div>
                             </div>
@@ -953,30 +917,6 @@
         });
 
         // ==============================================================
-        // HELPER FUNCTIONS FOR THARAV DATE FORMATTING
-        // ==============================================================
-        function formatIndianDate(dateString) {
-            if (!dateString) return "";
-            if (dateString.includes("/")) return dateString;
-            let parts = dateString.split("-");
-            if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-            return dateString;
-        }
-
-        function formatInputDate(dateString) {
-            if (!dateString) return "";
-            if (dateString.includes("-")) return dateString;
-            let parts = dateString.split("/");
-            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-            return dateString;
-        }
-
-        function updateTharavDateDisplay() {
-            let val = document.getElementById('tharavDate').value;
-            document.getElementById('val-tharavDate').innerText = val ? formatIndianDate(val) : "XX/XX/XXXX";
-        }
-
-        // ==============================================================
         // UI HELPERS
         // ==============================================================
         function toggleFamilyFields(show) {
@@ -1178,7 +1118,7 @@
                     <div class="status-box" style="border: 2px solid #10b981;">
                         <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
                         <h2 style="color: #065f46; margin-top:0; text-transform:uppercase;">CARD READY!</h2>
-                        <p style="color: #047857; font-weight: 600; font-size:13px;">YOUR ID CARD IS GENERATED. YOU CAN DOWNLOAD it BELOW.</p>
+                        <p style="color: #047857; font-weight: 600; font-size:13px;">YOUR ID CARD IS GENERATED. YOU CAN DOWNLOAD IT BELOW.</p>
                     </div>`;
                 
                 if(!reqData.idCardData && reqData.cardId) {
@@ -1243,8 +1183,6 @@
             document.getElementById('m-val-dob').innerText = data.dob || "XX/XX/XXXX";
             document.getElementById('m-val-mobile').innerText = data.mobile || "XXXXX XXXXX";
             document.getElementById('m-val-bloodgroup').innerText = data.bloodgroup || "-";
-            document.getElementById('m-val-tharavNo').innerText = data.tharavNo || "XXXX";
-            document.getElementById('m-val-tharavDate').innerText = data.tharavDate || "XX/XX/XXXX";
             document.getElementById('m-img-photo').src = data.photo || "";
             document.getElementById('member-card-preview-section').style.display = 'flex';
         }
@@ -1469,9 +1407,7 @@
                 bloodGroup: document.getElementById('reg-bloodgroup').value,
                 familyMemberNo: document.getElementById('reg-familyMemberNo').value.trim(),
                 familyMemberName: document.getElementById('reg-familyMemberName').value.trim(),
-                committeePhone: document.getElementById('reg-committee').value,
-                tharavNo: document.getElementById('reg-tharavNo').value.trim().toUpperCase(),
-                tharavDate: formatIndianDate(document.getElementById('reg-tharavDate').value)
+                committeePhone: document.getElementById('reg-committee').value
             };
 
             if(!data.photo) return alert("PLEASE UPLOAD A PHOTO OR TAKE A SELFIE.");
@@ -1633,7 +1569,6 @@
             html += addRow('OCCUPATION', rec.vyavsay); html += addRow('OCCUPATION ADD.', rec.vyavsayAddress + " - " + rec.vyavsayPincode);
             html += addRow('D.O.B.', rec.dob); html += addRow('EDUCATION', rec.education); html += addRow('BLOOD GROUP', rec.bloodGroup);
             html += addRow('FAMILY MEMBER', (rec.familyMemberNo || "-") + " - " + (rec.familyMemberName || "-"));
-            html += addRow('THARAV NO.', rec.tharavNo); html += addRow('THARAV DATE', rec.tharavDate);
             
             html += `<tr><td colspan="2" style="background:#f1f5f9; padding:8px; font-weight:bold; text-align:center; color:#0f3460; border-radius:8px; margin-top:10px; display:inline-block; width:100%;">APPROVAL HISTORY</td></tr>`;
             let reqCommPhoneObj = committeeList.find(c => c.phone === rec.committeePhone);
@@ -1665,7 +1600,6 @@
             html += addRow('MOBILE', rec.mobile); 
             if(rec.email) html += addRow('EMAIL', rec.email);
             html += addRow('D.O.B.', rec.dob); html += addRow('BLOOD GROUP', rec.bloodgroup);
-            html += addRow('THARAV NO.', rec.tharavNo); html += addRow('THARAV DATE', rec.tharavDate);
             html += `</table>`;
             
             body.innerHTML = html; document.getElementById('wfDetailsModal').style.display = 'flex';
@@ -1704,16 +1638,14 @@
             if(dataObj.email) document.getElementById('email').value = dataObj.email;
             
             document.getElementById('tharavNo').value = dataObj.tharavNo || "";
-            document.getElementById('tharavDate').value = formatInputDate(dataObj.tharavDate);
-            
+            document.getElementById('tharavDate').value = dataObj.tharavDate || "";
+
             let bgOpts = document.getElementById('bloodgroup').options;
             for(let i=0; i<bgOpts.length; i++){ if(bgOpts[i].value === dataObj.bloodGroup) { bgOpts[i].selected = true; break; } }
 
             if(dataObj.photo) { currentPhotoBase64 = dataObj.photo; document.getElementById('img-photo').src = currentPhotoBase64; }
 
-            ['address','hometown','dob','mobile','bloodgroup','tharavNo'].forEach(id => updateField(id, 'val-'+id));
-            updateTharavDateDisplay();
-            
+            ['address','hometown','dob','mobile','bloodgroup'].forEach(id => updateField(id, 'val-'+id));
             closeAdminApprovedModal();
             alert("DATA IMPORTED! ASSIGN A MEMBER NUMBER AND SAVE.");
         }
@@ -1776,8 +1708,8 @@
                 hometown: document.getElementById('hometown').value, dob: document.getElementById('dob').value,
                 mobile: document.getElementById('mobile').value, bloodgroup: document.getElementById('bloodgroup').value,
                 email: document.getElementById('email').value.toUpperCase(), photo: currentPhotoBase64,
-                tharavNo: document.getElementById('tharavNo').value.trim().toUpperCase(),
-                tharavDate: formatIndianDate(document.getElementById('tharavDate').value)
+                tharavNo: document.getElementById('tharavNo').value.toUpperCase(),
+                tharavDate: document.getElementById('tharavDate').value
             };
 
             const afterSave = (newDocId) => {
@@ -1830,18 +1762,13 @@
             document.getElementById('middlename').value = nameParts.slice(2).join(" ") || "";
             combineAndDisplayAdminName();
 
-            ['memberNo','address','hometown','dob','mobile','email'].forEach(id => {
+            ['memberNo','address','hometown','dob','mobile','email','tharavNo','tharavDate'].forEach(id => {
                 if(document.getElementById(id)) document.getElementById(id).value = rec[id] || "";
             });
             document.getElementById('bloodgroup').value = rec.bloodgroup || "-";
-            document.getElementById('tharavNo').value = rec.tharavNo || "";
-            document.getElementById('tharavDate').value = formatInputDate(rec.tharavDate);
-            
             currentPhotoBase64 = rec.photo; document.getElementById('img-photo').src = currentPhotoBase64;
             
-            ['memberNo','address','hometown','dob','mobile','bloodgroup','tharavNo'].forEach(id => updateField(id, 'val-'+id));
-            updateTharavDateDisplay();
-            
+            ['memberNo','address','hometown','dob','mobile','bloodgroup'].forEach(id => updateField(id, 'val-'+id));
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         function deleteRecord(docId) { if(confirm("DELETE THIS RECORD?")) { db.collection("idCards").doc(docId).delete(); } }
@@ -1853,8 +1780,8 @@
             });
             document.getElementById('bloodgroup').value = "-";
             currentPhotoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="; document.getElementById('img-photo').src = currentPhotoBase64;
-            ['val-memberNo', 'val-name', 'val-address', 'val-hometown', 'val-mobile', 'val-tharavNo'].forEach(id => document.getElementById(id).innerText = "XXXX");
-            document.getElementById('val-dob').innerText = "XX/XX/XXXX"; document.getElementById('val-bloodgroup').innerText = "-"; document.getElementById('val-tharavDate').innerText = "XX/XX/XXXX";
+            ['val-memberNo', 'val-name', 'val-address', 'val-hometown', 'val-mobile'].forEach(id => document.getElementById(id).innerText = "XXXX");
+            document.getElementById('val-dob').innerText = "XX/XX/XXXX"; document.getElementById('val-bloodgroup').innerText = "-";
         }
 
         function exportToExcel() {
@@ -2172,9 +2099,7 @@
                 bloodgroup: bg,
                 photo: existRegPhotoBase64,
                 timestamp: timestamp,
-                isExistingUpdate: true,
-                tharavNo: document.getElementById('exist-reg-tharavNo').value.trim().toUpperCase(),
-                tharavDate: formatIndianDate(document.getElementById('exist-reg-tharavDate').value)
+                isExistingUpdate: true
             };
 
             const updateLog = {
@@ -2262,8 +2187,6 @@
                         "OCCUPATION": r.vyavsay || "-",
                         "FAMILY MEMBER NO": r.familyMemberNo || "-",
                         "FAMILY MEMBER NAME": r.familyMemberName || "-",
-                        "THARAV NO": r.tharavNo || "-",
-                        "THARAV DATE": r.tharavDate || "-",
                         "COMMITTEE MEMBER": commName || "-",
                         "STATUS": r.status || "-",
                         "APPROVED BY": r.committeeApprovedBy || "-",
