@@ -370,6 +370,13 @@
                     <label>RESIDENCE ADDRESS *</label>
                     <textarea id="reg-address" rows="3" placeholder="FULL ADDRESS" class="uppercase-text" oninput="this.value = this.value.toUpperCase()"></textarea>
                 </div>
+
+                <!-- ADDRESS PROOF UPLOAD (IMGBB API INTEGRATION) -->
+                <div class="form-group" style="background:#f8fafc; padding:15px; border-radius:12px; border:1px dashed #cbd5e1; margin-top: 5px;">
+                    <label>ADDRESS PROOF UPLOAD (JPG, PNG, PDF - Max 2MB) *</label>
+                    <input type="file" id="reg-address-proof" accept=".jpg, .jpeg, .png, .pdf" onchange="uploadAddressProof(event)" style="padding: 10px; background: white;">
+                    <div id="proof-upload-status" style="font-size: 11px; font-weight: bold; margin-top: 8px; color: var(--text-light);"></div>
+                </div>
                 
                 <div class="name-grid">
                     <div class="form-group">
@@ -678,6 +685,9 @@
                         <label>MEMBER PHOTO</label>
                         <input type="file" id="photoInput" accept="image/*" onchange="openCropper(event)" style="padding: 10px;">
                     </div>
+                    
+                    <input type="hidden" id="adminAddressProofUrl">
+                    <div id="admin-proof-btn-container" style="display:none; margin-top: 10px; margin-bottom: 10px; text-align: left;"></div>
 
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
                         <button id="saveBtn" type="button" class="btn btn-save" onclick="saveRecord()"><i class="fa-solid fa-floppy-disk"></i> SAVE CARD</button>
@@ -1167,6 +1177,7 @@
         function tryAgainForm(docId, mobileNumber) {
             if(confirm("ARE YOU SURE YOU WANT TO FILL A NEW FORM? \nTHIS WILL DELETE YOUR OLD REJECTED FORM.")) {
                 db.collection("memberRequests").doc(docId).delete().then(() => {
+                    regAddressProofUrl = ""; // Reset Address Proof URL
                     document.getElementById('member-status-wrapper').style.display = 'none';
                     document.getElementById('public-registration-wrapper').style.display = 'block';
                     document.getElementById('header-title-text').innerText = "Registration";
@@ -1302,9 +1313,10 @@
 
 
         // ==============================================================
-        // PHOTO SYSTEM
+        // PHOTO SYSTEM & ADDRESS PROOF
         // ==============================================================
         let regPhotoBase64 = "";
+        let regAddressProofUrl = "";
 
         function processAndCropImage(sourceElement, isVideo) {
             const targetW = 300; const targetH = 400;
@@ -1334,6 +1346,56 @@
                 URL.revokeObjectURL(url);
             }
             img.src = url;
+        }
+
+        // ADDRESS PROOF UPLOAD (ImgBB API integration)
+        function uploadAddressProof(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                alert("File size must be less than 2MB");
+                event.target.value = "";
+                return;
+            }
+
+            if (file.type === "application/pdf") {
+                alert("Image server only supports photos. Please upload a JPG or PNG file.");
+                event.target.value = "";
+                return;
+            }
+
+            const statusEl = document.getElementById('proof-upload-status');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> UPLOADING TO SECURE SERVER...';
+            statusEl.style.color = "#f59e0b";
+
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("key", "77c6ecbe6786edef58354da6ff43fa5b"); // Added your ImgBB Key
+
+            fetch("https://api.imgbb.com/1/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    regAddressProofUrl = data.data.url;
+                    statusEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> UPLOAD SUCCESSFUL';
+                    statusEl.style.color = "#10b981";
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> UPLOAD FAILED';
+                    statusEl.style.color = "#ef4444";
+                    alert("Upload failed: " + data.error.message);
+                    event.target.value = "";
+                }
+            })
+            .catch(err => {
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> UPLOAD ERROR';
+                statusEl.style.color = "#ef4444";
+                alert("Upload error: " + err.message);
+                event.target.value = "";
+            });
         }
 
         let cameraStream = null;
@@ -1396,6 +1458,7 @@
                 fatherName: fatherFullName,
                 nativeName: document.getElementById('reg-nativeName').value,
                 address: document.getElementById('reg-address').value.trim(),
+                address_proof_url: regAddressProofUrl,
                 pincode: document.getElementById('reg-pincode').value.trim(),
                 mobile: document.getElementById('reg-mobile').value.trim(),
                 email: document.getElementById('reg-email').value.trim(),
@@ -1413,6 +1476,7 @@
             if(!data.photo) return alert("PLEASE UPLOAD A PHOTO OR TAKE A SELFIE.");
             if(!surname || !firstname || !middlename) return alert("PLEASE FILL YOUR COMPLETE FULL NAME.");
             if(!fSur || !fFirst || !fMid) return alert("PLEASE FILL FATHER'S COMPLETE FULL NAME.");
+            if(!regAddressProofUrl) return alert("ADDRESS PROOF UPLOAD KARNA MANDATORY HAI.");
             if(!data.nativeName || !data.address || !data.pincode || !data.mobile || !data.dob || !data.committeePhone) {
                 return alert("PLEASE FILL ALL REQUIRED (*) FIELDS.");
             }
@@ -1425,6 +1489,7 @@
 
             db.collection("memberRequests").add(payload).then(() => {
                 alert("FORM SUBMITTED SUCCESSFULLY.");
+                regAddressProofUrl = ""; // Reset memory
                 window.location.reload();
             }).catch(err => { alert("Error: " + err.message); btn.innerHTML = oldText; btn.disabled = false; });
         }
@@ -1570,6 +1635,11 @@
             html += addRow('D.O.B.', rec.dob); html += addRow('EDUCATION', rec.education); html += addRow('BLOOD GROUP', rec.bloodGroup);
             html += addRow('FAMILY MEMBER', (rec.familyMemberNo || "-") + " - " + (rec.familyMemberName || "-"));
             
+            // Show Address Proof in workflow details modal
+            if(rec.address_proof_url) {
+                html += addRow('ADDRESS PROOF', `<a href="${rec.address_proof_url}" target="_blank" style="background:#3b82f6; color:white; padding:4px 8px; border-radius:4px; text-decoration:none; font-size:10px; font-weight:bold;"><i class="fa-solid fa-file-image"></i> VIEW ADDRESS PROOF</a>`);
+            }
+
             html += `<tr><td colspan="2" style="background:#f1f5f9; padding:8px; font-weight:bold; text-align:center; color:#0f3460; border-radius:8px; margin-top:10px; display:inline-block; width:100%;">APPROVAL HISTORY</td></tr>`;
             let reqCommPhoneObj = committeeList.find(c => c.phone === rec.committeePhone);
             html += addRow('COMMITTEE REF', reqCommPhoneObj ? reqCommPhoneObj.name : rec.committeePhone);
@@ -1645,6 +1715,16 @@
 
             if(dataObj.photo) { currentPhotoBase64 = dataObj.photo; document.getElementById('img-photo').src = currentPhotoBase64; }
 
+            // Support displaying Address Proof in Admin Panel
+            if(dataObj.address_proof_url) {
+                document.getElementById('adminAddressProofUrl').value = dataObj.address_proof_url;
+                document.getElementById('admin-proof-btn-container').innerHTML = `<a href="${dataObj.address_proof_url}" target="_blank" class="btn btn-print-sm" style="background:#3b82f6; text-decoration:none; display:inline-block; padding: 6px 12px; border-radius:6px; color:white; font-size:12px;"><i class="fa-solid fa-file-image"></i> VIEW ADDRESS PROOF</a>`;
+                document.getElementById('admin-proof-btn-container').style.display = 'block';
+            } else {
+                document.getElementById('adminAddressProofUrl').value = "";
+                document.getElementById('admin-proof-btn-container').style.display = 'none';
+            }
+
             ['address','hometown','dob','mobile','bloodgroup'].forEach(id => updateField(id, 'val-'+id));
             closeAdminApprovedModal();
             alert("DATA IMPORTED! ASSIGN A MEMBER NUMBER AND SAVE.");
@@ -1709,7 +1789,8 @@
                 mobile: document.getElementById('mobile').value, bloodgroup: document.getElementById('bloodgroup').value,
                 email: document.getElementById('email').value.toUpperCase(), photo: currentPhotoBase64,
                 tharavNo: document.getElementById('tharavNo').value.toUpperCase(),
-                tharavDate: document.getElementById('tharavDate').value
+                tharavDate: document.getElementById('tharavDate').value,
+                address_proof_url: document.getElementById('adminAddressProofUrl').value || ""
             };
 
             const afterSave = (newDocId) => {
@@ -1768,6 +1849,16 @@
             document.getElementById('bloodgroup').value = rec.bloodgroup || "-";
             currentPhotoBase64 = rec.photo; document.getElementById('img-photo').src = currentPhotoBase64;
             
+            // Support displaying Address Proof upon edit in Admin Panel
+            if(rec.address_proof_url) {
+                document.getElementById('adminAddressProofUrl').value = rec.address_proof_url;
+                document.getElementById('admin-proof-btn-container').innerHTML = `<a href="${rec.address_proof_url}" target="_blank" class="btn btn-print-sm" style="background:#3b82f6; text-decoration:none; display:inline-block; padding: 6px 12px; border-radius:6px; color:white; font-size:12px;"><i class="fa-solid fa-file-image"></i> VIEW ADDRESS PROOF</a>`;
+                document.getElementById('admin-proof-btn-container').style.display = 'block';
+            } else {
+                document.getElementById('adminAddressProofUrl').value = "";
+                document.getElementById('admin-proof-btn-container').style.display = 'none';
+            }
+            
             ['memberNo','address','hometown','dob','mobile','bloodgroup'].forEach(id => updateField(id, 'val-'+id));
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1782,6 +1873,14 @@
             currentPhotoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="; document.getElementById('img-photo').src = currentPhotoBase64;
             ['val-memberNo', 'val-name', 'val-address', 'val-hometown', 'val-mobile'].forEach(id => document.getElementById(id).innerText = "XXXX");
             document.getElementById('val-dob').innerText = "XX/XX/XXXX"; document.getElementById('val-bloodgroup').innerText = "-";
+            
+            // Clear Address Proof hidden UI in Admin Generator
+            document.getElementById('adminAddressProofUrl').value = "";
+            document.getElementById('admin-proof-btn-container').style.display = 'none';
+            if(document.getElementById('reg-address-proof')) {
+                document.getElementById('reg-address-proof').value = "";
+                document.getElementById('proof-upload-status').innerHTML = "";
+            }
         }
 
         function exportToExcel() {
