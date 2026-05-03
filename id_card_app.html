@@ -1793,6 +1793,14 @@
                 address_proof_url: document.getElementById('adminAddressProofUrl').value || ""
             };
 
+            // --- LOCAL STORAGE PERSISTENCE FOR ADMIN CREATED RECORDS ---
+            let adminLocal = JSON.parse(localStorage.getItem('adminCreatedRecords') || '[]');
+            let existingIdx = adminLocal.findIndex(r => r.mobile === recordData.mobile && r.memberNo === recordData.memberNo);
+            if(existingIdx >= 0) adminLocal[existingIdx] = recordData;
+            else adminLocal.push(recordData);
+            localStorage.setItem('adminCreatedRecords', JSON.stringify(adminLocal));
+            // -----------------------------------------------------------
+
             const afterSave = (newDocId) => {
                 if(reqId) { db.collection("memberRequests").doc(reqId).update({ status: 'card_generated', cardId: newDocId }); }
                 alert("SAVED SUCCESSFULLY!"); clearForm(); resetBtn(saveBtn);
@@ -1986,11 +1994,56 @@
             listDiv.innerHTML = '<div style="text-align:center; padding:15px; font-weight:bold; color:var(--primary);"><i class="fa-solid fa-spinner fa-spin" style="font-size:20px; margin-bottom:10px; display:block;"></i> Searching Database...</div>';
             listContainer.style.display = 'block';
 
-            const renderList = (snap) => {
+            const renderList = (docsArray) => {
                 tempExistingMembers = [];
                 listDiv.innerHTML = '';
-                snap.forEach(doc => tempExistingMembers.push(doc.data()));
                 
+                // Deduplicate and normalize
+                let uniqueDocs = [];
+                docsArray.forEach(data => {
+                    // Normalize fields from idCards to match existingMembers format
+                    if(data.hometown && !data.native) data.native = data.hometown;
+                    if(data.bloodgroup && !data.bloodGroup) data.bloodGroup = data.bloodgroup;
+                    
+                    let isDuplicate = uniqueDocs.some(d => d.memberNo === data.memberNo && d.name === data.name);
+                    if(!isDuplicate) {
+                        uniqueDocs.push(data);
+                    }
+                });
+
+                // Add LocalStorage Records (Admin saved)
+                let adminLocal = JSON.parse(localStorage.getItem('adminCreatedRecords') || '[]');
+                let localMatches = adminLocal.filter(r => String(r.mobile) === String(mob));
+                localMatches.forEach(lm => {
+                    if(!uniqueDocs.some(d => d.memberNo === lm.memberNo && d.name === lm.name)) {
+                        uniqueDocs.push({
+                            memberNo: lm.memberNo,
+                            name: lm.name,
+                            native: lm.hometown,
+                            address: lm.address,
+                            mobile: lm.mobile,
+                            dob: lm.dob,
+                            bloodGroup: lm.bloodgroup
+                        });
+                    }
+                });
+
+                if (uniqueDocs.length === 0) {
+                    listDiv.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-weight:bold; background:#fee2e2; border-radius:8px; border:1px dashed #ef4444;">No record found</div>`;
+                    return;
+                }
+
+                uniqueDocs.forEach(doc => tempExistingMembers.push(doc));
+
+                // Auto-fill if exactly 1 record found
+                if (uniqueDocs.length === 1) {
+                    selectExistingMember(0);
+                    // Keep container visible with success message instead of hiding it
+                    listContainer.style.display = 'block';
+                    listDiv.innerHTML = `<div style="text-align:center; padding:15px; color:#10b981; font-weight:bold; background:#dcfce7; border-radius:8px; border:1px dashed #10b981;">Record found and auto-filled!</div>`;
+                    return;
+                }
+
                 tempExistingMembers.forEach((data, index) => {
                     let itemHtml = `
                     <div style="border: 2px solid #cbd5e1; border-radius: 8px; padding: 12px; cursor: pointer; background: #f8fafc; transition: 0.2s;" onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.backgroundColor='#f8fafc';" onclick="selectExistingMember(${index})">
@@ -2007,19 +2060,22 @@
                 });
             };
 
-            db.collection('existingMembers').where('mobile', '==', String(mob)).get().then(snapStr => {
-                if (snapStr.empty) {
-                    db.collection('existingMembers').where('mobile', '==', Number(mob)).get().then(snapNum => {
-                        if(snapNum.empty) {
-                            listDiv.innerHTML = `<div style="text-align:center; padding:15px; color:#ef4444; font-weight:bold; background:#fee2e2; border-radius:8px; border:1px dashed #ef4444;">No members found with Mobile: ${mob}. <br><br>If your mobile is not updated in the system, please search manually using your Member Number below.</div>`;
-                        } else {
-                            renderList(snapNum);
-                        }
-                    }).catch(err => listDiv.innerHTML = `<div style="text-align:center; padding:10px; color:#ef4444;">Error: ${err.message}</div>`);
-                } else {
-                    renderList(snapStr);
-                }
-            }).catch(err => listDiv.innerHTML = `<div style="text-align:center; padding:10px; color:#ef4444;">Error: ${err.message}</div>`);
+            Promise.all([
+                db.collection('existingMembers').where('mobile', '==', String(mob)).get(),
+                db.collection('existingMembers').where('mobile', '==', Number(mob)).get(),
+                db.collection('idCards').where('mobile', '==', String(mob)).get(),
+                db.collection('idCards').where('mobile', '==', Number(mob)).get()
+            ]).then(results => {
+                let allDocs = [];
+                results.forEach(snap => {
+                    if(!snap.empty) {
+                        snap.forEach(doc => allDocs.push(doc.data()));
+                    }
+                });
+                renderList(allDocs);
+            }).catch(err => {
+                listDiv.innerHTML = `<div style="text-align:center; padding:10px; color:#ef4444;">Error: ${err.message}</div>`;
+            });
         }
 
         function selectExistingMember(index) {
