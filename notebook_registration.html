@@ -278,6 +278,38 @@
                     <div id="update-mob-res" class="mt-3 hidden bg-light p-3 rounded border"></div>
                 </div>
 
+                <!-- NEW ADDITION: ADD NEW MEMBER -->
+                <div class="p-4 bg-white border border-success rounded mt-4 shadow-sm">
+                    <h6 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-person-plus-fill"></i> ADD NEW MEMBER MANUALLY</h6>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted">Member Name</label>
+                            <input type="text" id="newMemName" class="form-control fw-bold" placeholder="Full Name">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small fw-bold text-muted">Member No (MNO)</label>
+                            <input type="text" id="newMemNo" class="form-control fw-bold" placeholder="MNO">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted">Mobile Number</label>
+                            <input type="tel" id="newMemMobile" class="form-control fw-bold" maxlength="10" placeholder="10 Digits">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted">Native (Village)</label>
+                            <select id="newMemNative" class="form-select fw-bold border-success">
+                                <option value="">SELECT VILLAGE</option>
+                            </select>
+                        </div>
+                        <div class="col-md-9 mt-2">
+                            <label class="small fw-bold text-muted">Address</label>
+                            <input type="text" id="newMemAddr" class="form-control fw-bold" placeholder="Enter Full Address">
+                        </div>
+                        <div class="col-md-3 mt-4 pt-1">
+                            <button class="btn btn-success w-100 fw-bold text-white shadow-sm" onclick="addNewMember()">ADD MEMBER</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="p-4 bg-light border rounded mt-4 text-center">
                     <h6 class="fw-bold text-dark">⚡ INSTANT UPLOAD MASTER CSV</h6>
                     <input type="file" id="masterCSV" class="form-control mb-3 mx-auto" style="max-width: 400px;" accept=".csv">
@@ -425,6 +457,23 @@ const committeeMembers = [
     { name: "RAKESH BHARATBHAI SHAH", role: "EXECUTIVE MEMBER", native: "MIROLI", mobile: "9825253932" },
     { name: "MIHIR DINESHBHAI SHAH", role: "EXECUTIVE MEMBER", native: "KUBADTHAL", mobile: "9909902687" }
 ];
+
+// NATIVE VILLAGES LIST FOR ADMIN PANEL (ADD NEW MEMBER)
+const nativeVillages = [
+    "ADALAJ", "ENASAN", "AMBALIYARA", "A.MUVADA", "BAHIYAL", "BARDOLI", "BALVA", "BHADAJ", 
+    "CHILODA", "DABHODA", "GHAMIJ", "HARSOLI", "JALUNDRA", "ZUNDAL", "KALOL", "KUBADTHAL", 
+    "KOTHI", "KAROLI", "KUHA", "HILOL", "ZANU", "KOBA", "MIROLI", "NARODA", "OGNAJ", 
+    "PARDHOL", "PALAJ", "PASUNJ", "PALADI", "PRANTIYA", "RAIPUR", "RAYSAN", "SARKHEJ", 
+    "SHILAJ", "SONARDA", "SANTEJ", "THALTEJ", "VALAD", "VAHELAL", "VISALPUR", "VADODRA"
+];
+
+// Populate Native Dropdown Dynamically
+const nativeSelect = document.getElementById('newMemNative');
+if(nativeSelect) {
+    nativeVillages.forEach(v => {
+        nativeSelect.innerHTML += `<option value="${v}">${v}</option>`;
+    });
+}
 
 let globalPricePerStudent = 80;
 let tempMatchingMembers = []; // Stores members temporarily for selection
@@ -716,6 +765,59 @@ async function updateMobileData() {
     setLoader(false);
 }
 
+// --- NEW FUNCTION: ADD NEW MEMBER FROM ADMIN PANEL ---
+async function addNewMember() {
+    const name = document.getElementById('newMemName').value.trim().toUpperCase();
+    const mno = document.getElementById('newMemNo').value.trim().toUpperCase();
+    const mobile = document.getElementById('newMemMobile').value.trim();
+    const native = document.getElementById('newMemNative').value;
+    const addr = document.getElementById('newMemAddr').value.trim().toUpperCase();
+
+    if (!name || !mno || !mobile || !native || !addr) {
+        return alert("Please fill all fields to add a new member!");
+    }
+    if (mobile.length !== 10) {
+        return alert("Mobile number must be exactly 10 digits!");
+    }
+
+    setLoader(true, "Adding New Member...", "Updating System Database...");
+    try {
+        const members = await fetchMasterDB();
+        
+        // Check if member number already exists
+        const existingMember = members.find(m => m.mno === mno);
+        if (existingMember) {
+            alert(`Member Number ${mno} already exists! (${existingMember.name})`);
+            setLoader(false);
+            return;
+        }
+
+        // Append new member to the database list
+        members.push({
+            mno: mno,
+            name: name,
+            native: native,
+            mobile: mobile,
+            addr: addr
+        });
+
+        // Save updated list to Firebase
+        await db.collection("settings").doc("master_db").set({ data: JSON.stringify(members) });
+        alert(`Success! Member ${name} added successfully. They can now login using mobile number ${mobile}.`);
+        
+        // Clear input fields
+        document.getElementById('newMemName').value = "";
+        document.getElementById('newMemNo').value = "";
+        document.getElementById('newMemMobile').value = "";
+        document.getElementById('newMemNative').value = "";
+        document.getElementById('newMemAddr').value = "";
+
+    } catch (error) {
+        alert("Error adding member: " + error.message);
+    }
+    setLoader(false);
+}
+
 async function saveDistributionSettings() {
     const date = document.getElementById('adminDistDate').value.trim();
     const start = document.getElementById('adminDistStart').value.trim();
@@ -769,7 +871,7 @@ async function doMemberLogin() {
         tempMatchingMembers = members.filter(m => m.mobile === mob);
         
         if(tempMatchingMembers.length === 0) {
-            alert("Mobile Number NOT FOUND in List! Please check or contact Admin.");
+            alert("Member not found. Please contact admin.");
             setLoader(false); return;
         } else if (tempMatchingMembers.length === 1) {
             // Only 1 member found, proceed normally
