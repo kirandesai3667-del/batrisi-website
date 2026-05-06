@@ -93,6 +93,18 @@
         </div>
     </div>
 
+    <!-- REGISTRATION CLOSED SCREEN (NEW) -->
+    <div id="reg-closed-sec" class="row justify-content-center section hidden">
+        <div class="col-md-6 text-center">
+            <div class="card p-5 border-danger shadow-lg mt-4">
+                <i class="bi bi-door-closed text-danger" style="font-size: 4rem;"></i>
+                <h2 class="text-danger fw-bold mt-3">Registration is Closed</h2>
+                <p class="text-muted mt-2 fw-bold">We are not accepting new notebook registrations at this time.</p>
+                <button class="btn btn-secondary mt-4 w-100 fw-bold shadow-sm" onclick="showSection('member-login-sec')">GO BACK TO LOGIN</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 1.5. MEMBER STATUS DASHBOARD -->
     <div id="member-status-sec" class="row justify-content-center section hidden">
         <div class="col-md-7">
@@ -102,10 +114,15 @@
                 
                 <div id="member-status-list" class="details-scroll pe-2"></div>
                 
-                <div class="mt-4 pt-3 border-top text-center">
+                <!-- Dynamic Area for New Form Button or Closed Message -->
+                <div id="new-form-action-area" class="mt-4 pt-3 border-top text-center">
                     <p class="text-muted small mb-2">Want to apply for another student or re-apply for a declined one?</p>
                     <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" onclick="openRegistrationForm()"><i class="bi bi-plus-circle"></i> FILL NEW FORM</button>
                 </div>
+                <div id="reg-closed-msg-area" class="mt-4 pt-3 border-top text-center hidden">
+                    <div class="alert alert-danger fw-bold m-0 shadow-sm"><i class="bi bi-door-closed text-danger"></i> Registration is Currently Closed</div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -557,13 +574,27 @@ async function loadStatistics() {
     } catch(e) {}
 
     try {
-        const snap = await db.collection("registrations").orderBy("TokenId", "desc").get();
+        const snap = await db.collection("registrations").get();
         let totalMem = 0; let totalStu = 0; let totalDel = 0;
         let tableHTML = ""; 
-
+        
+        let allRecords = [];
         snap.forEach(doc => {
-            const data = doc.data();
-            const id = doc.id;
+            let data = doc.data();
+            data.docId = doc.id;
+            allRecords.push(data);
+        });
+
+        // FIXED SORTING LOGIC: Sort by Date chronologically descending instead of raw TokenId so reset tokens appear at the top.
+        allRecords.sort((a, b) => {
+            let dateA = a.Date ? new Date(a.Date).getTime() : 0;
+            let dateB = b.Date ? new Date(b.Date).getTime() : 0;
+            if(dateA === dateB) return (b.TokenId || 0) - (a.TokenId || 0);
+            return dateB - dateA;
+        });
+
+        allRecords.forEach(data => {
+            const id = data.docId;
             
             let stuArr = data.Students ? data.Students : (data.Student ? [data.Student] : []);
             if(stuArr.length === 0) return; 
@@ -922,6 +953,9 @@ async function doMemberLogin() {
     if(mob.length < 10) return alert("Enter valid 10-digit Mobile Number!");
     setLoader(true, "Loading Profile...", "");
     
+    // Ensure system status is up-to-date instantly upon login
+    await loadSystemStatus(); 
+
     try {
         const members = await fetchMasterDB();
         // Filtering all members associated with this mobile number
@@ -1086,24 +1120,44 @@ async function proceedWithSelectedMember(mob) {
                 </div>`;
 
                 if(!hasCurrentYearRecord) {
-                    summaryBox = `
-                    <div class="alert alert-warning border-warning text-center shadow-sm p-3 mb-4 rounded">
-                        <h5 class="fw-bold m-0 text-dark"><i class="bi bi-exclamation-triangle-fill"></i> NO REGISTRATION FOR CURRENT YEAR (${currentYear})</h5>
-                        <p class="small mb-2 mt-1">Your previous year records are shown below. Please click the <b>FILL NEW FORM</b> button below to securely renew and auto-fill your registration for ${currentYear}.</p>
-                    </div>` + summaryBox;
+                    if (isRegistrationOpen) {
+                        summaryBox = `
+                        <div class="alert alert-warning border-warning text-center shadow-sm p-3 mb-4 rounded">
+                            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-exclamation-triangle-fill"></i> NO REGISTRATION FOR CURRENT YEAR (${currentYear})</h5>
+                            <p class="small mb-2 mt-1">Your previous year records are shown below. Please click the <b>FILL NEW FORM</b> button below to securely renew and auto-fill your registration for ${currentYear}.</p>
+                        </div>` + summaryBox;
+                    } else {
+                        summaryBox = `
+                        <div class="alert alert-danger border-danger text-center shadow-sm p-3 mb-4 rounded">
+                            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-door-closed"></i> REGISTRATION IS CLOSED</h5>
+                            <p class="small mb-2 mt-1">We are not accepting new registrations for ${currentYear} at this time. Your previous year records are shown below.</p>
+                        </div>` + summaryBox;
+                    }
+                }
+
+                // Show proper UI button based on Toggle Link state
+                if (isRegistrationOpen) {
+                    document.getElementById('new-form-action-area').classList.remove('hidden');
+                    document.getElementById('reg-closed-msg-area').classList.add('hidden');
+                } else {
+                    document.getElementById('new-form-action-area').classList.add('hidden');
+                    document.getElementById('reg-closed-msg-area').classList.remove('hidden');
                 }
 
                 if(html !== "") {
                     document.getElementById('member-status-list').innerHTML = summaryBox + html;
                     showSection('member-status-sec');
                 } else {
-                    openRegistrationForm();
+                    if (isRegistrationOpen) openRegistrationForm();
+                    else showSection('reg-closed-sec');
                 }
             } else {
-                openRegistrationForm();
+                if (isRegistrationOpen) openRegistrationForm();
+                else showSection('reg-closed-sec');
             }
         } else {
-            openRegistrationForm();
+            if (isRegistrationOpen) openRegistrationForm();
+            else showSection('reg-closed-sec');
         }
     } catch(e) { alert("System Error: " + e.message); }
     
@@ -1112,7 +1166,8 @@ async function proceedWithSelectedMember(mob) {
 
 function openRegistrationForm() {
     if (!isRegistrationOpen) {
-        return alert("Registration is currently closed. You cannot fill a new form at this time.");
+        showSection('reg-closed-sec');
+        return;
     }
     if(!globalMemberData) return alert("Session Expired. Please login again.");
     document.getElementById('dispMNo').value = globalMemberData.mno;
@@ -1582,16 +1637,26 @@ function showSuccess(tokensArray, totalAmt) {
 async function downloadFullExcel() {
     setLoader(true, "Generating Excel...", "Please wait a moment.");
     try {
-        const snap = await db.collection("registrations").orderBy("TokenId", "desc").get();
+        const snap = await db.collection("registrations").get();
+        let allRecords = [];
+        snap.forEach(doc => allRecords.push(doc.data()));
+
+        // Sorted by Date desc same as Admin table so exports match perfectly
+        allRecords.sort((a, b) => {
+            let tA = a.Date ? new Date(a.Date).getTime() : 0;
+            let tB = b.Date ? new Date(b.Date).getTime() : 0;
+            if(tA === tB) return (b.TokenId || 0) - (a.TokenId || 0);
+            return tB - tA;
+        });
+
         let data = []; 
-        snap.forEach(d => {
-            let r = d.data();
+        allRecords.forEach(r => {
             let stuArr = r.Students ? r.Students : (r.Student ? [r.Student] : []);
             
             stuArr.forEach(s => {
                 data.push({ 
                     "TOKEN": r.Token,
-                    "YEAR": r.RegYear || (r.RegDate ? parseInt(r.RegDate.split('/')[2]) : "-"), // --- NEW EXCEL YEAR FEATURE ---
+                    "YEAR": r.RegYear || (r.RegDate ? parseInt(r.RegDate.split('/')[2]) : "-"), 
                     "REGISTRATION DATE": r.RegDate || "-",
                     "REGISTRATION TIME": r.RegTime || "-",
                     "MEMBER NO": r.MemberNo,
