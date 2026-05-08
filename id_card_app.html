@@ -585,6 +585,8 @@
                 <button class="wf-tab active" id="tab-pending" onclick="switchWfTab('pending')">PENDING <span id="badge-pending" class="badge badge-warning">0</span></button>
                 <button class="wf-tab" id="tab-approved" onclick="switchWfTab('approved')">APPROVED</button>
                 <button class="wf-tab" id="tab-rejected" onclick="switchWfTab('rejected')">REJECTED</button>
+                <!-- NEW PAYMENTS VERIFICATION TAB -->
+                <button class="wf-tab" id="tab-payments" onclick="switchWfTab('payments')" style="display:none;"><i class="fa-solid fa-indian-rupee-sign"></i> PAYMENTS <span id="badge-payments" class="badge badge-warning">0</span></button>
                 <button class="wf-tab" id="tab-idcards" onclick="switchWfTab('idcards')" style="display:none; background:var(--primary); color:white;"><i class="fa-solid fa-id-card"></i> CARDS CREATED</button>
             </div>
 
@@ -605,6 +607,9 @@
         <div class="app-content" style="max-width: 1200px;">
             
             <div style="display: flex; justify-content: flex-end; margin-bottom: 15px; gap: 10px; flex-wrap: wrap;">
+                <!-- ADMIN BANK DETAILS CONFIG BUTTON -->
+                <button class="btn" style="background: #3b82f6; width: auto;" onclick="openBankDetailsModal()"><i class="fa-solid fa-building-columns"></i> BANK DETAILS</button>
+                <button class="btn" style="background: #f59e0b; width: auto;" onclick="openAdminPaymentsModal()"><i class="fa-solid fa-indian-rupee-sign"></i> PENDING PAYMENTS</button>
                 <button class="btn" style="background: #8b5cf6; width: auto;" onclick="openAdminApprovedModal()"><i class="fa-solid fa-clipboard-check"></i> APPROVED REQUESTS</button>
             </div>
 
@@ -769,6 +774,64 @@
     <!-- MODALS -->
     <!-- ========================================================================= -->
 
+    <!-- BANK DETAILS MODAL (ADMIN) -->
+    <div id="bankDetailsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-building-columns"></i> MANAGE BANK DETAILS</h3>
+                <button class="btn-close-modal" onclick="closeBankDetailsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group"><label>ORGANIZATION / SANSTHA NAME</label><input type="text" id="bank-org" class="uppercase-text"></div>
+            <div class="form-group"><label>BANK NAME</label><input type="text" id="bank-name" class="uppercase-text"></div>
+            <div class="form-group"><label>ACCOUNT HOLDER NAME</label><input type="text" id="bank-acc-name" class="uppercase-text"></div>
+            <div class="form-group"><label>ACCOUNT NUMBER</label><input type="text" id="bank-acc-no"></div>
+            <div class="form-group"><label>IFSC CODE</label><input type="text" id="bank-ifsc" class="uppercase-text"></div>
+            <div class="form-group"><label>UPI ID (OPTIONAL)</label><input type="text" id="bank-upi"></div>
+            
+            <div class="form-group" style="background:#f8fafc; padding:15px; border-radius:12px; border:1px dashed #cbd5e1; margin-top:5px;">
+                <label>QR CODE IMAGE UPLOAD (OPTIONAL)</label>
+                <input type="file" id="bank-qr-upload" accept="image/*" onchange="uploadBankQR(event)" style="padding: 10px; background: white;">
+                <input type="hidden" id="bank-qr-url">
+                <div id="bank-qr-status" style="font-size: 11px; font-weight: bold; margin-top: 8px;"></div>
+                <img id="bank-qr-preview" style="max-width: 150px; margin-top: 10px; border-radius: 8px; display: none; border: 1px solid #cbd5e1;">
+            </div>
+
+            <button class="btn btn-save" onclick="saveBankDetails()" style="margin-top: 15px;">SAVE DETAILS</button>
+        </div>
+    </div>
+
+    <!-- PENDING PAYMENTS ADMIN MODAL -->
+    <div id="adminPaymentsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-indian-rupee-sign"></i> PENDING PAYMENTS</h3>
+                <button class="btn-close-modal" onclick="closeAdminPaymentsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%;">
+                    <thead><tr><th>NAME</th><th>MOBILE</th><th>ACTION</th></tr></thead>
+                    <tbody id="adminPaymentsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT PROOF VERIFICATION MODAL -->
+    <div id="paymentProofModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-invoice-dollar"></i> PAYMENT PROOF</h3>
+                <button class="btn-close-modal" onclick="closePaymentProofModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="pay-proof-name" style="font-weight: 800; font-size: 14px; color: var(--primary); text-transform: uppercase; margin-bottom: 15px;"></p>
+            <img id="pay-proof-img" src="" style="width: 100%; max-height: 400px; object-fit: contain; border: 2px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; background: #f8fafc;">
+            <div style="display: flex; gap: 10px; justify-content: center; flex-direction: column;">
+                <button class="btn btn-save" onclick="verifyPaymentAction()" style="background: #10b981;"><i class="fa-solid fa-check-double"></i> VERIFY & MAKE VISIBLE</button>
+                <button class="btn btn-delete" onclick="rejectPaymentAction()" style="background: #ef4444;"><i class="fa-solid fa-ban"></i> REJECT PAYMENT</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SELFIE CAMERA (For New Member & Admin) -->
     <div id="cameraModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 350px; text-align: center;">
@@ -874,6 +937,11 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // GLOBALS FOR NEW FEATURES
+        let systemBankDetails = {};
+        let tempPaymentScreenshotUrl = "";
+        let currentVerifyCardId = null;
+
         const nativeVillages = [
             "ADALAJ", "ENASAN", "AMBALIYARA", "A.MUVADA", "BAHIYAL", "BARDOLI", "BALVA", "BHADAJ", 
             "CHILODA", "DABHODA", "GHAMIJ", "HARSOLI", "JALUNDRA", "ZUNDAL", "KALOL", "KUBADTHAL", 
@@ -905,6 +973,11 @@
         ];
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Load Bank Details Globally
+            db.collection("settings").doc("bankDetails").onSnapshot(doc => {
+                if(doc.exists) systemBankDetails = doc.data();
+            });
+
             // Populate Native Villages
             const villageSelects = [document.getElementById('reg-nativeName'), document.getElementById('hometown')];
             nativeVillages.forEach(v => {
@@ -1097,7 +1170,9 @@
                             document.getElementById('main-app-header').style.display = 'flex';
                             document.getElementById('header-title-text').innerText = "Status";
                             document.getElementById('header-settings-btn').style.display = 'none';
-                            showMemberStatus({ status: 'card_generated', idCardData: idSnap.docs[0].data() });
+                            let cardData = idSnap.docs[0].data();
+                            cardData.docId = idSnap.docs[0].id;
+                            showMemberStatus({ status: 'card_generated', idCardData: cardData });
                         }
                     }).catch(err => { btn.innerHTML = oldText; btn.disabled = false; alert("Network Error"); });
                 } else {
@@ -1115,7 +1190,61 @@
         }
 
         // ==============================================================
-        // MEMBER STATUS
+        // PAYMENT ACTIONS & LOGIC (NEW FEATURE)
+        // ==============================================================
+
+        function uploadPaymentProof(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const statusEl = document.getElementById('payment-upload-status');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> UPLOADING SCREENSHOT...';
+            statusEl.style.color = "#f59e0b";
+            
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("key", "77c6ecbe6786edef58354da6ff43fa5b"); // Using existing ImgBB Integration
+
+            fetch("https://api.imgbb.com/1/upload", { method: "POST", body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    tempPaymentScreenshotUrl = data.data.url;
+                    statusEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> UPLOAD SUCCESSFUL';
+                    statusEl.style.color = "#10b981";
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> UPLOAD FAILED';
+                    statusEl.style.color = "#ef4444";
+                }
+            }).catch(err => {
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ERROR';
+                statusEl.style.color = "#ef4444";
+            });
+        }
+
+        function submitPaymentVerification(cardId) {
+            if(!tempPaymentScreenshotUrl) return alert("Please upload your payment screenshot first.");
+            let btn = document.getElementById('btn-submit-payment');
+            let oldText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SUBMITTING...';
+            btn.disabled = true;
+
+            db.collection("idCards").doc(cardId).update({
+                paymentStatus: 'pending_verification',
+                paymentScreenshotUrl: tempPaymentScreenshotUrl
+            }).then(() => {
+                alert("Payment screenshot submitted successfully!");
+                tempPaymentScreenshotUrl = "";
+                // Refresh UI natively
+                verifyMobile();
+            }).catch(err => {
+                alert("Error: " + err.message);
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+            });
+        }
+
+        // ==============================================================
+        // MEMBER STATUS MODULE (UPDATED WITH PAYMENT SYSTEM)
         // ==============================================================
         function showMemberStatus(reqData) {
             document.getElementById('member-status-wrapper').style.display = 'block';
@@ -1124,23 +1253,89 @@
             previewSection.style.display = 'none';
 
             if(reqData.status === 'card_generated' || reqData.idCardData) {
-                container.innerHTML = `
-                    <div class="status-box" style="border: 2px solid #10b981;">
-                        <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
-                        <h2 style="color: #065f46; margin-top:0; text-transform:uppercase;">CARD READY!</h2>
-                        <p style="color: #047857; font-weight: 600; font-size:13px;">YOUR ID CARD IS GENERATED. YOU CAN DOWNLOAD IT BELOW.</p>
-                    </div>`;
-                
-                if(!reqData.idCardData && reqData.cardId) {
-                    db.collection('idCards').doc(reqData.cardId).get().then(doc => {
-                        if(doc.exists) populateMemberCard(doc.data());
+                // Ensure we get the actual doc tracking the payment
+                let fetchCardPromise;
+                if(reqData.idCardData && reqData.idCardData.docId) {
+                    fetchCardPromise = Promise.resolve(reqData.idCardData);
+                } else if(reqData.cardId) {
+                    fetchCardPromise = db.collection('idCards').doc(reqData.cardId).get().then(d => {
+                        let data = d.data(); data.docId = d.id; return data;
                     });
-                } else if(reqData.idCardData) { populateMemberCard(reqData.idCardData); } 
-                else {
-                    db.collection('idCards').where('mobile', '==', reqData.mobile).get().then(snap => {
-                        if(!snap.empty) populateMemberCard(snap.docs[0].data());
+                } else {
+                    fetchCardPromise = db.collection('idCards').where('mobile', '==', reqData.mobile).get().then(snap => {
+                        if(!snap.empty) { let data = snap.docs[0].data(); data.docId = snap.docs[0].id; return data; }
+                        return null;
                     });
                 }
+
+                fetchCardPromise.then(cardData => {
+                    if(!cardData) return;
+
+                    let pStatus = cardData.paymentStatus;
+                    // Maintain backward compatibility for older cards or existing member flow
+                    if(pStatus === undefined) pStatus = 'verified'; 
+
+                    if(pStatus === 'verified') {
+                        container.innerHTML = `
+                            <div class="status-box" style="border: 2px solid #10b981;">
+                                <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
+                                <h2 style="color: #065f46; margin-top:0; text-transform:uppercase;">CARD READY!</h2>
+                                <p style="color: #047857; font-weight: 600; font-size:13px;">YOUR ID CARD IS GENERATED. YOU CAN DOWNLOAD IT BELOW.</p>
+                            </div>`;
+                        populateMemberCard(cardData);
+                    } 
+                    else if(pStatus === 'pending_verification') {
+                        container.innerHTML = `
+                            <div class="status-box" style="border: 2px solid #f59e0b;">
+                                <i class="fa-solid fa-clock-rotate-left" style="color: #f59e0b;"></i>
+                                <h2 style="color: #b45309; margin-top:0; text-transform:uppercase;">YOUR PAYMENT SCREENSHOT HAS BEEN SUBMITTED SUCCESSFULLY.</h2>
+                                <p style="color: #d97706; font-weight: 600; font-size:13px;">Please wait while the Admin or Committee Member verifies your payment.</p>
+                                <p style="color: #d97706; font-weight: 600; font-size:13px;">After verification, your Digital I-Card will be made visible automatically.</p>
+                                <p style="color: #d97706; font-weight: 600; font-size:13px;">Kindly login again after some time.</p>
+                            </div>`;
+                    } 
+                    else {
+                        // Payment is required (unpaid or rejected)
+                        let bankHtml = `
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: left; margin: 15px 0; border: 1px solid #cbd5e1;">
+                                <h4 style="margin-top:0; color:var(--primary); text-transform:uppercase; border-bottom: 2px solid var(--primary); padding-bottom: 5px;">Bank Details for Transfer</h4>
+                                <p style="margin: 4px 0; font-size: 13px;"><strong>Organization / Sanstha:</strong> <span style="color:var(--primary);">${systemBankDetails.orgName || 'N/A'}</span></p>
+                                <p style="margin: 4px 0; font-size: 13px;"><strong>Bank Name:</strong> <span style="color:var(--primary);">${systemBankDetails.bankName || 'N/A'}</span></p>
+                                <p style="margin: 4px 0; font-size: 13px;"><strong>Account Name:</strong> <span style="color:var(--primary);">${systemBankDetails.accName || 'N/A'}</span></p>
+                                <p style="margin: 4px 0; font-size: 13px;"><strong>Account No:</strong> <span style="color:var(--primary); font-weight:800;">${systemBankDetails.accNo || 'N/A'}</span></p>
+                                <p style="margin: 4px 0; font-size: 13px;"><strong>IFSC Code:</strong> <span style="color:var(--primary); font-weight:800;">${systemBankDetails.ifsc || 'N/A'}</span></p>
+                                ${systemBankDetails.upi ? `<p style="margin: 4px 0; font-size: 13px;"><strong>UPI ID:</strong> <span style="color:var(--primary); font-weight:800;">${systemBankDetails.upi}</span></p>` : ''}
+                                ${systemBankDetails.qrUrl ? `<div style="text-align:center; margin-top:10px;"><img src="${systemBankDetails.qrUrl}" style="max-width:180px; border-radius:8px; border: 2px solid #cbd5e1;"></div>` : ''}
+                            </div>
+                        `;
+
+                        container.innerHTML = `
+                            <div class="status-box" style="border: 2px solid #ef4444;">
+                                <i class="fa-solid fa-wallet" style="color: #ef4444;"></i>
+                                <h2 style="color: #991b1b; margin-top:0; text-transform:uppercase; font-size: 16px;">YOUR DIGITAL I-CARD HAS BEEN GENERATED SUCCESSFULLY.</h2>
+                                <p style="color: #b91c1c; font-weight: 700; font-size:13px; margin-bottom: 10px;">To activate and view your card, please complete the payment process.</p>
+                                
+                                <div style="background: #fee2e2; padding: 15px; border-radius: 8px; font-weight: bold; color: #991b1b; margin: 15px 0; border: 1px dashed #ef4444;">
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Registration Fees:</span> <span>₹251/-</span></div>
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>GST (18%):</span> <span>₹46/-</span></div>
+                                    <div style="display:flex; justify-content:space-between; font-size:18px; border-top: 1px solid #fca5a5; padding-top: 8px;"><span>Grand Total:</span> <span>₹297/-</span></div>
+                                </div>
+                                
+                                <p style="color: #b91c1c; font-weight: 600; font-size:12px;">Please transfer ₹297/- to the bank account displayed below and upload your payment screenshot for verification.</p>
+                                
+                                ${bankHtml}
+
+                                <div class="form-group" style="text-align: left; background:#fff; padding:15px; border-radius:12px; border:1px dashed #ef4444;">
+                                    <label>UPLOAD PAYMENT SCREENSHOT (JPG, PNG) *</label>
+                                    <input type="file" id="payment-proof-upload" accept=".jpg, .jpeg, .png" onchange="uploadPaymentProof(event)" style="padding: 10px; background: #f8fafc; width: 100%;">
+                                    <div id="payment-upload-status" style="font-size: 11px; font-weight: bold; margin-top: 8px; color: var(--text-light);"></div>
+                                </div>
+                                <button id="btn-submit-payment" onclick="submitPaymentVerification('${cardData.docId}')" class="btn btn-save" style="margin-top:15px; background:#10b981;">
+                                    <i class="fa-solid fa-check-to-slot"></i> SUBMIT PAYMENT
+                                </button>
+                            </div>`;
+                    }
+                });
             } 
             else if(reqData.status === 'approved_final') {
                 container.innerHTML = `
@@ -1495,7 +1690,7 @@
         }
 
         // ==============================================================
-        // DASHBOARDS (WORKFLOW)
+        // DASHBOARDS (WORKFLOW & PAYMENTS)
         // ==============================================================
         let workflowRecords = [];
         let idCardsRecords = []; 
@@ -1515,12 +1710,25 @@
                 renderWfTable();
             });
 
-            if(role === 'approver_mantri' || role === 'approver_convener') {
-                document.getElementById('tab-idcards').style.display = 'inline-block';
+            // ALL roles in workflow need access to verify payments now
+            if(role === 'committee' || role === 'approver_mantri' || role === 'approver_convener') {
+                document.getElementById('tab-payments').style.display = 'inline-block';
+                if(role === 'approver_mantri' || role === 'approver_convener') document.getElementById('tab-idcards').style.display = 'inline-block';
+                
                 db.collection("idCards").orderBy("timestamp", "desc").onSnapshot(snap => {
                     idCardsRecords = [];
-                    snap.forEach(doc => idCardsRecords.push({ docId: doc.id, ...doc.data() }));
-                    if(currentWfTab === 'idcards') renderWfTable();
+                    let pendingPaymentsCount = 0;
+                    snap.forEach(doc => { 
+                        let data = doc.data(); 
+                        data.docId = doc.id; 
+                        idCardsRecords.push(data); 
+                        if(data.paymentStatus === 'pending_verification') pendingPaymentsCount++;
+                    });
+                    
+                    let bp = document.getElementById('badge-payments'); 
+                    if(bp) bp.innerText = pendingPaymentsCount;
+
+                    if(currentWfTab === 'idcards' || currentWfTab === 'payments') renderWfTable();
                 });
             }
         }
@@ -1537,6 +1745,17 @@
             const phone = sessionStorage.getItem('userPhone');
             const tbody = document.getElementById('wf-tableBody');
             tbody.innerHTML = "";
+
+            // NEW: Payments Tab Handling
+            if(currentWfTab === 'payments') {
+                let pendingPayments = idCardsRecords.filter(r => r.paymentStatus === 'pending_verification');
+                if(pendingPayments.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">NO PENDING PAYMENTS</td></tr>`; return; }
+                pendingPayments.forEach(rec => {
+                    let actionsHtml = `<button class="btn-sm btn-print-sm" onclick="viewPaymentProof('${rec.docId}')">VIEW / VERIFY</button>`;
+                    tbody.innerHTML += `<tr><td>${rec.name}</td><td>${rec.mobile}</td><td>${rec.hometown || '-'}</td><td><span class="badge badge-warning">VERIFY</span></td><td class="action-btns">${actionsHtml}</td></tr>`;
+                });
+                return;
+            }
 
             if(currentWfTab === 'idcards') {
                 if(idCardsRecords.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">NO RECORDS FOUND</td></tr>`; return; }
@@ -1677,8 +1896,129 @@
         function closeWfDetailsModal() { document.getElementById('wfDetailsModal').style.display = 'none'; }
 
         // ==============================================================
+        // ADMIN BANK DETAILS MODAL
+        // ==============================================================
+        function openBankDetailsModal() {
+            document.getElementById('bank-org').value = systemBankDetails.orgName || '';
+            document.getElementById('bank-name').value = systemBankDetails.bankName || '';
+            document.getElementById('bank-acc-name').value = systemBankDetails.accName || '';
+            document.getElementById('bank-acc-no').value = systemBankDetails.accNo || '';
+            document.getElementById('bank-ifsc').value = systemBankDetails.ifsc || '';
+            document.getElementById('bank-upi').value = systemBankDetails.upi || '';
+            document.getElementById('bank-qr-url').value = systemBankDetails.qrUrl || '';
+            if(systemBankDetails.qrUrl) {
+                document.getElementById('bank-qr-preview').src = systemBankDetails.qrUrl;
+                document.getElementById('bank-qr-preview').style.display = 'block';
+            } else {
+                document.getElementById('bank-qr-preview').style.display = 'none';
+            }
+            document.getElementById('bankDetailsModal').style.display = 'flex';
+        }
+        function closeBankDetailsModal() { document.getElementById('bankDetailsModal').style.display = 'none'; }
+
+        function uploadBankQR(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const statusEl = document.getElementById('bank-qr-status');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> UPLOADING...';
+            statusEl.style.color = "#f59e0b";
+            
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("key", "77c6ecbe6786edef58354da6ff43fa5b"); 
+
+            fetch("https://api.imgbb.com/1/upload", { method: "POST", body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('bank-qr-url').value = data.data.url;
+                    document.getElementById('bank-qr-preview').src = data.data.url;
+                    document.getElementById('bank-qr-preview').style.display = 'block';
+                    statusEl.innerHTML = 'UPLOAD SUCCESSFUL';
+                    statusEl.style.color = "#10b981";
+                } else {
+                    statusEl.innerHTML = 'UPLOAD FAILED';
+                    statusEl.style.color = "#ef4444";
+                }
+            }).catch(err => {
+                statusEl.innerHTML = 'UPLOAD ERROR';
+                statusEl.style.color = "#ef4444";
+            });
+        }
+
+        function saveBankDetails() {
+            let data = {
+                orgName: document.getElementById('bank-org').value.trim().toUpperCase(),
+                bankName: document.getElementById('bank-name').value.trim().toUpperCase(),
+                accName: document.getElementById('bank-acc-name').value.trim().toUpperCase(),
+                accNo: document.getElementById('bank-acc-no').value.trim(),
+                ifsc: document.getElementById('bank-ifsc').value.trim().toUpperCase(),
+                upi: document.getElementById('bank-upi').value.trim(),
+                qrUrl: document.getElementById('bank-qr-url').value
+            };
+            db.collection("settings").doc("bankDetails").set(data).then(() => {
+                alert("Bank details successfully saved!");
+                closeBankDetailsModal();
+            });
+        }
+
+        // ==============================================================
         // ADMIN OPERATIONS (ID CARD CREATOR)
         // ==============================================================
+        function openAdminPaymentsModal() {
+            document.getElementById('adminPaymentsModal').style.display = 'flex';
+            db.collection("idCards").where("paymentStatus", "==", "pending_verification").onSnapshot(snap => {
+                const tbody = document.getElementById('adminPaymentsTableBody');
+                tbody.innerHTML = "";
+                if(snap.empty) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">NO PENDING PAYMENTS</td></tr>`; return; }
+                snap.forEach(doc => {
+                    let r = doc.data();
+                    tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.mobile}</td>
+                    <td><button class="btn-sm btn-print-sm" onclick="viewPaymentProof('${doc.id}')">VIEW PROOF</button></td></tr>`;
+                });
+            });
+        }
+        function closeAdminPaymentsModal() { document.getElementById('adminPaymentsModal').style.display = 'none'; }
+
+        // SHARED VIEW/VERIFY PAYMENT MODAL
+        function viewPaymentProof(cardId) {
+            let card = idCardsRecords.find(c => c.docId === cardId);
+            if(!card) card = records.find(c => c.docId === cardId); // fallback for Admin system
+            if(!card) return;
+            currentVerifyCardId = cardId;
+            document.getElementById('pay-proof-name').innerText = card.name + " (" + card.mobile + ")";
+            document.getElementById('pay-proof-img').src = card.paymentScreenshotUrl || '';
+            document.getElementById('paymentProofModal').style.display = 'flex';
+        }
+        function closePaymentProofModal() { document.getElementById('paymentProofModal').style.display = 'none'; }
+
+        function verifyPaymentAction() {
+            if(!currentVerifyCardId) return;
+            let btn = document.querySelector('#paymentProofModal .btn-save');
+            let oldText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> VERIFYING...';
+            
+            db.collection("idCards").doc(currentVerifyCardId).update({ paymentStatus: 'verified' }).then(() => {
+                alert("Payment Verified! Card is now VISIBLE to the member.");
+                closePaymentProofModal();
+                btn.innerHTML = oldText;
+            });
+        }
+
+        function rejectPaymentAction() {
+            if(!currentVerifyCardId) return;
+            if(!confirm("Are you sure you want to REJECT this payment?")) return;
+            
+            db.collection("idCards").doc(currentVerifyCardId).update({ 
+                paymentStatus: 'unpaid', 
+                paymentScreenshotUrl: '' 
+            }).then(() => {
+                alert("Payment rejected. User will need to re-upload the screenshot.");
+                closePaymentProofModal();
+            });
+        }
+
+
         function openAdminApprovedModal() {
             document.getElementById('adminApprovedModal').style.display = 'flex';
             db.collection("memberRequests").where("status", "==", "approved_final").onSnapshot(snap => {
@@ -1811,6 +2151,8 @@
                 db.collection("idCards").doc(docId).update(recordData).then(() => afterSave(docId)).catch(err => { alert(err.message); resetBtn(saveBtn); });
             } else {
                 recordData.timestamp = Date.now();
+                // Apply Payment verification requirement on New Cards
+                recordData.paymentStatus = 'unpaid';
                 db.collection("idCards").add(recordData).then((docRef) => afterSave(docRef.id)).catch(err => { alert(err.message); resetBtn(saveBtn); });
             }
         }
@@ -2254,7 +2596,8 @@
                 bloodgroup: bg,
                 photo: existRegPhotoBase64,
                 timestamp: timestamp,
-                isExistingUpdate: true
+                isExistingUpdate: true,
+                paymentStatus: 'verified' // Skips payment requirement completely to maintain old system workflow seamlessly.
             };
 
             const updateLog = {
