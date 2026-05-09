@@ -2367,7 +2367,18 @@
                     if(data.hometown && !data.native) data.native = data.hometown;
                     if(data.bloodgroup && !data.bloodGroup) data.bloodGroup = data.bloodgroup;
                     
-                    let isDuplicate = uniqueDocs.some(d => d.memberNo === data.memberNo && d.name === data.name);
+                    let isDuplicate = false;
+                    // Deduplicate strictly by memberNo if exists, avoiding name reversal dupes
+                    if (data.memberNo && String(data.memberNo).trim() !== "" && String(data.memberNo).toUpperCase() !== "XXXX") {
+                        isDuplicate = uniqueDocs.some(d => 
+                            d.memberNo && String(d.memberNo).toUpperCase().trim() === String(data.memberNo).toUpperCase().trim()
+                        );
+                    } else {
+                        isDuplicate = uniqueDocs.some(d => 
+                            d.name && String(d.name).toUpperCase().trim() === String(data.name).toUpperCase().trim()
+                        );
+                    }
+
                     if(!isDuplicate) {
                         uniqueDocs.push(data);
                     }
@@ -2377,7 +2388,17 @@
                 let adminLocal = JSON.parse(localStorage.getItem('adminCreatedRecords') || '[]');
                 let localMatches = adminLocal.filter(r => String(r.mobile) === String(mob));
                 localMatches.forEach(lm => {
-                    if(!uniqueDocs.some(d => d.memberNo === lm.memberNo && d.name === lm.name)) {
+                    let isDup = false;
+                    if (lm.memberNo && String(lm.memberNo).trim() !== "" && String(lm.memberNo).toUpperCase() !== "XXXX") {
+                        isDup = uniqueDocs.some(d => 
+                            d.memberNo && String(d.memberNo).toUpperCase().trim() === String(lm.memberNo).toUpperCase().trim()
+                        );
+                    } else {
+                        isDup = uniqueDocs.some(d => 
+                            d.name && String(d.name).toUpperCase().trim() === String(lm.name).toUpperCase().trim()
+                        );
+                    }
+                    if(!isDup) {
                         uniqueDocs.push({
                             memberNo: lm.memberNo,
                             name: lm.name,
@@ -2446,26 +2467,27 @@
 
             currentExistingOriginalData = data;
             
-            // --- NAME SPLITTING LOGIC ---
+            // --- STRICT NAME SPLITTING LOGIC ---
+            // Pattern: 1st word = Surname, 2nd word = First name, 3rd+ = Middle name
             let fullName = data.name || "";
             let nameParts = fullName.trim().split(/\s+/);
             let surname = "", firstname = "", middlename = "";
             
             if (nameParts.length === 1) {
-                firstname = nameParts[0];
+                surname = nameParts[0];
             } else if (nameParts.length === 2) {
-                firstname = nameParts[0];
-                surname = nameParts[1];
+                surname = nameParts[0];
+                firstname = nameParts[1];
             } else if (nameParts.length >= 3) {
-                firstname = nameParts[0];
-                surname = nameParts[nameParts.length - 1]; // Last word
-                middlename = nameParts.slice(1, nameParts.length - 1).join(" "); // Everything in between
+                surname = nameParts[0];
+                firstname = nameParts[1];
+                middlename = nameParts.slice(2).join(" ");
             }
 
             document.getElementById('exist-reg-surname').value = surname;
             document.getElementById('exist-reg-firstname').value = firstname;
             document.getElementById('exist-reg-middlename').value = middlename;
-            document.getElementById('exist-reg-name').value = fullName; // Hidden field
+            document.getElementById('exist-reg-name').value = fullName; // Hidden field to lock exactly
             
             document.getElementById('exist-reg-memberNo').value = data.memberNo || "";
             document.getElementById('exist-reg-nativeName').value = data.native || "";
@@ -2560,20 +2582,20 @@
                     let data = doc.data();
                     currentExistingOriginalData = data;
                     
-                    // --- NAME SPLITTING LOGIC ---
+                    // --- STRICT NAME SPLITTING LOGIC ---
                     let fullName = data.name || "";
                     let nameParts = fullName.trim().split(/\s+/);
                     let surname = "", firstname = "", middlename = "";
                     
                     if (nameParts.length === 1) {
-                        firstname = nameParts[0];
+                        surname = nameParts[0];
                     } else if (nameParts.length === 2) {
-                        firstname = nameParts[0];
-                        surname = nameParts[1];
+                        surname = nameParts[0];
+                        firstname = nameParts[1];
                     } else if (nameParts.length >= 3) {
-                        firstname = nameParts[0];
-                        surname = nameParts[nameParts.length - 1];
-                        middlename = nameParts.slice(1, nameParts.length - 1).join(" ");
+                        surname = nameParts[0];
+                        firstname = nameParts[1];
+                        middlename = nameParts.slice(2).join(" ");
                     }
 
                     document.getElementById('exist-reg-surname').value = surname;
