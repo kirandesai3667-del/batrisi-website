@@ -532,7 +532,12 @@
                 <!-- READ ONLY FIELDS -->
                 <div class="form-group">
                     <label>MEMBER FULL NAME (LOCKED)</label>
-                    <input type="text" id="exist-reg-name" readonly style="background:#e2e8f0; color: #64748b; font-weight: bold;">
+                    <div class="name-grid">
+                        <input type="text" id="exist-reg-surname" placeholder="SURNAME" readonly style="background:#e2e8f0; color: #64748b; font-weight: bold;">
+                        <input type="text" id="exist-reg-firstname" placeholder="FIRST NAME" readonly style="background:#e2e8f0; color: #64748b; font-weight: bold;">
+                        <input type="text" id="exist-reg-middlename" placeholder="MIDDLE NAME" readonly style="background:#e2e8f0; color: #64748b; font-weight: bold;">
+                    </div>
+                    <input type="hidden" id="exist-reg-name">
                 </div>
 
                 <div class="form-group">
@@ -1269,7 +1274,15 @@
                 }
 
                 fetchCardPromise.then(cardData => {
-                    if(!cardData) return;
+                    if(!cardData) {
+                        container.innerHTML = `
+                            <div class="status-box" style="border: 2px solid #ef4444;">
+                                <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>
+                                <h2 style="color: #991b1b; margin-top:0; text-transform:uppercase;">DATA NOT FOUND</h2>
+                                <p style="color: #b91c1c; font-weight: 600; font-size:13px;">YOUR ID CARD DATA COULD NOT BE FETCHED IMMEDIATELY. PLEASE REFRESH THE PAGE OR LOG IN AGAIN.</p>
+                            </div>`;
+                        return;
+                    }
 
                     let pStatus = cardData.paymentStatus;
                     // Maintain backward compatibility for older cards or existing member flow
@@ -1335,6 +1348,13 @@
                                 </button>
                             </div>`;
                     }
+                }).catch(err => {
+                    container.innerHTML = `
+                        <div class="status-box" style="border: 2px solid #ef4444;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>
+                            <h2 style="color: #991b1b; margin-top:0; text-transform:uppercase;">ERROR FETCHING DATA</h2>
+                            <p style="color: #b91c1c; font-weight: 600; font-size:13px;">${err.message}</p>
+                        </div>`;
                 });
             } 
             else if(reqData.status === 'approved_final') {
@@ -2425,8 +2445,29 @@
             if(!data) return;
 
             currentExistingOriginalData = data;
+            
+            // --- NAME SPLITTING LOGIC ---
+            let fullName = data.name || "";
+            let nameParts = fullName.trim().split(/\s+/);
+            let surname = "", firstname = "", middlename = "";
+            
+            if (nameParts.length === 1) {
+                firstname = nameParts[0];
+            } else if (nameParts.length === 2) {
+                firstname = nameParts[0];
+                surname = nameParts[1];
+            } else if (nameParts.length >= 3) {
+                firstname = nameParts[0];
+                surname = nameParts[nameParts.length - 1]; // Last word
+                middlename = nameParts.slice(1, nameParts.length - 1).join(" "); // Everything in between
+            }
+
+            document.getElementById('exist-reg-surname').value = surname;
+            document.getElementById('exist-reg-firstname').value = firstname;
+            document.getElementById('exist-reg-middlename').value = middlename;
+            document.getElementById('exist-reg-name').value = fullName; // Hidden field
+            
             document.getElementById('exist-reg-memberNo').value = data.memberNo || "";
-            document.getElementById('exist-reg-name').value = data.name || "";
             document.getElementById('exist-reg-nativeName').value = data.native || "";
             document.getElementById('exist-reg-address').value = data.address || "";
             document.getElementById('exist-reg-mobile').value = data.mobile || document.getElementById('exist-search-mobile').value;
@@ -2435,9 +2476,9 @@
 
             document.getElementById('exist-member-list-container').style.display = 'none';
             
-            document.getElementById('exist-reg-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('exist-reg-surname').scrollIntoView({ behavior: 'smooth', block: 'center' });
             
-            ['exist-reg-name', 'exist-reg-nativeName', 'exist-reg-address', 'exist-reg-memberNo'].forEach(id => {
+            ['exist-reg-surname', 'exist-reg-firstname', 'exist-reg-middlename', 'exist-reg-nativeName', 'exist-reg-address', 'exist-reg-memberNo'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) {
                     let oldBg = el.style.backgroundColor;
@@ -2518,7 +2559,28 @@
                 if(doc.exists) {
                     let data = doc.data();
                     currentExistingOriginalData = data;
-                    document.getElementById('exist-reg-name').value = data.name || "";
+                    
+                    // --- NAME SPLITTING LOGIC ---
+                    let fullName = data.name || "";
+                    let nameParts = fullName.trim().split(/\s+/);
+                    let surname = "", firstname = "", middlename = "";
+                    
+                    if (nameParts.length === 1) {
+                        firstname = nameParts[0];
+                    } else if (nameParts.length === 2) {
+                        firstname = nameParts[0];
+                        surname = nameParts[1];
+                    } else if (nameParts.length >= 3) {
+                        firstname = nameParts[0];
+                        surname = nameParts[nameParts.length - 1];
+                        middlename = nameParts.slice(1, nameParts.length - 1).join(" ");
+                    }
+
+                    document.getElementById('exist-reg-surname').value = surname;
+                    document.getElementById('exist-reg-firstname').value = firstname;
+                    document.getElementById('exist-reg-middlename').value = middlename;
+                    document.getElementById('exist-reg-name').value = fullName; // Hidden field
+                    
                     document.getElementById('exist-reg-nativeName').value = data.native || "";
                     document.getElementById('exist-reg-address').value = data.address || "";
                     document.getElementById('exist-reg-mobile').value = data.mobile || document.getElementById('exist-reg-mobile').value;
@@ -2616,7 +2678,18 @@
 
             // Save directly to generated idCards and create an update log
             db.collection("idCards").add(finalData).then((docRef) => {
+                
+                finalData.docId = docRef.id; // CRITICAL FIX FOR BLANK PAGE
+
                 db.collection("existingUpdates").add(updateLog).then(() => {
+                    alert("DATA SAVED AND ID CARD GENERATED SUCCESSFULLY!");
+                    hideAllAuth();
+                    document.getElementById('existing-registration-wrapper').style.display = 'none';
+                    document.getElementById('main-app-header').style.display = 'flex';
+                    document.getElementById('header-title-text').innerText = "Card Status";
+                    showMemberStatus({ status: 'card_generated', idCardData: finalData });
+                }).catch(err => {
+                    console.error("Update log error: ", err);
                     alert("DATA SAVED AND ID CARD GENERATED SUCCESSFULLY!");
                     hideAllAuth();
                     document.getElementById('existing-registration-wrapper').style.display = 'none';
