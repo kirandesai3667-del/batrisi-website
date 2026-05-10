@@ -57,7 +57,7 @@
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 600;}
         #toast.show { opacity: 1; }
 
-        /* --- WHATSAPP STABLE WEB AUTOMATION STYLES --- */
+        /* --- WHATSAPP API INTEGRATION STYLES --- */
         .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
         .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
         .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
@@ -76,9 +76,6 @@
         .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; font-weight:600;}
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
-        
-        /* Auto Refresh Spinner Overlay for QR */
-        .wa-qr-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:none; justify-content:center; align-items:center; flex-direction:column; color:var(--dark); font-weight:bold; font-size:12px; text-align:center;}
         /* --------------------------------------------------- */
     </style>
 </head>
@@ -121,10 +118,8 @@
             
             <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
             
-            <!-- CSV Upload Container -->
             <div id="csvUploadBtnContainer" style="display:none; gap: 15px; align-items: center;">
                 <button class="btn-add" style="background:#ef4444;" onclick="deleteAllMembers()"><i class="fa-solid fa-trash-can"></i> Delete All Data</button>
-                
                 <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCSVUpload(this)">
                 <button class="btn-add" style="background:#10b981;" onclick="document.getElementById('csvFileInput').click()"><i class="fa-solid fa-file-csv"></i> Upload CSV DB</button>
             </div>
@@ -143,30 +138,24 @@
             <!-- Connection Status Panel -->
             <div class="wa-conn-box">
                 <div class="wa-qr-container">
-                    <!-- Inline SVG Loader (Never breaks or crashes) -->
-                    <img id="wa-qr-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b' font-weight='bold'>Turn on Node.js Server</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%2394a3b8'>(Run node server.js)</text></svg>" alt="QR Code Area">
-                    <div id="wa-qr-overlay" class="wa-qr-overlay">
-                        <i class="fa-solid fa-arrows-rotate fa-spin" style="font-size:24px; color:var(--primary); margin-bottom:5px;"></i>
-                        Generating Fresh QR...
-                    </div>
+                    <img id="wa-qr-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b' font-weight='bold'>Connecting API...</text></svg>" alt="QR Code Area">
                 </div>
                 <div style="flex:1;">
                     <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
-                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp System
+                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp Cloud System
                     </h2>
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
-                        1. Start `node server.js` in your terminal background.<br>
-                        2. Open WhatsApp on your phone.<br>
-                        3. Tap Menu / Settings and select Linked Devices.<br>
-                        4. Scan the QR code. (Bot saves session automatically).
+                        1. Scan the QR code to connect your WhatsApp.<br>
+                        2. The server saves your session automatically.<br>
+                        3. Don't close this tab while broadcasting is running.
                     </p>
                     
                     <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
-                            Status: <span id="wa-status-text" style="color:#ef4444;">Server Offline / Initializing...</span>
+                            Status: <span id="wa-status-text" style="color:#ef4444;">Connecting to Server...</span>
                         </div>
                         <button onclick="logoutWhatsApp()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; display:none;" id="wa-logout-btn"><i class="fa-solid fa-power-off"></i> Force Logout</button>
-                        <button onclick="restartWABot()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; transition:0.2s;" id="wa-restart-btn"><i class="fa-solid fa-rotate-right"></i> Restart Bot</button>
+                        <button onclick="restartWABot()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; transition:0.2s;" id="wa-restart-btn"><i class="fa-solid fa-rotate-right"></i> Restart API Server</button>
                     </div>
                 </div>
             </div>
@@ -195,15 +184,14 @@
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
                     <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>Anti-Ban Active:</b> Backend auto-delays messages (5-12s). Session is persistent. Use <code style="color:red;">{{member_name}}</code> for personalization.
+                        <b>⚠️ Important:</b> Leave this webpage open while messages are sending. The system will auto-delay (5-12s) to prevent bans. Use <code style="color:red;">{{member_name}}</code> for personalization.
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
                     <textarea id="wa-message" class="wa-input" rows="5" placeholder="Example: Hello {{member_name}}, your Batrisi membership no is {{member_no}}..."></textarea>
                     
-                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px;">Attachment / Image URL (Optional)</label>
-                    <input type="text" id="wa-media-url" class="wa-input" placeholder="https://example.com/image.jpg">
-                    
+                    <!-- Removed Image URL input as Replit WhatsApp API currently handles text -->
+
                     <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
                         <i class="fa-solid fa-paper-plane"></i> Send via WhatsApp Web
                     </button>
@@ -222,7 +210,7 @@
                     <!-- Logs Panel -->
                     <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">System Terminal Logs</h4>
                     <div id="wa-logs" class="wa-logs">
-                        Waiting for connection... Make sure node server.js is running.
+                        Waiting for connection...
                     </div>
                 </div>
             </div>
@@ -231,37 +219,28 @@
 
     </div>
 
-    <!-- MODAL -->
-    <div class="modal" id="cmsModal">
-        <div class="modal-content">
-            <h2 id="modalTitle" style="margin-bottom:20px;">Add/Edit Record</h2>
-            <div id="dynamicFields"></div>
-            <div class="progress-box" id="uploadProgress">Uploading: 0 / 0 Files</div>
-            <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:25px;">
-                <button onclick="closeCMSModal()" style="padding:10px 20px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
-                <button id="saveBtn" onclick="saveDataToFirebase()" style="padding:10px 25px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px;">SAVE RECORD</button>
-            </div>
-        </div>
-    </div>
-
     <div id="toast">Success!</div>
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const IMGBB_API_KEY = "77c6ecbe6786edef58354da6ff43fa5b";
+
+        // ==============================================================
+        // YOUR PERMANENT 24/7 REPLIT API URL (Updated Here)
+        // ==============================================================
+        const WA_API_URL = "https://node-manager--kirandesai3667.replit.app/api/whatsapp"; 
 
         const schemas = {
-            'events': [ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
-            'media': [ {key:'title', label:'Media / News Title'}, {key:'date', label:'Date (e.g. 15 Aug 2026)'}, {key:'images', label:'Upload Newspaper Image(s) - Select Multiple', isMultiFile:true} ],
-            'about': [ {key:'title', label:'Heading Title'}, {key:'desc', label:'Full About Description', isArea:true} ], 
-            'gallery': [ {key:'title', label:'Album Caption'}, {key:'images', label:'Upload Multiple Images (Select 100+ at once)', isMultiFile:true} ],
-            'committee': [ {key:'name', label:'Full Name'}, {key:'position', label:'Position'}, {key:'native', label:'Native Village'}, {key:'phone', label:'Mobile Number'}, {key:'photo', label:'Passport Photo', isFile:true} ],
-            'downloads': [ {key:'title', label:'Document Title'}, {key:'desc', label:'Form Description', isArea:true}, {key:'file', label:'PDF Link (Google Drive)'} ]
+            'events':[ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
+            'media':[ {key:'title', label:'Media / News Title'}, {key:'date', label:'Date (e.g. 15 Aug 2026)'}, {key:'images', label:'Upload Newspaper Image(s) - Select Multiple', isMultiFile:true} ],
+            'about':[ {key:'title', label:'Heading Title'}, {key:'desc', label:'Full About Description', isArea:true} ], 
+            'gallery':[ {key:'title', label:'Album Caption'}, {key:'images', label:'Upload Multiple Images (Select 100+ at once)', isMultiFile:true} ],
+            'committee':[ {key:'name', label:'Full Name'}, {key:'position', label:'Position'}, {key:'native', label:'Native Village'}, {key:'phone', label:'Mobile Number'}, {key:'photo', label:'Passport Photo', isFile:true} ],
+            'downloads':[ {key:'title', label:'Document Title'}, {key:'desc', label:'Form Description', isArea:true}, {key:'file', label:'PDF Link (Google Drive)'} ]
         };
 
-        let currentCol = 'events'; let uploadedUrlsArray = []; let currentEditId = null; window.tableData = {}; 
+        let currentCol = 'events'; let uploadedUrlsArray =[]; let currentEditId = null; window.tableData = {}; 
 
         function adminLogin() {
             if(document.getElementById('adminUser').value==='Batrisi' && document.getElementById('adminPwd').value==='Bat@3232') document.getElementById('login-overlay').style.display='none';
@@ -330,123 +309,27 @@
                             <td><b>${d.title || d.name || 'No Name'}</b><br><small style="color:gray;">${(d.desc || d.date || '').substring(0,40)}</small></td>
                             <td>${mediaHtml}</td>
                             <td>
-                                <button onclick="editDoc('${doc.id}')" style="color:#2563eb; border:none; background:none; cursor:pointer; font-weight:bold; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                                 <button onclick="deleteDoc('${doc.id}')" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Delete</button>
                             </td>
                         </tr>`;
                     }
                 });
-
-                if(currentCol === 'members' && snap.size >= 200) {
-                    tempHtml += `<tr><td colspan="6" style="text-align:center; padding: 20px; color:#64748b; background:#f1f5f9; font-weight:bold;"><i class="fa-solid fa-circle-info"></i> Showing latest 200 records to keep Admin Panel fast. (All records are safe in Database).</td></tr>`;
-                }
-
                 body.innerHTML = tempHtml; 
             });
         }
-
-        async function deleteAllMembers() {
-            if(!confirm("⚠️ WARNING: This will delete ALL members from the database!\nAre you absolutely sure you want to clear the entire database?")) return;
-            const t = document.getElementById('toast');
-            t.innerText = "Deleting all data... Please wait (Do not close page)."; t.style.background = "#ef4444"; t.classList.add('show');
-            try {
-                const snapshot = await db.collection('members').get();
-                if(snapshot.empty) { t.innerText = "Database is already empty!"; setTimeout(() => { t.classList.remove('show'); t.style.background = "#10b981"; }, 3000); return; }
-
-                const batches = []; let currentBatch = db.batch(); let currentCount = 0;
-                snapshot.docs.forEach((doc) => {
-                    currentBatch.delete(doc.ref); currentCount++;
-                    if(currentCount === 490) { batches.push(currentBatch.commit()); currentBatch = db.batch(); currentCount = 0; }
-                });
-                if(currentCount > 0) batches.push(currentBatch.commit());
-                await Promise.all(batches);
-                
-                t.innerText = "All members deleted successfully!"; t.style.background = "#10b981"; setTimeout(() => t.classList.remove('show'), 3000);
-            } catch(e) { alert("Error deleting: " + e.message); t.classList.remove('show'); t.style.background = "#10b981"; }
-        }
-
-        async function handleCSVUpload(el) {
-            const file = el.files[0];
-            if(!file) return;
-
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: async function(results) {
-                    const rows = results.data;
-                    if(rows.length === 0) { alert("Empty CSV or invalid format!"); return; }
-                    if(!confirm(`Found ${rows.length} records in CSV.\nDo you want to upload this data?`)) { el.value = ""; return; }
-
-                    const t = document.getElementById('toast');
-                    t.innerText = `Uploading ${rows.length} members... Please wait.`;
-                    t.classList.add('show');
-
-                    let batch = db.batch();
-                    let count = 0;
-                    
-                    const getVal = (rowObj, possibleKeys) => {
-                        for(let k in rowObj) {
-                            let cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, ''); 
-                            if(possibleKeys.includes(cleanK)) return rowObj[k] ? String(rowObj[k]).trim() : '';
-                        }
-                        return '';
-                    };
-
-                    try {
-                        for(let i=0; i<rows.length; i++) {
-                            const row = rows[i];
-                            const docRef = db.collection('members').doc();
-                            
-                            let dataObj = {
-                                memberNumber: getVal(row, ['membernumber', 'memberno', 'no']),
-                                memberName: getVal(row, ['membername', 'name']),
-                                nativeName: getVal(row, ['nativename', 'native']),
-                                mobileNumber: getVal(row, ['mobilenumber', 'mobileno', 'mobile', 'phone']),
-                                address: getVal(row, ['address', 'add']),
-                                timestamp: Date.now() + i 
-                            };
-                            
-                            batch.set(docRef, dataObj);
-                            count++;
-                            
-                            if(count === 490) { 
-                                await batch.commit();
-                                batch = db.batch();
-                                count = 0;
-                            }
-                        }
-                        if(count > 0) { await batch.commit(); }
-                        
-                        t.innerText = "CSV Upload Successful!";
-                        setTimeout(() => t.classList.remove('show'), 3000);
-                        el.value = ""; 
-                    } catch(e) {
-                        alert("Error uploading CSV: " + e.message);
-                    }
-                }
-            });
-        }
-
-        function openAddModal() { currentEditId = null; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Add New Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
-        function editDoc(id) { currentEditId = id; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(f.isMultiFile) { uploadedUrlsArray = data[f.key] || []; if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; } else if(f.isFile) { uploadedUrlsArray = [data[f.key] || ""]; document.getElementById('manual_link').value = uploadedUrlsArray[0]; updatePreview(uploadedUrlsArray[0]); } else if(document.getElementById('f_'+f.key)) { document.getElementById('f_'+f.key).value = data[f.key] || ""; } }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
-        function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
-        function convertDriveLink(url) { if(!url) return ""; if(url.includes("drive.google.com/file/d/")) { let id = url.split("/d/")[1].split("/")[0]; return `https://drive.google.com/uc?export=view&id=${id}`; } return url; }
-        async function handleBulkUpload(el) { const files = el.files; if(!files.length) return; const btn = document.getElementById('saveBtn'); btn.disabled = true; const prog = document.getElementById('uploadProgress'); prog.style.display = 'block'; uploadedUrlsArray = []; let successCount = 0; for(let i=0; i<files.length; i++) { prog.innerText = `Uploading: ${i+1} of ${files.length} Files... Please Wait!`; const fd = new FormData(); fd.append("image", files[i]); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); if(data.data && data.data.url) { uploadedUrlsArray.push(data.data.url); successCount++; } } catch(e) { console.log("Failed", i); } } prog.innerText = `Upload Complete! (${successCount} Images Ready to Save)`; prog.style.color = "green"; btn.disabled = false; }
-        async function handleSingleUpload(el) { const file = el.files[0]; if(!file) return; const btn = document.getElementById('saveBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; const fd = new FormData(); fd.append("image", file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); uploadedUrlsArray = [data.data.url]; updatePreview(data.data.url); } catch(e) { alert("Upload Failed!"); } btn.innerText = "SAVE RECORD"; btn.disabled = false; }
-        function updatePreview(url) { const img = document.getElementById('modal_prev'); if(img) { if(url && !url.includes('.pdf')) { img.src = url; img.style.display = 'block'; } else { img.style.display = 'none'; } } }
-        async function saveDataToFirebase() { const btn = document.getElementById('saveBtn'); btn.innerText = "SAVING..."; btn.disabled = true; const fields = schemas[currentCol]; let dataObj = {}; fields.forEach(f => { if(f.isMultiFile) { let manual = document.getElementById('manual_link').value; if(manual) { uploadedUrlsArray.push(convertDriveLink(manual)); } dataObj[f.key] = uploadedUrlsArray; } else if(f.isFile) { let manual = document.getElementById('manual_link').value; dataObj[f.key] = manual || (uploadedUrlsArray.length > 0 ? uploadedUrlsArray[0] : ""); } else { dataObj[f.key] = document.getElementById('f_'+f.key).value; } }); try { if (currentEditId) { await db.collection(currentCol).doc(currentEditId).update(dataObj); } else { dataObj.timestamp = Date.now(); await db.collection(currentCol).add(dataObj); } closeCMSModal(); showToast(); } catch(e) { alert("Database Error! Please check your connection."); } btn.innerText = "SAVE RECORD"; btn.disabled = false; }
         function deleteDoc(id) { if(confirm("Are you sure you want to delete this record?")) db.collection(currentCol).doc(id).delete(); }
-        function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; document.getElementById('uploadProgress').style.display='none'; }
-        function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
         // ==============================================================
-        // STABLE WHATSAPP WEB AUTOMATION SYSTEM (Via Firebase Bridge)
+        // NEW API-BASED WHATSAPP WEB AUTOMATION SYSTEM
         // ==============================================================
-        let waMembersList = [];
+        let waMembersList =[];
         let isWABotConnected = false;
-        let currentBatchId = null;
-        let bridgeUnsubscribe = null;
-        const offlineSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b' font-weight='bold'>Turn on Node.js Server</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%2394a3b8'>(Run node server.js)</text></svg>";
+        let isBroadcastingWA = false;
+        let waQueue =[];
+        let waTotalTasks = 0;
+        let waSentCount = 0;
+        let waFailedCount = 0;
+        let statusInterval = null;
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -455,11 +338,11 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            startWABridgeListener(); 
+            startAPIStatusPolling();
 
             try {
                 const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
-                waMembersList = [];
+                waMembersList =[];
                 snap.forEach(doc => waMembersList.push({ id: doc.id, ...doc.data() }));
                 renderWAMembers(waMembersList);
             } catch(e) {
@@ -467,97 +350,69 @@
             }
         }
 
-        function startWABridgeListener() {
-            if(bridgeUnsubscribe) bridgeUnsubscribe();
-
-            let lastState = "";
-            let isFirstLoad = true;
-
-            bridgeUnsubscribe = db.collection('wa_system').doc('status').onSnapshot(doc => {
+        // Check Status via Fetch API Every 3 Seconds
+        function startAPIStatusPolling() {
+            if(statusInterval) clearInterval(statusInterval);
+            
+            statusInterval = setInterval(async () => {
+                if(isBroadcastingWA) return; // Don't poll heavily while sending
+                
                 const statusTxt = document.getElementById('wa-status-text');
                 const qrImg = document.getElementById('wa-qr-img');
-                const overlay = document.getElementById('wa-qr-overlay');
                 const sendBtn = document.getElementById('wa-btn-start');
                 const logoutBtn = document.getElementById('wa-logout-btn');
 
-                if(!doc.exists) {
-                    statusTxt.innerText = "Server Offline (Run node server.js)";
-                    qrImg.src = offlineSvg;
-                    return;
-                }
-                
-                const d = doc.data();
-
-                // Smooth QR Refresh Handling
-                if (d.state === 'QR_READY' && lastState === 'QR_READY' && !isFirstLoad) {
-                    overlay.style.display = 'flex';
-                    setTimeout(() => { qrImg.src = d.qrCodeUrl; overlay.style.display = 'none'; }, 500);
-                } else {
-                    overlay.style.display = 'none';
-                }
-
-                if(d.state === 'CONNECTED') {
-                    isWABotConnected = true;
-                    statusTxt.innerText = "🟢 CONNECTED (Session Saved)";
-                    statusTxt.style.color = "#10b981";
-                    qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
-                    sendBtn.disabled = false;
-                    logoutBtn.style.display = "block";
-                    printLog("WhatsApp Web Authenticated and Ready.", "success");
-                } 
-                else if(d.state === 'QR_READY') {
+                try {
+                    const res = await fetch(WA_API_URL + '/status');
+                    const data = await res.json();
+                    
+                    // Connected State
+                    if(data.status === 'CONNECTED' || data.state === 'CONNECTED' || data.connected === true) {
+                        isWABotConnected = true;
+                        statusTxt.innerText = "🟢 CONNECTED (Ready to Send)";
+                        statusTxt.style.color = "#10b981";
+                        qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
+                        sendBtn.disabled = false;
+                        logoutBtn.style.display = "block";
+                    } 
+                    // Need to scan QR State
+                    else {
+                        isWABotConnected = false;
+                        statusTxt.innerText = "🟡 Scan the QR Code";
+                        statusTxt.style.color = "#f59e0b";
+                        // Fetch direct image from API endpoint (Anti-cache query param)
+                        qrImg.src = WA_API_URL + '/qr.png?t=' + Date.now();
+                        sendBtn.disabled = true;
+                        logoutBtn.style.display = "none";
+                    }
+                } catch(e) {
                     isWABotConnected = false;
-                    statusTxt.innerText = "🟡 Scan Fresh QR Code";
-                    statusTxt.style.color = "#f59e0b";
-                    if(lastState !== 'QR_READY') qrImg.src = d.qrCodeUrl; 
-                    sendBtn.disabled = true;
-                    logoutBtn.style.display = "none";
-                    if(lastState !== 'QR_READY') printLog("Waiting for QR Scan...", "info");
-                } 
-                else if(d.state === 'RECONNECTING') {
-                    isWABotConnected = false;
-                    statusTxt.innerText = "🟠 Reconnecting Session...";
-                    statusTxt.style.color = "#f59e0b";
-                    qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23fef3c7'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23d97706'>Restoring Session...</text></svg>";
-                    sendBtn.disabled = true;
-                    logoutBtn.style.display = "none";
-                    printLog("Restoring saved WhatsApp session...", "info");
-                }
-                else if(d.state === 'DISCONNECTED' || d.state === 'STARTING') {
-                    isWABotConnected = false;
-                    statusTxt.innerText = "🔴 " + (d.state === 'STARTING' ? "Bot Starting..." : "Bot Disconnected");
+                    statusTxt.innerText = "🔴 Server Offline / Error";
                     statusTxt.style.color = "#ef4444";
-                    qrImg.src = offlineSvg;
+                    qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23ef4444' font-weight='bold'>Connection Failed</text></svg>";
                     sendBtn.disabled = true;
                     logoutBtn.style.display = "none";
                 }
-
-                lastState = d.state;
-                isFirstLoad = false;
-            });
+            }, 3000);
         }
 
-        function logoutWhatsApp() {
-            if(confirm("Are you sure you want to completely log out this WhatsApp number? You will need to scan QR again.")) {
-                db.collection('wa_system').doc('commands').set({ command: 'LOGOUT', timestamp: Date.now() });
-                printLog("Sending Force Logout command...", "error");
+        async function logoutWhatsApp() {
+            if(confirm("Log out completely? You will need to scan QR again.")) {
+                try {
+                    await fetch(WA_API_URL + '/logout', { method: 'POST' });
+                    printLog("Logout command sent. Please wait.", "error");
+                } catch(e) { printLog("Logout error.", "error"); }
             }
         }
 
-        // Updated Restart button logic with visual feedback
-        function restartWABot() {
+        async function restartWABot() {
             const btn = document.getElementById('wa-restart-btn');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Command...';
-            btn.disabled = true;
-            
-            db.collection('wa_system').doc('commands').set({ command: 'RESTART', timestamp: Date.now() });
-            printLog("Restart command sent to Backend...", "info");
-            
-            setTimeout(() => { 
-                btn.innerHTML = originalHTML; 
-                btn.disabled = false;
-            }, 2000);
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restarting...';
+            try {
+                await fetch(WA_API_URL + '/restart', { method: 'POST' });
+                printLog("Restarted API Server. It will take 10 seconds to boot.", "info");
+            } catch(e) {}
+            setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Restart API Server'; }, 3000);
         }
 
         function renderWAMembers(list) {
@@ -580,7 +435,6 @@
             const q = document.getElementById('wa-search').value.toLowerCase();
             const filtered = waMembersList.filter(m => (m.memberName && m.memberName.toLowerCase().includes(q)) || (m.mobileNumber && String(m.mobileNumber).toLowerCase().includes(q)));
             renderWAMembers(filtered);
-            document.getElementById('wa-select-all').checked = false;
         }
 
         function toggleAllWAMembers() {
@@ -601,85 +455,105 @@
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
 
+        // --- THE NEW FRONTEND QUEUE SYSTEM (Calls /send API) ---
         async function initiateWABroadcast() {
             if(!isWABotConnected) return alert("WhatsApp is not connected!");
-            
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
             if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
             
             const rawTemplate = document.getElementById('wa-message').value.trim();
             if(!rawTemplate) return alert("Message box cannot be empty.");
             
-            if(!confirm(`Send real messages to ${selectedBoxes.length} members?\nThe bot will auto-delay (5-12s) to prevent bans.`)) return;
+            if(!confirm(`Send real messages to ${selectedBoxes.length} members?\nPlease DO NOT close this webpage until sending is fully completed.`)) return;
 
-            const mediaUrl = document.getElementById('wa-media-url').value.trim();
-            currentBatchId = "batch_" + Date.now();
-            
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
-            printLog(`Queueing ${selectedBoxes.length} messages...`, "info");
+            
+            // Build Queue
+            waQueue = selectedBoxes.map(cb => {
+                return {
+                    name: cb.dataset.name,
+                    phone: cb.dataset.phone,
+                    msgText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no)
+                };
+            });
 
-            let batch = db.batch();
-            let count = 0;
+            waTotalTasks = waQueue.length;
+            waSentCount = 0;
+            waFailedCount = 0;
+            isBroadcastingWA = true;
 
-            try {
-                for(let i=0; i<selectedBoxes.length; i++) {
-                    let cb = selectedBoxes[i];
-                    let logRef = db.collection('wa_queue').doc();
-                    
-                    batch.set(logRef, {
-                        batchId: currentBatchId,
-                        memberId: cb.value,
-                        memberName: cb.dataset.name,
-                        memberPhone: cb.dataset.phone,
-                        messageText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no),
-                        mediaUrl: mediaUrl,
-                        status: 'Pending',
-                        timestamp: Date.now()
+            printLog(`Campaign Started! Queueing ${waTotalTasks} messages with 5-12s Anti-Spam delay...`, "info");
+            updateWAUI();
+            
+            // Start the loop
+            processLocalQueue();
+        }
+
+        async function processLocalQueue() {
+            if(waQueue.length === 0) {
+                isBroadcastingWA = false;
+                printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                document.getElementById('wa-btn-start').disabled = false;
+                updateWAUI();
+                return;
+            }
+
+            const item = waQueue.shift();
+            
+            // Format phone number safely (India Code)
+            let phoneStr = String(item.phone).replace(/[^0-9]/g, '');
+            if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) {
+                phoneStr = '91' + phoneStr.slice(-10);
+            }
+
+            printLog(`Sending to ${item.name} (${phoneStr})...`, "info");
+
+            if(!phoneStr || phoneStr.length < 10) {
+                waFailedCount++;
+                printLog(`❌ Failed to send to ${item.name}: Invalid Number`, "error");
+            } else {
+                try {
+                    // API Call to Replit Backend
+                    const response = await fetch(WA_API_URL + '/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ to: phoneStr, message: item.msgText })
                     });
                     
-                    count++;
-                    if(count === 490) { await batch.commit(); batch = db.batch(); count = 0; }
+                    if(response.ok) {
+                        waSentCount++;
+                        printLog(`✅ Successfully delivered to ${item.name}!`, "success");
+                    } else {
+                        waFailedCount++;
+                        printLog(`❌ Failed to send to ${item.name}`, "error");
+                    }
+                } catch(e) {
+                    waFailedCount++;
+                    printLog(`❌ API Error for ${item.name}`, "error");
                 }
-                if(count > 0) { await batch.commit(); }
-                
-                printLog(`✅ Successfully queued. Background Bot has taken over delivery!`, "success");
-                trackLiveDelivery(currentBatchId, selectedBoxes.length);
+            }
 
-            } catch(e) {
-                printLog("❌ Error queueing: " + e.message, "error");
-                document.getElementById('wa-btn-start').disabled = false;
+            updateWAUI();
+
+            // Anti Spam Delay
+            if(waQueue.length > 0) {
+                const randomDelay = Math.floor(Math.random() * (12000 - 5000 + 1)) + 5000;
+                printLog(`[Anti-Spam] Holding for ${randomDelay/1000} seconds...`, "info");
+                setTimeout(processLocalQueue, randomDelay);
+            } else {
+                processLocalQueue(); // Call once more to trigger finished state
             }
         }
 
-        let deliveryUnsubscribe = null;
-        function trackLiveDelivery(batchId, total) {
-            if(deliveryUnsubscribe) deliveryUnsubscribe();
-
-            deliveryUnsubscribe = db.collection('wa_queue').where('batchId', '==', batchId).onSnapshot(snap => {
-                let pending = 0; let sent = 0; let failed = 0;
-                
-                snap.forEach(doc => {
-                    let st = doc.data().status;
-                    if(st === 'Pending') pending++;
-                    else if(st === 'Sent') sent++;
-                    else failed++;
-                });
-
-                document.getElementById('wa-stat-pending').innerText = pending;
-                document.getElementById('wa-stat-sent').innerText = sent;
-                document.getElementById('wa-stat-failed').innerText = failed;
-                
-                let percent = Math.round(((sent + failed) / total) * 100);
-                document.getElementById('wa-progress-bar').style.width = `${percent}%`;
-
-                if(pending === 0 && total > 0) {
-                    printLog(`🎉 Campaign Finished! Sent: ${sent}, Failed: ${failed}`, "success");
-                    document.getElementById('wa-btn-start').disabled = false;
-                    deliveryUnsubscribe();
-                }
-            });
+        function updateWAUI() {
+            document.getElementById('wa-stat-pending').innerText = waQueue.length;
+            document.getElementById('wa-stat-sent').innerText = waSentCount;
+            document.getElementById('wa-stat-failed').innerText = waFailedCount;
+            
+            let percent = waTotalTasks === 0 ? 0 : Math.round(((waSentCount + waFailedCount) / waTotalTasks) * 100);
+            document.getElementById('wa-progress-bar').style.width = `${percent}%`;
         }
 
         initCMS('events', 'Events');
