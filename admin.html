@@ -56,6 +56,18 @@
 
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 600;}
         #toast.show { opacity: 1; }
+
+        /* --- WHATSAPP BROADCAST STYLES ADDED SAFELY --- */
+        .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); }
+        .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
+        .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
+        .wa-btn:hover { background: #128C7E; transform: translateY(-2px); }
+        .wa-list-box { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 15px; background: #f8fafc; }
+        .wa-member-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; transition: background 0.2s;}
+        .wa-member-item:hover { background: #e2e8f0; }
+        .wa-checkbox { width: 16px; height: 16px; cursor: pointer; }
+        .wa-logs { margin-top: 15px; max-height: 200px; overflow-y: auto; font-size: 12px; background: #f1f5f9; padding: 10px; border-radius: 8px; font-family: monospace; }
+        /* ---------------------------------------------- */
     </style>
 </head>
 <body>
@@ -83,6 +95,9 @@
         <!-- Manage Members Button -->
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="initCMS('members', 'Members Database (CSV)')"><i class="fa-solid fa-users"></i> Manage Members</button>
 
+        <!-- WHATSAPP BROADCAST BUTTON -->
+        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Broadcast</button>
+
         <button class="nav-btn" style="margin-top:auto; color:red;" onclick="location.reload()">Logout</button>
     </div>
 
@@ -102,12 +117,64 @@
                 <button class="btn-add" style="background:#10b981;" onclick="document.getElementById('csvFileInput').click()"><i class="fa-solid fa-file-csv"></i> Upload CSV DB</button>
             </div>
         </div>
+        
         <div class="table-container">
             <table>
                 <thead><tr id="tableHeaders"><th>Record Info</th><th>Media</th><th>Actions</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
+
+        <!-- WHATSAPP BROADCAST UI CONTAINER (Safely Hidden by Default) -->
+        <div id="wa-broadcast-container" style="display:none;">
+            <h1 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> WhatsApp Broadcast Panel</h1>
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                
+                <!-- Left: Member Selection -->
+                <div class="wa-panel" style="flex:1; min-width:300px;">
+                    <h3 style="margin-bottom:10px;">Select Audience</h3>
+                    <input type="text" class="wa-input" id="wa-search" placeholder="Search by Name or Mobile No..." onkeyup="filterWAMembers()">
+                    
+                    <div style="margin-top:15px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="wa-select-all" class="wa-checkbox" onchange="toggleAllWAMembers()"> Select All Members
+                        </label>
+                        <span id="wa-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
+                    </div>
+
+                    <div id="wa-members-list" class="wa-list-box">
+                        <p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Members...</p>
+                    </div>
+                </div>
+
+                <!-- Right: Message Compose -->
+                <div class="wa-panel" style="flex:1; min-width:300px;">
+                    <h3 style="margin-bottom:10px;">Compose Message</h3>
+                    
+                    <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
+                        <b>Pro Tip:</b> Use <code style="color:red;">{{member_name}}</code> or <code style="color:red;">{{member_no}}</code> to send personalized messages!
+                    </div>
+
+                    <label style="font-weight:600; font-size:14px;">Message Text *</label>
+                    <textarea id="wa-message" class="wa-input" rows="6" placeholder="Example: Hello {{member_name}}, your Batrisi membership no is {{member_no}}..."></textarea>
+                    
+                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px;">Attachment / Image URL (Optional)</label>
+                    <input type="text" id="wa-media-url" class="wa-input" placeholder="https://example.com/image.jpg">
+                    
+                    <button onclick="sendWABroadcast()" class="wa-btn" style="margin-top:20px;">
+                        <i class="fa-solid fa-paper-plane"></i> Send via Business API
+                    </button>
+
+                    <!-- Logs Panel -->
+                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live Delivery Logs</h4>
+                    <div id="wa-logs" class="wa-logs">
+                        Waiting for broadcast to start...
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END WHATSAPP UI -->
+
     </div>
 
     <!-- MODAL -->
@@ -148,6 +215,13 @@
         }
 
         function initCMS(col, title) {
+            // --- ADDED SECURELY TO TOGGLE VIEWS FOR WA BROADCAST (Without deleting old code) ---
+            let waContainer = document.getElementById('wa-broadcast-container');
+            if(waContainer) waContainer.style.display = 'none';
+            document.getElementById('topToolbar').style.display = 'flex';
+            document.querySelector('.table-container').style.display = 'block';
+            // -----------------------------------------------------------------------------------
+
             currentCol = col;
             document.getElementById('cms-title').innerText = "Manage " + title;
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -318,6 +392,150 @@
         function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; document.getElementById('uploadProgress').style.display='none'; }
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
+        // ==============================================================
+        // WHATSAPP BROADCAST SYSTEM LOGIC
+        // ==============================================================
+        let waMembersList = [];
+
+        async function openWABroadcast() {
+            // Adjust UI
+            document.getElementById('wa-broadcast-container').style.display = 'block';
+            document.getElementById('topToolbar').style.display = 'none';
+            document.querySelector('.table-container').style.display = 'none';
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const logsDiv = document.getElementById('wa-logs');
+            
+            try {
+                // Fetch members once
+                const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
+                waMembersList = [];
+                snap.forEach(doc => waMembersList.push({ id: doc.id, ...doc.data() }));
+                
+                renderWAMembers(waMembersList);
+            } catch(e) {
+                logsDiv.innerHTML = `<span style="color:red;">Error loading members: ${e.message}</span>`;
+            }
+        }
+
+        function renderWAMembers(list) {
+            let html = '';
+            if(list.length === 0) {
+                html = '<p style="padding:15px; color:red; text-align:center;">No members found.</p>';
+            } else {
+                list.forEach(m => {
+                    let phone = m.mobileNumber || '';
+                    let name = m.memberName || 'No Name';
+                    let memNo = m.memberNumber || '';
+                    
+                    html += `
+                    <div class="wa-member-item">
+                        <input type="checkbox" class="wa-checkbox" value="${m.id}" data-phone="${phone}" data-name="${name}" data-no="${memNo}" onchange="updateWACount()">
+                        <div>
+                            <b>${name}</b> ${memNo ? `(No: ${memNo})` : ''}<br>
+                            <small style="color:gray;"><i class="fa-brands fa-whatsapp"></i> ${phone}</small>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('wa-members-list').innerHTML = html;
+            updateWACount();
+        }
+
+        function filterWAMembers() {
+            const q = document.getElementById('wa-search').value.toLowerCase();
+            const filtered = waMembersList.filter(m => 
+                (m.memberName && m.memberName.toLowerCase().includes(q)) || 
+                (m.mobileNumber && String(m.mobileNumber).toLowerCase().includes(q))
+            );
+            renderWAMembers(filtered);
+            document.getElementById('wa-select-all').checked = false;
+        }
+
+        function toggleAllWAMembers() {
+            const isChecked = document.getElementById('wa-select-all').checked;
+            document.querySelectorAll('.wa-checkbox').forEach(cb => cb.checked = isChecked);
+            updateWACount();
+        }
+
+        function updateWACount() {
+            const count = document.querySelectorAll('.wa-checkbox:checked').length;
+            document.getElementById('wa-count-badge').innerText = `${count} Selected`;
+        }
+
+        async function sendWABroadcast() {
+            const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
+            if(selectedBoxes.length === 0) return alert("Please select at least 1 member to send the message.");
+            
+            const rawTemplate = document.getElementById('wa-message').value.trim();
+            if(!rawTemplate) return alert("Message box cannot be empty.");
+            
+            if(!confirm(`Are you sure you want to broadcast this message to ${selectedBoxes.length} members via WhatsApp API Structure?`)) return;
+
+            const mediaUrl = document.getElementById('wa-media-url').value.trim();
+            const logsDiv = document.getElementById('wa-logs');
+            logsDiv.innerHTML = `<div style="color:blue; font-weight:bold; margin-bottom:10px;">➔ Initializing Broadcast Batch for ${selectedBoxes.length} members...</div>`;
+            
+            let batch = db.batch();
+            let batchCount = 0;
+            let successCount = 0;
+
+            try {
+                for (let i = 0; i < selectedBoxes.length; i++) {
+                    const cb = selectedBoxes[i];
+                    
+                    // Replace tags for personalization
+                    let finalMsg = rawTemplate
+                        .replace(/{{member_name}}/gi, cb.dataset.name)
+                        .replace(/{{member_no}}/gi, cb.dataset.no);
+
+                    // API Ready Firebase Entry
+                    let logRef = db.collection('whatsapp_logs').doc();
+                    batch.set(logRef, {
+                        memberId: cb.value,
+                        memberName: cb.dataset.name,
+                        memberPhone: cb.dataset.phone,
+                        messageText: finalMsg,
+                        mediaUrl: mediaUrl,
+                        status: 'Queued (Ready for API)',
+                        timestamp: Date.now()
+                    });
+
+                    successCount++;
+                    batchCount++;
+
+                    // Commit batches of 490 to avoid Firebase limit
+                    if(batchCount >= 490) {
+                        await batch.commit();
+                        batch = db.batch();
+                        batchCount = 0;
+                    }
+
+                    // Simulated live visual logs
+                    setTimeout(() => {
+                        logsDiv.innerHTML = `<div style="color:#059669; border-bottom:1px solid #e2e8f0; padding:4px 0;">✔ Queued for ${cb.dataset.name} (${cb.dataset.phone})</div>` + logsDiv.innerHTML;
+                    }, i * 30);
+                }
+
+                if(batchCount > 0) {
+                    await batch.commit();
+                }
+
+                setTimeout(() => {
+                    logsDiv.innerHTML = `<div style="background:#10b981; color:white; padding:8px; border-radius:4px; margin-bottom:10px; font-weight:bold;">✅ All ${successCount} messages successfully saved to Broadcast Database! (API webhooks will process them)</div>` + logsDiv.innerHTML;
+                    document.getElementById('wa-message').value = '';
+                    document.getElementById('wa-media-url').value = '';
+                    document.getElementById('wa-select-all').checked = false;
+                    toggleAllWAMembers();
+                }, selectedBoxes.length * 30 + 500);
+
+            } catch (e) {
+                logsDiv.innerHTML = `<div style="color:red;">❌ Error processing broadcast: ${e.message}</div>` + logsDiv.innerHTML;
+            }
+        }
+
         initCMS('events', 'Events');
     </script>
 </body>
