@@ -61,8 +61,8 @@
         .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
         .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
         .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
-        .wa-btn:hover { background: #128C7E; transform: translateY(-2px); }
-        .wa-btn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+        .wa-btn:hover:not(:disabled) { background: #128C7E; transform: translateY(-2px); }
+        .wa-btn:disabled { background: #94a3b8; cursor: not-allowed; }
         .wa-list-box { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 15px; background: #f8fafc; }
         .wa-member-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; transition: background 0.2s;}
         .wa-member-item:hover { background: #e2e8f0; }
@@ -78,7 +78,7 @@
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
         
         /* Auto Refresh Spinner Overlay for QR */
-        .wa-qr-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); display:none; justify-content:center; align-items:center; flex-direction:column; color:var(--dark); font-weight:bold; font-size:12px; text-align:center;}
+        .wa-qr-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:none; justify-content:center; align-items:center; flex-direction:column; color:var(--dark); font-weight:bold; font-size:12px; text-align:center;}
         /* --------------------------------------------------- */
     </style>
 </head>
@@ -137,13 +137,14 @@
             </table>
         </div>
 
-        <!-- WHATSAPP AUTOMATION UI CONTAINER (Safely Hidden by Default) -->
+        <!-- WHATSAPP AUTOMATION UI CONTAINER -->
         <div id="wa-broadcast-container" style="display:none;">
             
             <!-- Connection Status Panel -->
             <div class="wa-conn-box">
                 <div class="wa-qr-container">
-                    <img id="wa-qr-img" src="https://via.placeholder.com/200?text=Waiting+for+Bot" alt="QR Code">
+                    <!-- Inline SVG Loader (Never breaks or crashes) -->
+                    <img id="wa-qr-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b' font-weight='bold'>Turn on Node.js Server</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%2394a3b8'>(Run node server.js)</text></svg>" alt="QR Code Area">
                     <div id="wa-qr-overlay" class="wa-qr-overlay">
                         <i class="fa-solid fa-arrows-rotate fa-spin" style="font-size:24px; color:var(--primary); margin-bottom:5px;"></i>
                         Generating Fresh QR...
@@ -154,17 +155,18 @@
                         <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp System
                     </h2>
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
-                        1. Open WhatsApp on your phone.<br>
-                        2. Tap Menu / Settings and select Linked Devices.<br>
-                        3. Scan the QR code to connect. (Bot saves session automatically).
+                        1. Start `node server.js` in your terminal background.<br>
+                        2. Open WhatsApp on your phone.<br>
+                        3. Tap Menu / Settings and select Linked Devices.<br>
+                        4. Scan the QR code. (Bot saves session automatically).
                     </p>
                     
                     <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
-                            Status: <span id="wa-status-text" style="color:#f59e0b;">Initializing...</span>
+                            Status: <span id="wa-status-text" style="color:#ef4444;">Server Offline / Initializing...</span>
                         </div>
                         <button onclick="logoutWhatsApp()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; display:none;" id="wa-logout-btn"><i class="fa-solid fa-power-off"></i> Force Logout</button>
-                        <button onclick="restartWABot()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;" id="wa-restart-btn"><i class="fa-solid fa-rotate-right"></i> Restart Bot</button>
+                        <button onclick="restartWABot()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; transition:0.2s;" id="wa-restart-btn"><i class="fa-solid fa-rotate-right"></i> Restart Bot</button>
                     </div>
                 </div>
             </div>
@@ -220,7 +222,7 @@
                     <!-- Logs Panel -->
                     <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">System Terminal Logs</h4>
                     <div id="wa-logs" class="wa-logs">
-                        Connecting to Backend Bot...
+                        Waiting for connection... Make sure node server.js is running.
                     </div>
                 </div>
             </div>
@@ -444,6 +446,7 @@
         let isWABotConnected = false;
         let currentBatchId = null;
         let bridgeUnsubscribe = null;
+        const offlineSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b' font-weight='bold'>Turn on Node.js Server</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%2394a3b8'>(Run node server.js)</text></svg>";
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -452,7 +455,7 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            startWABridgeListener(); // Listen to bot status from Firebase
+            startWABridgeListener(); 
 
             try {
                 const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
@@ -471,16 +474,21 @@
             let isFirstLoad = true;
 
             bridgeUnsubscribe = db.collection('wa_system').doc('status').onSnapshot(doc => {
-                if(!doc.exists) return;
-                const d = doc.data();
-                
                 const statusTxt = document.getElementById('wa-status-text');
                 const qrImg = document.getElementById('wa-qr-img');
                 const overlay = document.getElementById('wa-qr-overlay');
                 const sendBtn = document.getElementById('wa-btn-start');
                 const logoutBtn = document.getElementById('wa-logout-btn');
 
-                // Smooth QR Refresh Handling (Don't blink UI randomly)
+                if(!doc.exists) {
+                    statusTxt.innerText = "Server Offline (Run node server.js)";
+                    qrImg.src = offlineSvg;
+                    return;
+                }
+                
+                const d = doc.data();
+
+                // Smooth QR Refresh Handling
                 if (d.state === 'QR_READY' && lastState === 'QR_READY' && !isFirstLoad) {
                     overlay.style.display = 'flex';
                     setTimeout(() => { qrImg.src = d.qrCodeUrl; overlay.style.display = 'none'; }, 500);
@@ -510,7 +518,7 @@
                     isWABotConnected = false;
                     statusTxt.innerText = "🟠 Reconnecting Session...";
                     statusTxt.style.color = "#f59e0b";
-                    qrImg.src = "https://via.placeholder.com/200?text=Restoring+Session...";
+                    qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23fef3c7'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23d97706'>Restoring Session...</text></svg>";
                     sendBtn.disabled = true;
                     logoutBtn.style.display = "none";
                     printLog("Restoring saved WhatsApp session...", "info");
@@ -519,7 +527,7 @@
                     isWABotConnected = false;
                     statusTxt.innerText = "🔴 " + (d.state === 'STARTING' ? "Bot Starting..." : "Bot Disconnected");
                     statusTxt.style.color = "#ef4444";
-                    qrImg.src = "https://via.placeholder.com/200?text=Bot+Offline";
+                    qrImg.src = offlineSvg;
                     sendBtn.disabled = true;
                     logoutBtn.style.display = "none";
                 }
@@ -536,9 +544,20 @@
             }
         }
 
+        // Updated Restart button logic with visual feedback
         function restartWABot() {
+            const btn = document.getElementById('wa-restart-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Command...';
+            btn.disabled = true;
+            
             db.collection('wa_system').doc('commands').set({ command: 'RESTART', timestamp: Date.now() });
-            printLog("Restarting Backend Bot...", "info");
+            printLog("Restart command sent to Backend...", "info");
+            
+            setTimeout(() => { 
+                btn.innerHTML = originalHTML; 
+                btn.disabled = false;
+            }, 2000);
         }
 
         function renderWAMembers(list) {
