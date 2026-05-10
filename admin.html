@@ -57,7 +57,7 @@
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 600;}
         #toast.show { opacity: 1; }
 
-        /* --- WHATSAPP WEB AUTOMATION STYLES SAFELY ADDED --- */
+        /* --- WHATSAPP STABLE WEB AUTOMATION STYLES --- */
         .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
         .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
         .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
@@ -70,12 +70,15 @@
         .wa-logs { margin-top: 15px; max-height: 250px; overflow-y: auto; font-size: 12px; background: #1e293b; color:#a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid var(--dark);}
         
         .wa-conn-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 20px;}
-        .wa-qr-container { width: 150px; height: 150px; background: white; border-radius: 8px; border: 2px dashed #cbd5e1; display: flex; justify-content: center; align-items: center; overflow: hidden;}
-        .wa-qr-container img { width: 100%; height: 100%; object-fit: contain;}
+        .wa-qr-container { width: 220px; height: 220px; background: white; border-radius: 8px; border: 2px dashed #cbd5e1; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: hidden; flex-shrink: 0; position: relative;}
+        .wa-qr-container img { max-width: 100%; max-height: 100%; object-fit: contain;}
         
         .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; font-weight:600;}
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
+        
+        /* Auto Refresh Spinner Overlay for QR */
+        .wa-qr-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); display:none; justify-content:center; align-items:center; flex-direction:column; color:var(--dark); font-weight:bold; font-size:12px; text-align:center;}
         /* --------------------------------------------------- */
     </style>
 </head>
@@ -140,19 +143,28 @@
             <!-- Connection Status Panel -->
             <div class="wa-conn-box">
                 <div class="wa-qr-container">
-                    <img id="wa-qr-img" src="https://via.placeholder.com/150?text=Waiting+for+Bot" alt="QR Code">
+                    <img id="wa-qr-img" src="https://via.placeholder.com/200?text=Waiting+for+Bot" alt="QR Code">
+                    <div id="wa-qr-overlay" class="wa-qr-overlay">
+                        <i class="fa-solid fa-arrows-rotate fa-spin" style="font-size:24px; color:var(--primary); margin-bottom:5px;"></i>
+                        Generating Fresh QR...
+                    </div>
                 </div>
                 <div style="flex:1;">
                     <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
-                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp Web Link
+                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp System
                     </h2>
-                    <p style="margin-bottom:10px; color:#475569; font-size:14px;">Scan this QR code from your WhatsApp Linked Devices to activate the bot.</p>
+                    <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
+                        1. Open WhatsApp on your phone.<br>
+                        2. Tap Menu / Settings and select Linked Devices.<br>
+                        3. Scan the QR code to connect. (Bot saves session automatically).
+                    </p>
                     
-                    <div style="display:flex; align-items:center; gap:15px;">
+                    <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
                             Status: <span id="wa-status-text" style="color:#f59e0b;">Initializing...</span>
                         </div>
-                        <button onclick="logoutWhatsApp()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; display:none;" id="wa-logout-btn"><i class="fa-solid fa-power-off"></i> Logout Web</button>
+                        <button onclick="logoutWhatsApp()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; display:none;" id="wa-logout-btn"><i class="fa-solid fa-power-off"></i> Force Logout</button>
+                        <button onclick="restartWABot()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;" id="wa-restart-btn"><i class="fa-solid fa-rotate-right"></i> Restart Bot</button>
                     </div>
                 </div>
             </div>
@@ -181,7 +193,7 @@
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
                     <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>Anti-Ban Active:</b> Backend will auto-delay messages randomly between 5 to 12 seconds. Use <code style="color:red;">{{member_name}}</code> for personalization.
+                        <b>Anti-Ban Active:</b> Backend auto-delays messages (5-12s). Session is persistent. Use <code style="color:red;">{{member_name}}</code> for personalization.
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
@@ -191,7 +203,7 @@
                     <input type="text" id="wa-media-url" class="wa-input" placeholder="https://example.com/image.jpg">
                     
                     <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
-                        <i class="fa-solid fa-paper-plane"></i> Send via WhatsApp Web (Connect First)
+                        <i class="fa-solid fa-paper-plane"></i> Send via WhatsApp Web
                     </button>
 
                     <!-- Real-time Progress Tracking -->
@@ -206,9 +218,9 @@
                     </div>
 
                     <!-- Logs Panel -->
-                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Bot Terminal Logs</h4>
+                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">System Terminal Logs</h4>
                     <div id="wa-logs" class="wa-logs">
-                        Waiting for connection...
+                        Connecting to Backend Bot...
                     </div>
                 </div>
             </div>
@@ -426,11 +438,12 @@
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
         // ==============================================================
-        // WHATSAPP WEB AUTOMATION SYSTEM (Via Firebase Bridge)
+        // STABLE WHATSAPP WEB AUTOMATION SYSTEM (Via Firebase Bridge)
         // ==============================================================
         let waMembersList = [];
         let isWABotConnected = false;
         let currentBatchId = null;
+        let bridgeUnsubscribe = null;
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -451,48 +464,81 @@
             }
         }
 
-        // Bridge Listener - Listens to Node.js Bot Status
         function startWABridgeListener() {
-            db.collection('wa_system').doc('status').onSnapshot(doc => {
+            if(bridgeUnsubscribe) bridgeUnsubscribe();
+
+            let lastState = "";
+            let isFirstLoad = true;
+
+            bridgeUnsubscribe = db.collection('wa_system').doc('status').onSnapshot(doc => {
                 if(!doc.exists) return;
                 const d = doc.data();
                 
                 const statusTxt = document.getElementById('wa-status-text');
                 const qrImg = document.getElementById('wa-qr-img');
+                const overlay = document.getElementById('wa-qr-overlay');
                 const sendBtn = document.getElementById('wa-btn-start');
                 const logoutBtn = document.getElementById('wa-logout-btn');
 
+                // Smooth QR Refresh Handling (Don't blink UI randomly)
+                if (d.state === 'QR_READY' && lastState === 'QR_READY' && !isFirstLoad) {
+                    overlay.style.display = 'flex';
+                    setTimeout(() => { qrImg.src = d.qrCodeUrl; overlay.style.display = 'none'; }, 500);
+                } else {
+                    overlay.style.display = 'none';
+                }
+
                 if(d.state === 'CONNECTED') {
                     isWABotConnected = true;
-                    statusTxt.innerText = "🟢 CONNECTED & READY";
+                    statusTxt.innerText = "🟢 CONNECTED (Session Saved)";
                     statusTxt.style.color = "#10b981";
                     qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
                     sendBtn.disabled = false;
-                    sendBtn.innerText = "Start Broadcasting Campaign";
                     logoutBtn.style.display = "block";
-                } else if(d.state === 'QR_READY') {
+                    printLog("WhatsApp Web Authenticated and Ready.", "success");
+                } 
+                else if(d.state === 'QR_READY') {
                     isWABotConnected = false;
-                    statusTxt.innerText = "🟡 Scan QR Code below";
+                    statusTxt.innerText = "🟡 Scan Fresh QR Code";
                     statusTxt.style.color = "#f59e0b";
-                    qrImg.src = d.qrCodeUrl; 
+                    if(lastState !== 'QR_READY') qrImg.src = d.qrCodeUrl; 
                     sendBtn.disabled = true;
                     logoutBtn.style.display = "none";
-                } else if(d.state === 'DISCONNECTED' || d.state === 'STARTING') {
+                    if(lastState !== 'QR_READY') printLog("Waiting for QR Scan...", "info");
+                } 
+                else if(d.state === 'RECONNECTING') {
                     isWABotConnected = false;
-                    statusTxt.innerText = "🔴 " + (d.state === 'STARTING' ? "Bot Starting..." : "Disconnected. Start Bot.");
+                    statusTxt.innerText = "🟠 Reconnecting Session...";
+                    statusTxt.style.color = "#f59e0b";
+                    qrImg.src = "https://via.placeholder.com/200?text=Restoring+Session...";
+                    sendBtn.disabled = true;
+                    logoutBtn.style.display = "none";
+                    printLog("Restoring saved WhatsApp session...", "info");
+                }
+                else if(d.state === 'DISCONNECTED' || d.state === 'STARTING') {
+                    isWABotConnected = false;
+                    statusTxt.innerText = "🔴 " + (d.state === 'STARTING' ? "Bot Starting..." : "Bot Disconnected");
                     statusTxt.style.color = "#ef4444";
-                    qrImg.src = "https://via.placeholder.com/150?text=Waiting+for+Bot";
+                    qrImg.src = "https://via.placeholder.com/200?text=Bot+Offline";
                     sendBtn.disabled = true;
                     logoutBtn.style.display = "none";
                 }
+
+                lastState = d.state;
+                isFirstLoad = false;
             });
         }
 
         function logoutWhatsApp() {
-            if(confirm("Are you sure you want to logout WhatsApp Web?")) {
+            if(confirm("Are you sure you want to completely log out this WhatsApp number? You will need to scan QR again.")) {
                 db.collection('wa_system').doc('commands').set({ command: 'LOGOUT', timestamp: Date.now() });
-                printLog("Logout command sent to Node.js server.", "error");
+                printLog("Sending Force Logout command...", "error");
             }
+        }
+
+        function restartWABot() {
+            db.collection('wa_system').doc('commands').set({ command: 'RESTART', timestamp: Date.now() });
+            printLog("Restarting Backend Bot...", "info");
         }
 
         function renderWAMembers(list) {
@@ -537,7 +583,7 @@
         }
 
         async function initiateWABroadcast() {
-            if(!isWABotConnected) return alert("WhatsApp is not connected! Scan the QR code first.");
+            if(!isWABotConnected) return alert("WhatsApp is not connected!");
             
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
             if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
@@ -545,7 +591,7 @@
             const rawTemplate = document.getElementById('wa-message').value.trim();
             if(!rawTemplate) return alert("Message box cannot be empty.");
             
-            if(!confirm(`Send real WhatsApp messages to ${selectedBoxes.length} members?\nThe background Node.js server will send them safely using Anti-Ban delays (5 to 12 secs per msg).`)) return;
+            if(!confirm(`Send real messages to ${selectedBoxes.length} members?\nThe bot will auto-delay (5-12s) to prevent bans.`)) return;
 
             const mediaUrl = document.getElementById('wa-media-url').value.trim();
             currentBatchId = "batch_" + Date.now();
@@ -553,7 +599,7 @@
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
-            printLog("Queueing messages in Firebase for Node.js Bot...", "info");
+            printLog(`Queueing ${selectedBoxes.length} messages...`, "info");
 
             let batch = db.batch();
             let count = 0;
@@ -579,18 +625,15 @@
                 }
                 if(count > 0) { await batch.commit(); }
                 
-                printLog(`✅ ${selectedBoxes.length} messages queued. Background Bot has started delivering them!`, "success");
-                
-                // Track Progress Realtime
+                printLog(`✅ Successfully queued. Background Bot has taken over delivery!`, "success");
                 trackLiveDelivery(currentBatchId, selectedBoxes.length);
 
             } catch(e) {
-                printLog("❌ Error queueing messages: " + e.message, "error");
+                printLog("❌ Error queueing: " + e.message, "error");
                 document.getElementById('wa-btn-start').disabled = false;
             }
         }
 
-        // Realtime Delivery Tracker
         let deliveryUnsubscribe = null;
         function trackLiveDelivery(batchId, total) {
             if(deliveryUnsubscribe) deliveryUnsubscribe();
@@ -612,7 +655,7 @@
                 let percent = Math.round(((sent + failed) / total) * 100);
                 document.getElementById('wa-progress-bar').style.width = `${percent}%`;
 
-                if(pending === 0) {
+                if(pending === 0 && total > 0) {
                     printLog(`🎉 Campaign Finished! Sent: ${sent}, Failed: ${failed}`, "success");
                     document.getElementById('wa-btn-start').disabled = false;
                     deliveryUnsubscribe();
