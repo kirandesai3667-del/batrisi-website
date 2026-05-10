@@ -57,7 +57,7 @@
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 600;}
         #toast.show { opacity: 1; }
 
-        /* --- WHATSAPP API INTEGRATION STYLES --- */
+        /* --- WHATSAPP DIRECT WEB STYLES --- */
         .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
         .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
         .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
@@ -67,15 +67,17 @@
         .wa-member-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; transition: background 0.2s;}
         .wa-member-item:hover { background: #e2e8f0; }
         .wa-checkbox { width: 16px; height: 16px; cursor: pointer; }
-        .wa-logs { margin-top: 15px; max-height: 250px; overflow-y: auto; font-size: 12px; background: #1e293b; color:#a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid var(--dark);}
         
-        .wa-conn-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 20px;}
-        .wa-qr-container { width: 220px; height: 220px; background: white; border-radius: 8px; border: 2px dashed #cbd5e1; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: hidden; flex-shrink: 0; position: relative;}
-        .wa-qr-container img { max-width: 100%; max-height: 100%; object-fit: contain;}
-        
+        .wa-conn-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 20px;}
         .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; font-weight:600;}
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
+        
+        /* Interactive Queue Box */
+        .queue-box { border: 2px solid #3b82f6; border-radius: 12px; padding: 20px; background: #eff6ff; text-align: center; margin-top: 20px;}
+        .queue-name { font-size: 22px; font-weight: 700; color: #1e3a8a; margin: 10px 0; }
+        .queue-phone { font-size: 16px; color: #3b82f6; margin-bottom: 15px; }
+        .action-btns { display: flex; gap: 10px; justify-content: center; }
         /* --------------------------------------------------- */
     </style>
 </head>
@@ -105,7 +107,7 @@
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="initCMS('members', 'Members Database (CSV)')"><i class="fa-solid fa-users"></i> Manage Members</button>
 
         <!-- WHATSAPP BROADCAST BUTTON -->
-        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Automation</button>
+        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Sender</button>
 
         <button class="nav-btn" style="margin-top:auto; color:red;" onclick="location.reload()">Logout</button>
     </div>
@@ -115,9 +117,7 @@
             <div>
                 <h1 id="cms-title">Manage Events</h1>
             </div>
-            
             <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
-            
             <div id="csvUploadBtnContainer" style="display:none; gap: 15px; align-items: center;">
                 <button class="btn-add" style="background:#ef4444;" onclick="deleteAllMembers()"><i class="fa-solid fa-trash-can"></i> Delete All Data</button>
                 <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCSVUpload(this)">
@@ -132,31 +132,22 @@
             </table>
         </div>
 
-        <!-- WHATSAPP AUTOMATION UI CONTAINER -->
+        <!-- WHATSAPP DIRECT SENDER UI CONTAINER -->
         <div id="wa-broadcast-container" style="display:none;">
             
-            <!-- Connection Status Panel -->
+            <!-- Instructions Panel -->
             <div class="wa-conn-box">
-                <div class="wa-qr-container">
-                    <img id="wa-qr-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b' font-weight='bold'>Connecting API...</text></svg>" alt="QR Code Area">
-                </div>
+                <i class="fa-solid fa-circle-check" style="font-size: 50px; color: #10b981;"></i>
                 <div style="flex:1;">
-                    <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
-                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp Cloud System
+                    <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:10px; color:#065f46;">
+                        No-Server WhatsApp Integration
                     </h2>
-                    <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
-                        1. Scan the QR code to connect your WhatsApp.<br>
-                        2. The server saves your session automatically.<br>
-                        3. Don't close this tab while broadcasting is running.
+                    <p style="margin-bottom:0; color:#064e3b; font-size:14px; line-height: 1.6; font-weight:500;">
+                        Is system me aapko kisi server ya QR code ki zaroorat nahi hai. Yeh direct aapke browser se chalega.<br>
+                        1. Apne browser me ek nayi tab me <b>WhatsApp Web</b> open karke login kar lein.<br>
+                        2. Yahan list me se members select karein aur Message likhein.<br>
+                        3. Start dabaein, yeh ek-ek karke chat open karega pre-typed message ke sath. Aapko bas send dabana hai!
                     </p>
-                    
-                    <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
-                        <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
-                            Status: <span id="wa-status-text" style="color:#ef4444;">Connecting to Server...</span>
-                        </div>
-                        <button onclick="logoutWhatsApp()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; display:none;" id="wa-logout-btn"><i class="fa-solid fa-power-off"></i> Force Logout</button>
-                        <button onclick="restartWABot()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; transition:0.2s;" id="wa-restart-btn"><i class="fa-solid fa-rotate-right"></i> Restart API Server</button>
-                    </div>
                 </div>
             </div>
 
@@ -164,7 +155,7 @@
                 
                 <!-- Left: Member Selection -->
                 <div class="wa-panel" style="flex:1; min-width:350px;">
-                    <h3 style="margin-bottom:10px;">Select Audience</h3>
+                    <h3 style="margin-bottom:10px;">1. Select Audience</h3>
                     <input type="text" class="wa-input" id="wa-search" placeholder="Search by Name or Mobile No..." onkeyup="filterWAMembers()">
                     
                     <div style="margin-top:15px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
@@ -179,44 +170,69 @@
                     </div>
                 </div>
 
-                <!-- Right: Message Compose & Queue -->
+                <!-- Right: Message Compose & Action -->
                 <div class="wa-panel" style="flex:1; min-width:350px;">
-                    <h3 style="margin-bottom:10px;">Compose Message</h3>
+                    <h3 style="margin-bottom:10px;">2. Compose Message</h3>
                     
                     <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>⚠️ Important:</b> Leave this webpage open while messages are sending. The system will auto-delay (5-12s) to prevent bans. Use <code style="color:red;">{{member_name}}</code> for personalization.
+                        Use <code style="color:red;">{{member_name}}</code> for personalization. Do not use images here, send text directly.
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="5" placeholder="Example: Hello {{member_name}}, your Batrisi membership no is {{member_no}}..."></textarea>
+                    <textarea id="wa-message" class="wa-input" rows="6" placeholder="Example: Hello {{member_name}}, your Batrisi membership no is {{member_no}}..."></textarea>
                     
-                    <!-- Removed Image URL input as Replit WhatsApp API currently handles text -->
-
-                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
-                        <i class="fa-solid fa-paper-plane"></i> Send via WhatsApp Web
+                    <button id="wa-btn-start" onclick="startDirectBroadcast()" class="wa-btn" style="margin-top:20px;">
+                        <i class="fa-solid fa-rocket"></i> Start Sending Process
                     </button>
 
-                    <!-- Real-time Progress Tracking -->
+                    <!-- Interactive Queue Panel (Shows after Start) -->
                     <div id="wa-progress-panel" style="margin-top:25px; display:none;">
-                        <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
+                        <h4 style="margin-bottom:10px; color:var(--dark);">Live Sending Progress</h4>
                         <div class="wa-stat-box">
                             <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
-                            <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
-                            <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
+                            <span>Completed: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
                         </div>
                         <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
+
+                        <!-- Action Box -->
+                        <div class="queue-box" id="wa-queue-box">
+                            <p style="font-weight:bold; color:#64748b; font-size:14px; margin:0;">Now Sending To:</p>
+                            <div class="queue-name" id="q-name">John Doe</div>
+                            <div class="queue-phone" id="q-phone">+91 9876543210</div>
+                            
+                            <div class="action-btns">
+                                <button onclick="skipQueueItem()" style="padding:10px; border-radius:8px; border:none; background:#e2e8f0; font-weight:bold; cursor:pointer; width:30%;">Skip</button>
+                                <button onclick="openChatAndNext()" style="padding:10px; border-radius:8px; border:none; background:#3b82f6; color:white; font-weight:bold; cursor:pointer; width:70%; font-size:15px;"><i class="fa-brands fa-whatsapp"></i> Open Chat & Pre-Fill</button>
+                            </div>
+                            <p style="font-size:12px; color:#64748b; margin-top:15px; margin-bottom:0;">Click 'Open Chat', hit send on WhatsApp web, then come back here to continue.</p>
+                        </div>
+
+                        <!-- Completion Box -->
+                        <div class="queue-box" id="wa-complete-box" style="display:none; background:#f0fdf4; border-color:#10b981;">
+                            <i class="fa-solid fa-circle-check" style="font-size: 40px; color: #10b981; margin-bottom:10px;"></i>
+                            <h3 style="color:#065f46;">Broadcast Complete!</h3>
+                            <button onclick="resetBroadcast()" style="margin-top:15px; padding:10px 20px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Start New Broadcast</button>
+                        </div>
                     </div>
 
-                    <!-- Logs Panel -->
-                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">System Terminal Logs</h4>
-                    <div id="wa-logs" class="wa-logs">
-                        Waiting for connection...
-                    </div>
                 </div>
             </div>
         </div>
         <!-- END WHATSAPP UI -->
 
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="cmsModal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="margin-bottom:20px;">Add/Edit Record</h2>
+            <div id="dynamicFields"></div>
+            <div class="progress-box" id="uploadProgress">Uploading: 0 / 0 Files</div>
+            <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:25px;">
+                <button onclick="closeCMSModal()" style="padding:10px 20px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
+                <button id="saveBtn" onclick="saveDataToFirebase()" style="padding:10px 25px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px;">SAVE RECORD</button>
+            </div>
+        </div>
     </div>
 
     <div id="toast">Success!</div>
@@ -225,11 +241,6 @@
         const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        // ==============================================================
-        // YOUR PERMANENT 24/7 REPLIT API URL (Updated Here)
-        // ==============================================================
-        const WA_API_URL = "https://node-manager--kirandesai3667.replit.app/api/whatsapp"; 
 
         const schemas = {
             'events':[ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
@@ -318,18 +329,26 @@
             });
         }
         function deleteDoc(id) { if(confirm("Are you sure you want to delete this record?")) db.collection(currentCol).doc(id).delete(); }
+
+        // Standard Functions
+        function openAddModal() { currentEditId = null; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Add New Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
+        function editDoc(id) { currentEditId = id; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(f.isMultiFile) { uploadedUrlsArray = data[f.key] || []; if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; } else if(f.isFile) { uploadedUrlsArray = [data[f.key] || ""]; document.getElementById('manual_link').value = uploadedUrlsArray[0]; updatePreview(uploadedUrlsArray[0]); } else if(document.getElementById('f_'+f.key)) { document.getElementById('f_'+f.key).value = data[f.key] || ""; } }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
+        function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
+        function convertDriveLink(url) { if(!url) return ""; if(url.includes("drive.google.com/file/d/")) { let id = url.split("/d/")[1].split("/")[0]; return `https://drive.google.com/uc?export=view&id=${id}`; } return url; }
+        async function handleBulkUpload(el) { const files = el.files; if(!files.length) return; const btn = document.getElementById('saveBtn'); btn.disabled = true; const prog = document.getElementById('uploadProgress'); prog.style.display = 'block'; uploadedUrlsArray = []; let successCount = 0; for(let i=0; i<files.length; i++) { prog.innerText = `Uploading: ${i+1} of ${files.length} Files... Please Wait!`; const fd = new FormData(); fd.append("image", files[i]); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); if(data.data && data.data.url) { uploadedUrlsArray.push(data.data.url); successCount++; } } catch(e) { console.log("Failed", i); } } prog.innerText = `Upload Complete! (${successCount} Images Ready to Save)`; prog.style.color = "green"; btn.disabled = false; }
+        async function handleSingleUpload(el) { const file = el.files[0]; if(!file) return; const btn = document.getElementById('saveBtn'); btn.innerText = "UPLOADING..."; btn.disabled = true; const fd = new FormData(); fd.append("image", file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd }); const data = await res.json(); uploadedUrlsArray = [data.data.url]; updatePreview(data.data.url); } catch(e) { alert("Upload Failed!"); } btn.innerText = "SAVE RECORD"; btn.disabled = false; }
+        function updatePreview(url) { const img = document.getElementById('modal_prev'); if(img) { if(url && !url.includes('.pdf')) { img.src = url; img.style.display = 'block'; } else { img.style.display = 'none'; } } }
+        async function saveDataToFirebase() { const btn = document.getElementById('saveBtn'); btn.innerText = "SAVING..."; btn.disabled = true; const fields = schemas[currentCol]; let dataObj = {}; fields.forEach(f => { if(f.isMultiFile) { let manual = document.getElementById('manual_link').value; if(manual) { uploadedUrlsArray.push(convertDriveLink(manual)); } dataObj[f.key] = uploadedUrlsArray; } else if(f.isFile) { let manual = document.getElementById('manual_link').value; dataObj[f.key] = manual || (uploadedUrlsArray.length > 0 ? uploadedUrlsArray[0] : ""); } else { dataObj[f.key] = document.getElementById('f_'+f.key).value; } }); try { if (currentEditId) { await db.collection(currentCol).doc(currentEditId).update(dataObj); } else { dataObj.timestamp = Date.now(); await db.collection(currentCol).add(dataObj); } closeCMSModal(); showToast(); } catch(e) { alert("Database Error! Please check your connection."); } btn.innerText = "SAVE RECORD"; btn.disabled = false; }
+        function closeCMSModal() { document.getElementById('cmsModal').style.display = 'none'; document.getElementById('uploadProgress').style.display='none'; }
         
         // ==============================================================
-        // NEW API-BASED WHATSAPP WEB AUTOMATION SYSTEM
+        // DIRECT NO-SERVER WHATSAPP ROUTING SYSTEM
         // ==============================================================
-        let waMembersList =[];
-        let isWABotConnected = false;
-        let isBroadcastingWA = false;
-        let waQueue =[];
+        let waMembersList = [];
+        let waQueue = [];
         let waTotalTasks = 0;
         let waSentCount = 0;
-        let waFailedCount = 0;
-        let statusInterval = null;
+        let currentWAItem = null;
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -338,81 +357,14 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            startAPIStatusPolling();
-
             try {
                 const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
-                waMembersList =[];
+                waMembersList = [];
                 snap.forEach(doc => waMembersList.push({ id: doc.id, ...doc.data() }));
                 renderWAMembers(waMembersList);
             } catch(e) {
-                printLog(`Error loading members: ${e.message}`, "error");
+                alert(`Error loading members: ${e.message}`);
             }
-        }
-
-        // Check Status via Fetch API Every 3 Seconds
-        function startAPIStatusPolling() {
-            if(statusInterval) clearInterval(statusInterval);
-            
-            statusInterval = setInterval(async () => {
-                if(isBroadcastingWA) return; // Don't poll heavily while sending
-                
-                const statusTxt = document.getElementById('wa-status-text');
-                const qrImg = document.getElementById('wa-qr-img');
-                const sendBtn = document.getElementById('wa-btn-start');
-                const logoutBtn = document.getElementById('wa-logout-btn');
-
-                try {
-                    const res = await fetch(WA_API_URL + '/status');
-                    const data = await res.json();
-                    
-                    // Connected State
-                    if(data.status === 'CONNECTED' || data.state === 'CONNECTED' || data.connected === true) {
-                        isWABotConnected = true;
-                        statusTxt.innerText = "🟢 CONNECTED (Ready to Send)";
-                        statusTxt.style.color = "#10b981";
-                        qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
-                        sendBtn.disabled = false;
-                        logoutBtn.style.display = "block";
-                    } 
-                    // Need to scan QR State
-                    else {
-                        isWABotConnected = false;
-                        statusTxt.innerText = "🟡 Scan the QR Code";
-                        statusTxt.style.color = "#f59e0b";
-                        // Fetch direct image from API endpoint (Anti-cache query param)
-                        qrImg.src = WA_API_URL + '/qr.png?t=' + Date.now();
-                        sendBtn.disabled = true;
-                        logoutBtn.style.display = "none";
-                    }
-                } catch(e) {
-                    isWABotConnected = false;
-                    statusTxt.innerText = "🔴 Server Offline / Error";
-                    statusTxt.style.color = "#ef4444";
-                    qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23ef4444' font-weight='bold'>Connection Failed</text></svg>";
-                    sendBtn.disabled = true;
-                    logoutBtn.style.display = "none";
-                }
-            }, 3000);
-        }
-
-        async function logoutWhatsApp() {
-            if(confirm("Log out completely? You will need to scan QR again.")) {
-                try {
-                    await fetch(WA_API_URL + '/logout', { method: 'POST' });
-                    printLog("Logout command sent. Please wait.", "error");
-                } catch(e) { printLog("Logout error.", "error"); }
-            }
-        }
-
-        async function restartWABot() {
-            const btn = document.getElementById('wa-restart-btn');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restarting...';
-            try {
-                await fetch(WA_API_URL + '/restart', { method: 'POST' });
-                printLog("Restarted API Server. It will take 10 seconds to boot.", "info");
-            } catch(e) {}
-            setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Restart API Server'; }, 3000);
         }
 
         function renderWAMembers(list) {
@@ -447,30 +399,14 @@
             document.getElementById('wa-count-badge').innerText = `${document.querySelectorAll('.wa-checkbox:checked').length} Selected`;
         }
 
-        function printLog(msg, type="info") {
-            const logsDiv = document.getElementById('wa-logs');
-            const time = new Date().toLocaleTimeString();
-            let color = type === "error" ? "#ef4444" : type === "success" ? "#10b981" : "#a5b4fc";
-            logsDiv.innerHTML += `<div style="color:${color}; margin-bottom:5px;">[${time}] ${msg}</div>`;
-            logsDiv.scrollTop = logsDiv.scrollHeight;
-        }
-
-        // --- THE NEW FRONTEND QUEUE SYSTEM (Calls /send API) ---
-        async function initiateWABroadcast() {
-            if(!isWABotConnected) return alert("WhatsApp is not connected!");
+        function startDirectBroadcast() {
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
             if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
             
             const rawTemplate = document.getElementById('wa-message').value.trim();
             if(!rawTemplate) return alert("Message box cannot be empty.");
             
-            if(!confirm(`Send real messages to ${selectedBoxes.length} members?\nPlease DO NOT close this webpage until sending is fully completed.`)) return;
-
-            document.getElementById('wa-btn-start').disabled = true;
-            document.getElementById('wa-progress-panel').style.display = 'block';
-            document.getElementById('wa-logs').innerHTML = ''; 
-            
-            // Build Queue
+            // Queue setup
             waQueue = selectedBoxes.map(cb => {
                 return {
                     name: cb.dataset.name,
@@ -481,78 +417,68 @@
 
             waTotalTasks = waQueue.length;
             waSentCount = 0;
-            waFailedCount = 0;
-            isBroadcastingWA = true;
 
-            printLog(`Campaign Started! Queueing ${waTotalTasks} messages with 5-12s Anti-Spam delay...`, "info");
-            updateWAUI();
-            
-            // Start the loop
-            processLocalQueue();
+            document.getElementById('wa-btn-start').disabled = true;
+            document.getElementById('wa-progress-panel').style.display = 'block';
+            document.getElementById('wa-queue-box').style.display = 'block';
+            document.getElementById('wa-complete-box').style.display = 'none';
+
+            loadNextInQueue();
         }
 
-        async function processLocalQueue() {
+        function loadNextInQueue() {
             if(waQueue.length === 0) {
-                isBroadcastingWA = false;
-                printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
-                document.getElementById('wa-btn-start').disabled = false;
-                updateWAUI();
+                // Done
+                document.getElementById('wa-queue-box').style.display = 'none';
+                document.getElementById('wa-complete-box').style.display = 'block';
                 return;
             }
 
-            const item = waQueue.shift();
+            currentWAItem = waQueue.shift();
             
-            // Format phone number safely (India Code)
-            let phoneStr = String(item.phone).replace(/[^0-9]/g, '');
+            // Format phone safely
+            let phoneStr = String(currentWAItem.phone).replace(/[^0-9]/g, '');
             if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) {
                 phoneStr = '91' + phoneStr.slice(-10);
             }
+            currentWAItem.formattedPhone = phoneStr;
 
-            printLog(`Sending to ${item.name} (${phoneStr})...`, "info");
-
-            if(!phoneStr || phoneStr.length < 10) {
-                waFailedCount++;
-                printLog(`❌ Failed to send to ${item.name}: Invalid Number`, "error");
-            } else {
-                try {
-                    // API Call to Replit Backend
-                    const response = await fetch(WA_API_URL + '/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ to: phoneStr, message: item.msgText })
-                    });
-                    
-                    if(response.ok) {
-                        waSentCount++;
-                        printLog(`✅ Successfully delivered to ${item.name}!`, "success");
-                    } else {
-                        waFailedCount++;
-                        printLog(`❌ Failed to send to ${item.name}`, "error");
-                    }
-                } catch(e) {
-                    waFailedCount++;
-                    printLog(`❌ API Error for ${item.name}`, "error");
-                }
-            }
-
+            document.getElementById('q-name').innerText = currentWAItem.name;
+            document.getElementById('q-phone').innerText = `+${phoneStr}`;
+            
             updateWAUI();
+        }
 
-            // Anti Spam Delay
-            if(waQueue.length > 0) {
-                const randomDelay = Math.floor(Math.random() * (12000 - 5000 + 1)) + 5000;
-                printLog(`[Anti-Spam] Holding for ${randomDelay/1000} seconds...`, "info");
-                setTimeout(processLocalQueue, randomDelay);
+        function openChatAndNext() {
+            if(!currentWAItem.formattedPhone || currentWAItem.formattedPhone.length < 10) {
+                alert("Invalid Phone Number for this user. Skipping...");
             } else {
-                processLocalQueue(); // Call once more to trigger finished state
+                // Open WhatsApp Web Link in New Tab
+                const waUrl = `https://web.whatsapp.com/send?phone=${currentWAItem.formattedPhone}&text=${encodeURIComponent(currentWAItem.msgText)}`;
+                window.open(waUrl, '_blank');
             }
+            
+            waSentCount++;
+            loadNextInQueue();
+        }
+
+        function skipQueueItem() {
+            waSentCount++; // Count as processed but skipped
+            loadNextInQueue();
+        }
+
+        function resetBroadcast() {
+            document.getElementById('wa-btn-start').disabled = false;
+            document.getElementById('wa-progress-panel').style.display = 'none';
+            document.querySelectorAll('.wa-checkbox').forEach(cb => cb.checked = false);
+            updateWACount();
+            document.getElementById('wa-message').value = '';
         }
 
         function updateWAUI() {
             document.getElementById('wa-stat-pending').innerText = waQueue.length;
             document.getElementById('wa-stat-sent').innerText = waSentCount;
-            document.getElementById('wa-stat-failed').innerText = waFailedCount;
-            
-            let percent = waTotalTasks === 0 ? 0 : Math.round(((waSentCount + waFailedCount) / waTotalTasks) * 100);
+            let percent = waTotalTasks === 0 ? 0 : Math.round((waSentCount / waTotalTasks) * 100);
             document.getElementById('wa-progress-bar').style.width = `${percent}%`;
         }
 
