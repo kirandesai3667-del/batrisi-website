@@ -57,8 +57,8 @@
         #toast { position: fixed; bottom: 30px; right: 30px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; opacity: 0; transition: 0.4s ease; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 600;}
         #toast.show { opacity: 1; }
 
-        /* --- WHATSAPP BROADCAST STYLES ADDED SAFELY --- */
-        .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); }
+        /* --- WHATSAPP WEB AUTOMATION STYLES SAFELY ADDED --- */
+        .wa-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
         .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
         .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
         .wa-btn:hover { background: #128C7E; transform: translateY(-2px); }
@@ -67,15 +67,16 @@
         .wa-member-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; transition: background 0.2s;}
         .wa-member-item:hover { background: #e2e8f0; }
         .wa-checkbox { width: 16px; height: 16px; cursor: pointer; }
-        .wa-logs { margin-top: 15px; max-height: 200px; overflow-y: auto; font-size: 12px; background: #1e293b; color:#a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid var(--dark);}
+        .wa-logs { margin-top: 15px; max-height: 250px; overflow-y: auto; font-size: 12px; background: #1e293b; color:#a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid var(--dark);}
         
-        /* Progress Queue Panel */
-        .wa-progress-panel { display:none; background:#f8fafc; padding:20px; border-radius:12px; margin-top:20px; border:1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:15px; font-size:14px; font-weight:600;}
+        .wa-conn-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 20px;}
+        .wa-qr-container { width: 150px; height: 150px; background: white; border-radius: 8px; border: 2px dashed #cbd5e1; display: flex; justify-content: center; align-items: center; overflow: hidden;}
+        .wa-qr-container img { width: 100%; height: 100%; object-fit: contain;}
+        
+        .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; font-weight:600;}
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
-        .btn-action { padding:8px 15px; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px; transition:0.2s;}
-        /* ---------------------------------------------- */
+        /* --------------------------------------------------- */
     </style>
 </head>
 <body>
@@ -104,7 +105,7 @@
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="initCMS('members', 'Members Database (CSV)')"><i class="fa-solid fa-users"></i> Manage Members</button>
 
         <!-- WHATSAPP BROADCAST BUTTON -->
-        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Broadcast</button>
+        <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Automation</button>
 
         <button class="nav-btn" style="margin-top:auto; color:red;" onclick="location.reload()">Logout</button>
     </div>
@@ -133,13 +134,29 @@
             </table>
         </div>
 
-        <!-- WHATSAPP BROADCAST UI CONTAINER (Safely Hidden by Default) -->
+        <!-- WHATSAPP AUTOMATION UI CONTAINER (Safely Hidden by Default) -->
         <div id="wa-broadcast-container" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h1 style="display:flex; align-items:center; gap:10px;"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Bulk WhatsApp Panel</h1>
-                <span style="background:#1e293b; color:#10b981; padding:5px 15px; border-radius:20px; font-size:12px; font-weight:bold; letter-spacing:1px;"><i class="fa-solid fa-shield-halved"></i> ANTI-SPAM PROTECTED</span>
-            </div>
             
+            <!-- Connection Status Panel -->
+            <div class="wa-conn-box">
+                <div class="wa-qr-container">
+                    <img id="wa-qr-img" src="https://via.placeholder.com/150?text=Waiting+for+Bot" alt="QR Code">
+                </div>
+                <div style="flex:1;">
+                    <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> WhatsApp Web Link
+                    </h2>
+                    <p style="margin-bottom:10px; color:#475569; font-size:14px;">Scan this QR code from your WhatsApp Linked Devices to activate the bot.</p>
+                    
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
+                            Status: <span id="wa-status-text" style="color:#f59e0b;">Initializing...</span>
+                        </div>
+                        <button onclick="logoutWhatsApp()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600; display:none;" id="wa-logout-btn"><i class="fa-solid fa-power-off"></i> Logout Web</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="display:flex; gap:20px; flex-wrap:wrap;">
                 
                 <!-- Left: Member Selection -->
@@ -159,12 +176,12 @@
                     </div>
                 </div>
 
-                <!-- Right: Message Compose -->
+                <!-- Right: Message Compose & Queue -->
                 <div class="wa-panel" style="flex:1; min-width:350px;">
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
                     <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>Pro Tip:</b> Use <code style="color:red;">{{member_name}}</code> or <code style="color:red;">{{member_no}}</code> to send personalized messages!
+                        <b>Anti-Ban Active:</b> Backend will auto-delay messages randomly between 5 to 12 seconds. Use <code style="color:red;">{{member_name}}</code> for personalization.
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
@@ -173,33 +190,25 @@
                     <label style="font-weight:600; font-size:14px; display:block; margin-top:15px;">Attachment / Image URL (Optional)</label>
                     <input type="text" id="wa-media-url" class="wa-input" placeholder="https://example.com/image.jpg">
                     
-                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;">
-                        <i class="fa-solid fa-paper-plane"></i> Start Broadcast Campaign
+                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
+                        <i class="fa-solid fa-paper-plane"></i> Send via WhatsApp Web (Connect First)
                     </button>
 
-                    <!-- Anti-Spam Progress & Queue Panel -->
-                    <div id="wa-progress-panel" class="wa-progress-panel">
-                        <h4 style="margin-bottom:15px; color:var(--dark); border-bottom:1px solid #cbd5e1; padding-bottom:5px;"><i class="fa-solid fa-layer-group"></i> Live Queue Status</h4>
+                    <!-- Real-time Progress Tracking -->
+                    <div id="wa-progress-panel" style="margin-top:25px; display:none;">
+                        <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
                         <div class="wa-stat-box">
-                            <span>Total Queue: <span id="wa-stat-total" style="color:var(--primary);">0</span></span>
                             <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
                             <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
                             <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
                         </div>
-                        <div class="wa-bar-bg">
-                            <div id="wa-progress-bar" class="wa-bar-fill"></div>
-                        </div>
-                        
-                        <div style="margin-top:15px; display:flex; gap:10px; align-items:center;">
-                            <button id="wa-btn-pause" onclick="togglePauseWA()" class="btn-action" style="background:#f59e0b; color:white; flex:1;"><i class="fa-solid fa-pause"></i> Pause Sending</button>
-                            <button id="wa-btn-retry" onclick="retryFailedWA()" class="btn-action" style="background:#ef4444; color:white; flex:1; display:none;"><i class="fa-solid fa-rotate-right"></i> Retry Failed</button>
-                        </div>
+                        <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
                     </div>
 
                     <!-- Logs Panel -->
-                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live Engine Terminal</h4>
+                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Bot Terminal Logs</h4>
                     <div id="wa-logs" class="wa-logs">
-                        System ready. Waiting to initiate batch campaign...
+                        Waiting for connection...
                     </div>
                 </div>
             </div>
@@ -277,7 +286,7 @@
             }
 
             let query = db.collection(currentCol).orderBy('timestamp', 'desc');
-            if(currentCol === 'members') { query = query.limit(200); } // Prevent browser hang
+            if(currentCol === 'members') { query = query.limit(200); } 
 
             query.onSnapshot(snap => {
                 let tempHtml = ""; 
@@ -417,22 +426,11 @@
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
         // ==============================================================
-        // WHATSAPP BROADCAST - ANTI SPAM QUEUE SYSTEM
+        // WHATSAPP WEB AUTOMATION SYSTEM (Via Firebase Bridge)
         // ==============================================================
         let waMembersList = [];
-        
-        // Queue Configuration
-        const WA_BATCH_SIZE = 50;   // Process 50 members at once
-        const WA_DELAY_MS = 4000;   // Wait 4 seconds between batches
-        
-        // State variables
-        let waQueue = [];
-        let waFailedQueue = [];
-        let isBroadcastingWA = false;
-        let waTotalTasks = 0;
-        let waSentCount = 0;
-        let waPendingCount = 0;
-        let waFailedCount = 0;
+        let isWABotConnected = false;
+        let currentBatchId = null;
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -441,14 +439,59 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            const logsDiv = document.getElementById('wa-logs');
+            startWABridgeListener(); // Listen to bot status from Firebase
+
             try {
                 const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
                 waMembersList = [];
                 snap.forEach(doc => waMembersList.push({ id: doc.id, ...doc.data() }));
                 renderWAMembers(waMembersList);
             } catch(e) {
-                logsDiv.innerHTML = `<span style="color:red;">Error loading members: ${e.message}</span>`;
+                printLog(`Error loading members: ${e.message}`, "error");
+            }
+        }
+
+        // Bridge Listener - Listens to Node.js Bot Status
+        function startWABridgeListener() {
+            db.collection('wa_system').doc('status').onSnapshot(doc => {
+                if(!doc.exists) return;
+                const d = doc.data();
+                
+                const statusTxt = document.getElementById('wa-status-text');
+                const qrImg = document.getElementById('wa-qr-img');
+                const sendBtn = document.getElementById('wa-btn-start');
+                const logoutBtn = document.getElementById('wa-logout-btn');
+
+                if(d.state === 'CONNECTED') {
+                    isWABotConnected = true;
+                    statusTxt.innerText = "🟢 CONNECTED & READY";
+                    statusTxt.style.color = "#10b981";
+                    qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
+                    sendBtn.disabled = false;
+                    sendBtn.innerText = "Start Broadcasting Campaign";
+                    logoutBtn.style.display = "block";
+                } else if(d.state === 'QR_READY') {
+                    isWABotConnected = false;
+                    statusTxt.innerText = "🟡 Scan QR Code below";
+                    statusTxt.style.color = "#f59e0b";
+                    qrImg.src = d.qrCodeUrl; 
+                    sendBtn.disabled = true;
+                    logoutBtn.style.display = "none";
+                } else if(d.state === 'DISCONNECTED' || d.state === 'STARTING') {
+                    isWABotConnected = false;
+                    statusTxt.innerText = "🔴 " + (d.state === 'STARTING' ? "Bot Starting..." : "Disconnected. Start Bot.");
+                    statusTxt.style.color = "#ef4444";
+                    qrImg.src = "https://via.placeholder.com/150?text=Waiting+for+Bot";
+                    sendBtn.disabled = true;
+                    logoutBtn.style.display = "none";
+                }
+            });
+        }
+
+        function logoutWhatsApp() {
+            if(confirm("Are you sure you want to logout WhatsApp Web?")) {
+                db.collection('wa_system').doc('commands').set({ command: 'LOGOUT', timestamp: Date.now() });
+                printLog("Logout command sent to Node.js server.", "error");
             }
         }
 
@@ -493,147 +536,88 @@
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
 
-        function updateWAUI() {
-            document.getElementById('wa-stat-total').innerText = waTotalTasks;
-            document.getElementById('wa-stat-pending').innerText = waPendingCount;
-            document.getElementById('wa-stat-sent').innerText = waSentCount;
-            document.getElementById('wa-stat-failed').innerText = waFailedCount;
+        async function initiateWABroadcast() {
+            if(!isWABotConnected) return alert("WhatsApp is not connected! Scan the QR code first.");
             
-            let percent = waTotalTasks === 0 ? 0 : Math.round(((waSentCount + waFailedCount) / waTotalTasks) * 100);
-            document.getElementById('wa-progress-bar').style.width = `${percent}%`;
-
-            if(waFailedCount > 0 && !isBroadcastingWA) document.getElementById('wa-btn-retry').style.display = 'block';
-            else document.getElementById('wa-btn-retry').style.display = 'none';
-
-            let btnPause = document.getElementById('wa-btn-pause');
-            if(isBroadcastingWA) { btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Sending'; btnPause.style.background = '#f59e0b'; }
-            else { btnPause.innerHTML = '<i class="fa-solid fa-play"></i> Resume Sending'; btnPause.style.background = '#3b82f6'; }
-        }
-
-        function initiateWABroadcast() {
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
             if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
+            
             const rawTemplate = document.getElementById('wa-message').value.trim();
             if(!rawTemplate) return alert("Message box cannot be empty.");
             
-            if(!confirm(`Start sending messages to ${selectedBoxes.length} members using safe batching system?`)) return;
+            if(!confirm(`Send real WhatsApp messages to ${selectedBoxes.length} members?\nThe background Node.js server will send them safely using Anti-Ban delays (5 to 12 secs per msg).`)) return;
 
+            const mediaUrl = document.getElementById('wa-media-url').value.trim();
+            currentBatchId = "batch_" + Date.now();
+            
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
-            document.getElementById('wa-logs').innerHTML = ''; // clear logs
-            
-            const mediaUrl = document.getElementById('wa-media-url').value.trim();
-            
-            // Build Queue payload safely
-            waQueue = selectedBoxes.map(cb => {
-                return {
-                    id: cb.value,
-                    name: cb.dataset.name,
-                    phone: cb.dataset.phone,
-                    msgText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no),
-                    mediaUrl: mediaUrl
-                };
-            });
-
-            waTotalTasks = waQueue.length;
-            waPendingCount = waTotalTasks;
-            waSentCount = 0;
-            waFailedCount = 0;
-            waFailedQueue = [];
-            isBroadcastingWA = true;
-            
-            updateWAUI();
-            printLog(`Campaign initialized for ${waTotalTasks} members. Batch size: ${WA_BATCH_SIZE}.`, "info");
-            
-            processWAQueue(); // Start loop
-        }
-
-        function togglePauseWA() {
-            if(waPendingCount === 0 && waQueue.length === 0) return; // already done
-            isBroadcastingWA = !isBroadcastingWA;
-            if(isBroadcastingWA) {
-                printLog("Campaign Resumed.", "info");
-                processWAQueue();
-            } else {
-                printLog("Campaign Paused by Admin.", "error");
-            }
-            updateWAUI();
-        }
-
-        function retryFailedWA() {
-            if(waFailedQueue.length === 0) return;
-            printLog(`Retrying ${waFailedQueue.length} failed messages...`, "info");
-            waQueue = [...waFailedQueue];
-            waFailedQueue = [];
-            
-            waTotalTasks = waQueue.length;
-            waPendingCount = waTotalTasks;
-            waSentCount = 0;
-            waFailedCount = 0;
-            
-            isBroadcastingWA = true;
-            updateWAUI();
-            processWAQueue();
-        }
-
-        // --- THE ENGINE LOOP ---
-        async function processWAQueue() {
-            if(!isBroadcastingWA) return;
-            
-            if(waQueue.length === 0) {
-                isBroadcastingWA = false;
-                printLog(`Campaign Complete! Successfully sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
-                document.getElementById('wa-btn-start').disabled = false;
-                updateWAUI();
-                return;
-            }
-
-            // Extract a safe batch of 50
-            const batchItems = waQueue.splice(0, WA_BATCH_SIZE);
-            waPendingCount = waQueue.length;
-            printLog(`Processing batch of ${batchItems.length} messages...`, "info");
-            updateWAUI();
+            document.getElementById('wa-logs').innerHTML = ''; 
+            printLog("Queueing messages in Firebase for Node.js Bot...", "info");
 
             let batch = db.batch();
+            let count = 0;
+
             try {
-                batchItems.forEach(item => {
-                    let logRef = db.collection('whatsapp_logs').doc();
+                for(let i=0; i<selectedBoxes.length; i++) {
+                    let cb = selectedBoxes[i];
+                    let logRef = db.collection('wa_queue').doc();
+                    
                     batch.set(logRef, {
-                        memberId: item.id,
-                        memberName: item.name,
-                        memberPhone: item.phone,
-                        messageText: item.msgText,
-                        mediaUrl: item.mediaUrl,
-                        status: 'Queued (Ready for API)',
+                        batchId: currentBatchId,
+                        memberId: cb.value,
+                        memberName: cb.dataset.name,
+                        memberPhone: cb.dataset.phone,
+                        messageText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no),
+                        mediaUrl: mediaUrl,
+                        status: 'Pending',
                         timestamp: Date.now()
                     });
-                });
-                
-                await batch.commit(); // Safely save 50 to Firebase
-                waSentCount += batchItems.length;
-                printLog(`✅ Batch successful! (${waSentCount}/${waTotalTasks})`, "success");
-                updateWAUI();
-                
-            } catch(e) {
-                printLog(`❌ Batch Failed: ${e.message}`, "error");
-                waFailedCount += batchItems.length;
-                waFailedQueue.push(...batchItems); // Add to retry pool
-                updateWAUI();
-            }
-
-            // Proceed to next batch ONLY if queue not empty, applying the Anti-Spam Delay
-            if(waQueue.length > 0) {
-                if(isBroadcastingWA) {
-                    printLog(`Anti-spam: Waiting ${WA_DELAY_MS/1000} seconds before next batch...`, "info");
-                    setTimeout(() => { processWAQueue(); }, WA_DELAY_MS);
+                    
+                    count++;
+                    if(count === 490) { await batch.commit(); batch = db.batch(); count = 0; }
                 }
-            } else {
-                // If queue became empty after splice
-                isBroadcastingWA = false;
-                printLog(`Campaign Complete! Successfully sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                if(count > 0) { await batch.commit(); }
+                
+                printLog(`✅ ${selectedBoxes.length} messages queued. Background Bot has started delivering them!`, "success");
+                
+                // Track Progress Realtime
+                trackLiveDelivery(currentBatchId, selectedBoxes.length);
+
+            } catch(e) {
+                printLog("❌ Error queueing messages: " + e.message, "error");
                 document.getElementById('wa-btn-start').disabled = false;
-                updateWAUI();
             }
+        }
+
+        // Realtime Delivery Tracker
+        let deliveryUnsubscribe = null;
+        function trackLiveDelivery(batchId, total) {
+            if(deliveryUnsubscribe) deliveryUnsubscribe();
+
+            deliveryUnsubscribe = db.collection('wa_queue').where('batchId', '==', batchId).onSnapshot(snap => {
+                let pending = 0; let sent = 0; let failed = 0;
+                
+                snap.forEach(doc => {
+                    let st = doc.data().status;
+                    if(st === 'Pending') pending++;
+                    else if(st === 'Sent') sent++;
+                    else failed++;
+                });
+
+                document.getElementById('wa-stat-pending').innerText = pending;
+                document.getElementById('wa-stat-sent').innerText = sent;
+                document.getElementById('wa-stat-failed').innerText = failed;
+                
+                let percent = Math.round(((sent + failed) / total) * 100);
+                document.getElementById('wa-progress-bar').style.width = `${percent}%`;
+
+                if(pending === 0) {
+                    printLog(`🎉 Campaign Finished! Sent: ${sent}, Failed: ${failed}`, "success");
+                    document.getElementById('wa-btn-start').disabled = false;
+                    deliveryUnsubscribe();
+                }
+            });
         }
 
         initCMS('events', 'Events');
