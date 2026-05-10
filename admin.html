@@ -62,11 +62,19 @@
         .wa-input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit;}
         .wa-btn { background: #25D366; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; width: 100%; justify-content: center; transition: 0.3s;}
         .wa-btn:hover { background: #128C7E; transform: translateY(-2px); }
+        .wa-btn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
         .wa-list-box { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 15px; background: #f8fafc; }
         .wa-member-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; transition: background 0.2s;}
         .wa-member-item:hover { background: #e2e8f0; }
         .wa-checkbox { width: 16px; height: 16px; cursor: pointer; }
-        .wa-logs { margin-top: 15px; max-height: 200px; overflow-y: auto; font-size: 12px; background: #f1f5f9; padding: 10px; border-radius: 8px; font-family: monospace; }
+        .wa-logs { margin-top: 15px; max-height: 200px; overflow-y: auto; font-size: 12px; background: #1e293b; color:#a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid var(--dark);}
+        
+        /* Progress Queue Panel */
+        .wa-progress-panel { display:none; background:#f8fafc; padding:20px; border-radius:12px; margin-top:20px; border:1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:15px; font-size:14px; font-weight:600;}
+        .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
+        .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
+        .btn-action { padding:8px 15px; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px; transition:0.2s;}
         /* ---------------------------------------------- */
     </style>
 </head>
@@ -127,11 +135,15 @@
 
         <!-- WHATSAPP BROADCAST UI CONTAINER (Safely Hidden by Default) -->
         <div id="wa-broadcast-container" style="display:none;">
-            <h1 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> WhatsApp Broadcast Panel</h1>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h1 style="display:flex; align-items:center; gap:10px;"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Bulk WhatsApp Panel</h1>
+                <span style="background:#1e293b; color:#10b981; padding:5px 15px; border-radius:20px; font-size:12px; font-weight:bold; letter-spacing:1px;"><i class="fa-solid fa-shield-halved"></i> ANTI-SPAM PROTECTED</span>
+            </div>
+            
             <div style="display:flex; gap:20px; flex-wrap:wrap;">
                 
                 <!-- Left: Member Selection -->
-                <div class="wa-panel" style="flex:1; min-width:300px;">
+                <div class="wa-panel" style="flex:1; min-width:350px;">
                     <h3 style="margin-bottom:10px;">Select Audience</h3>
                     <input type="text" class="wa-input" id="wa-search" placeholder="Search by Name or Mobile No..." onkeyup="filterWAMembers()">
                     
@@ -148,7 +160,7 @@
                 </div>
 
                 <!-- Right: Message Compose -->
-                <div class="wa-panel" style="flex:1; min-width:300px;">
+                <div class="wa-panel" style="flex:1; min-width:350px;">
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
                     <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
@@ -156,19 +168,38 @@
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="6" placeholder="Example: Hello {{member_name}}, your Batrisi membership no is {{member_no}}..."></textarea>
+                    <textarea id="wa-message" class="wa-input" rows="5" placeholder="Example: Hello {{member_name}}, your Batrisi membership no is {{member_no}}..."></textarea>
                     
                     <label style="font-weight:600; font-size:14px; display:block; margin-top:15px;">Attachment / Image URL (Optional)</label>
                     <input type="text" id="wa-media-url" class="wa-input" placeholder="https://example.com/image.jpg">
                     
-                    <button onclick="sendWABroadcast()" class="wa-btn" style="margin-top:20px;">
-                        <i class="fa-solid fa-paper-plane"></i> Send via Business API
+                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;">
+                        <i class="fa-solid fa-paper-plane"></i> Start Broadcast Campaign
                     </button>
 
+                    <!-- Anti-Spam Progress & Queue Panel -->
+                    <div id="wa-progress-panel" class="wa-progress-panel">
+                        <h4 style="margin-bottom:15px; color:var(--dark); border-bottom:1px solid #cbd5e1; padding-bottom:5px;"><i class="fa-solid fa-layer-group"></i> Live Queue Status</h4>
+                        <div class="wa-stat-box">
+                            <span>Total Queue: <span id="wa-stat-total" style="color:var(--primary);">0</span></span>
+                            <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
+                            <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
+                            <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
+                        </div>
+                        <div class="wa-bar-bg">
+                            <div id="wa-progress-bar" class="wa-bar-fill"></div>
+                        </div>
+                        
+                        <div style="margin-top:15px; display:flex; gap:10px; align-items:center;">
+                            <button id="wa-btn-pause" onclick="togglePauseWA()" class="btn-action" style="background:#f59e0b; color:white; flex:1;"><i class="fa-solid fa-pause"></i> Pause Sending</button>
+                            <button id="wa-btn-retry" onclick="retryFailedWA()" class="btn-action" style="background:#ef4444; color:white; flex:1; display:none;"><i class="fa-solid fa-rotate-right"></i> Retry Failed</button>
+                        </div>
+                    </div>
+
                     <!-- Logs Panel -->
-                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live Delivery Logs</h4>
+                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live Engine Terminal</h4>
                     <div id="wa-logs" class="wa-logs">
-                        Waiting for broadcast to start...
+                        System ready. Waiting to initiate batch campaign...
                     </div>
                 </div>
             </div>
@@ -215,12 +246,10 @@
         }
 
         function initCMS(col, title) {
-            // --- ADDED SECURELY TO TOGGLE VIEWS FOR WA BROADCAST (Without deleting old code) ---
             let waContainer = document.getElementById('wa-broadcast-container');
             if(waContainer) waContainer.style.display = 'none';
             document.getElementById('topToolbar').style.display = 'flex';
             document.querySelector('.table-container').style.display = 'block';
-            // -----------------------------------------------------------------------------------
 
             currentCol = col;
             document.getElementById('cms-title').innerText = "Manage " + title;
@@ -313,9 +342,6 @@
             } catch(e) { alert("Error deleting: " + e.message); t.classList.remove('show'); t.style.background = "#10b981"; }
         }
 
-        // ==============================================================
-        // BULLETPROOF CSV READER (Fixes space issues in Excel Headers)
-        // ==============================================================
         async function handleCSVUpload(el) {
             const file = el.files[0];
             if(!file) return;
@@ -335,10 +361,9 @@
                     let batch = db.batch();
                     let count = 0;
                     
-                    // Super Helper: Cleans all spaces and special chars to guarantee a match
                     const getVal = (rowObj, possibleKeys) => {
                         for(let k in rowObj) {
-                            let cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, ''); // Removes ALL spaces and special chars
+                            let cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, ''); 
                             if(possibleKeys.includes(cleanK)) return rowObj[k] ? String(rowObj[k]).trim() : '';
                         }
                         return '';
@@ -379,7 +404,6 @@
             });
         }
 
-        // Standard Functions
         function openAddModal() { currentEditId = null; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Add New Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
         function editDoc(id) { currentEditId = id; uploadedUrlsArray = []; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(f.isMultiFile) { uploadedUrlsArray = data[f.key] || []; if(uploadedUrlsArray.length > 0) document.getElementById('manual_link').value = uploadedUrlsArray[0]; } else if(f.isFile) { uploadedUrlsArray = [data[f.key] || ""]; document.getElementById('manual_link').value = uploadedUrlsArray[0]; updatePreview(uploadedUrlsArray[0]); } else if(document.getElementById('f_'+f.key)) { document.getElementById('f_'+f.key).value = data[f.key] || ""; } }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
         function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isMultiFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" multiple accept="image/*" onchange="handleBulkUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image / G-Drive URL here"></div>`; } else if(f.isFile) { html += `<div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #cbd5e1;"><label>${f.label}</label><input type="file" onchange="handleSingleUpload(this)"><p style="text-align:center; font-size:10px; margin:5px 0; font-weight:bold;">--- OR ---</p><input type="text" id="manual_link" placeholder="Paste Direct Image URL here" oninput="updatePreview(this.value)"><img id="modal_prev" class="preview-img"></div>`; } else if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
@@ -393,27 +417,35 @@
         function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
         
         // ==============================================================
-        // WHATSAPP BROADCAST SYSTEM LOGIC
+        // WHATSAPP BROADCAST - ANTI SPAM QUEUE SYSTEM
         // ==============================================================
         let waMembersList = [];
+        
+        // Queue Configuration
+        const WA_BATCH_SIZE = 50;   // Process 50 members at once
+        const WA_DELAY_MS = 4000;   // Wait 4 seconds between batches
+        
+        // State variables
+        let waQueue = [];
+        let waFailedQueue = [];
+        let isBroadcastingWA = false;
+        let waTotalTasks = 0;
+        let waSentCount = 0;
+        let waPendingCount = 0;
+        let waFailedCount = 0;
 
         async function openWABroadcast() {
-            // Adjust UI
             document.getElementById('wa-broadcast-container').style.display = 'block';
             document.getElementById('topToolbar').style.display = 'none';
             document.querySelector('.table-container').style.display = 'none';
-            
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
             const logsDiv = document.getElementById('wa-logs');
-            
             try {
-                // Fetch members once
                 const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
                 waMembersList = [];
                 snap.forEach(doc => waMembersList.push({ id: doc.id, ...doc.data() }));
-                
                 renderWAMembers(waMembersList);
             } catch(e) {
                 logsDiv.innerHTML = `<span style="color:red;">Error loading members: ${e.message}</span>`;
@@ -422,21 +454,13 @@
 
         function renderWAMembers(list) {
             let html = '';
-            if(list.length === 0) {
-                html = '<p style="padding:15px; color:red; text-align:center;">No members found.</p>';
-            } else {
+            if(list.length === 0) { html = '<p style="padding:15px; color:red; text-align:center;">No members found.</p>'; } 
+            else {
                 list.forEach(m => {
-                    let phone = m.mobileNumber || '';
-                    let name = m.memberName || 'No Name';
-                    let memNo = m.memberNumber || '';
-                    
                     html += `
                     <div class="wa-member-item">
-                        <input type="checkbox" class="wa-checkbox" value="${m.id}" data-phone="${phone}" data-name="${name}" data-no="${memNo}" onchange="updateWACount()">
-                        <div>
-                            <b>${name}</b> ${memNo ? `(No: ${memNo})` : ''}<br>
-                            <small style="color:gray;"><i class="fa-brands fa-whatsapp"></i> ${phone}</small>
-                        </div>
+                        <input type="checkbox" class="wa-checkbox" value="${m.id}" data-phone="${m.mobileNumber || ''}" data-name="${m.memberName || 'Member'}" data-no="${m.memberNumber || ''}" onchange="updateWACount()">
+                        <div><b>${m.memberName || 'No Name'}</b> ${m.memberNumber ? `(No: ${m.memberNumber})` : ''}<br><small style="color:gray;"><i class="fa-brands fa-whatsapp"></i> ${m.mobileNumber || 'N/A'}</small></div>
                     </div>`;
                 });
             }
@@ -446,10 +470,7 @@
 
         function filterWAMembers() {
             const q = document.getElementById('wa-search').value.toLowerCase();
-            const filtered = waMembersList.filter(m => 
-                (m.memberName && m.memberName.toLowerCase().includes(q)) || 
-                (m.mobileNumber && String(m.mobileNumber).toLowerCase().includes(q))
-            );
+            const filtered = waMembersList.filter(m => (m.memberName && m.memberName.toLowerCase().includes(q)) || (m.mobileNumber && String(m.mobileNumber).toLowerCase().includes(q)));
             renderWAMembers(filtered);
             document.getElementById('wa-select-all').checked = false;
         }
@@ -461,78 +482,157 @@
         }
 
         function updateWACount() {
-            const count = document.querySelectorAll('.wa-checkbox:checked').length;
-            document.getElementById('wa-count-badge').innerText = `${count} Selected`;
+            document.getElementById('wa-count-badge').innerText = `${document.querySelectorAll('.wa-checkbox:checked').length} Selected`;
         }
 
-        async function sendWABroadcast() {
-            const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
-            if(selectedBoxes.length === 0) return alert("Please select at least 1 member to send the message.");
+        function printLog(msg, type="info") {
+            const logsDiv = document.getElementById('wa-logs');
+            const time = new Date().toLocaleTimeString();
+            let color = type === "error" ? "#ef4444" : type === "success" ? "#10b981" : "#a5b4fc";
+            logsDiv.innerHTML += `<div style="color:${color}; margin-bottom:5px;">[${time}] ${msg}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateWAUI() {
+            document.getElementById('wa-stat-total').innerText = waTotalTasks;
+            document.getElementById('wa-stat-pending').innerText = waPendingCount;
+            document.getElementById('wa-stat-sent').innerText = waSentCount;
+            document.getElementById('wa-stat-failed').innerText = waFailedCount;
             
+            let percent = waTotalTasks === 0 ? 0 : Math.round(((waSentCount + waFailedCount) / waTotalTasks) * 100);
+            document.getElementById('wa-progress-bar').style.width = `${percent}%`;
+
+            if(waFailedCount > 0 && !isBroadcastingWA) document.getElementById('wa-btn-retry').style.display = 'block';
+            else document.getElementById('wa-btn-retry').style.display = 'none';
+
+            let btnPause = document.getElementById('wa-btn-pause');
+            if(isBroadcastingWA) { btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Sending'; btnPause.style.background = '#f59e0b'; }
+            else { btnPause.innerHTML = '<i class="fa-solid fa-play"></i> Resume Sending'; btnPause.style.background = '#3b82f6'; }
+        }
+
+        function initiateWABroadcast() {
+            const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
+            if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
             const rawTemplate = document.getElementById('wa-message').value.trim();
             if(!rawTemplate) return alert("Message box cannot be empty.");
             
-            if(!confirm(`Are you sure you want to broadcast this message to ${selectedBoxes.length} members via WhatsApp API Structure?`)) return;
+            if(!confirm(`Start sending messages to ${selectedBoxes.length} members using safe batching system?`)) return;
 
-            const mediaUrl = document.getElementById('wa-media-url').value.trim();
-            const logsDiv = document.getElementById('wa-logs');
-            logsDiv.innerHTML = `<div style="color:blue; font-weight:bold; margin-bottom:10px;">➔ Initializing Broadcast Batch for ${selectedBoxes.length} members...</div>`;
+            document.getElementById('wa-btn-start').disabled = true;
+            document.getElementById('wa-progress-panel').style.display = 'block';
+            document.getElementById('wa-logs').innerHTML = ''; // clear logs
             
+            const mediaUrl = document.getElementById('wa-media-url').value.trim();
+            
+            // Build Queue payload safely
+            waQueue = selectedBoxes.map(cb => {
+                return {
+                    id: cb.value,
+                    name: cb.dataset.name,
+                    phone: cb.dataset.phone,
+                    msgText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no),
+                    mediaUrl: mediaUrl
+                };
+            });
+
+            waTotalTasks = waQueue.length;
+            waPendingCount = waTotalTasks;
+            waSentCount = 0;
+            waFailedCount = 0;
+            waFailedQueue = [];
+            isBroadcastingWA = true;
+            
+            updateWAUI();
+            printLog(`Campaign initialized for ${waTotalTasks} members. Batch size: ${WA_BATCH_SIZE}.`, "info");
+            
+            processWAQueue(); // Start loop
+        }
+
+        function togglePauseWA() {
+            if(waPendingCount === 0 && waQueue.length === 0) return; // already done
+            isBroadcastingWA = !isBroadcastingWA;
+            if(isBroadcastingWA) {
+                printLog("Campaign Resumed.", "info");
+                processWAQueue();
+            } else {
+                printLog("Campaign Paused by Admin.", "error");
+            }
+            updateWAUI();
+        }
+
+        function retryFailedWA() {
+            if(waFailedQueue.length === 0) return;
+            printLog(`Retrying ${waFailedQueue.length} failed messages...`, "info");
+            waQueue = [...waFailedQueue];
+            waFailedQueue = [];
+            
+            waTotalTasks = waQueue.length;
+            waPendingCount = waTotalTasks;
+            waSentCount = 0;
+            waFailedCount = 0;
+            
+            isBroadcastingWA = true;
+            updateWAUI();
+            processWAQueue();
+        }
+
+        // --- THE ENGINE LOOP ---
+        async function processWAQueue() {
+            if(!isBroadcastingWA) return;
+            
+            if(waQueue.length === 0) {
+                isBroadcastingWA = false;
+                printLog(`Campaign Complete! Successfully sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                document.getElementById('wa-btn-start').disabled = false;
+                updateWAUI();
+                return;
+            }
+
+            // Extract a safe batch of 50
+            const batchItems = waQueue.splice(0, WA_BATCH_SIZE);
+            waPendingCount = waQueue.length;
+            printLog(`Processing batch of ${batchItems.length} messages...`, "info");
+            updateWAUI();
+
             let batch = db.batch();
-            let batchCount = 0;
-            let successCount = 0;
-
             try {
-                for (let i = 0; i < selectedBoxes.length; i++) {
-                    const cb = selectedBoxes[i];
-                    
-                    // Replace tags for personalization
-                    let finalMsg = rawTemplate
-                        .replace(/{{member_name}}/gi, cb.dataset.name)
-                        .replace(/{{member_no}}/gi, cb.dataset.no);
-
-                    // API Ready Firebase Entry
+                batchItems.forEach(item => {
                     let logRef = db.collection('whatsapp_logs').doc();
                     batch.set(logRef, {
-                        memberId: cb.value,
-                        memberName: cb.dataset.name,
-                        memberPhone: cb.dataset.phone,
-                        messageText: finalMsg,
-                        mediaUrl: mediaUrl,
+                        memberId: item.id,
+                        memberName: item.name,
+                        memberPhone: item.phone,
+                        messageText: item.msgText,
+                        mediaUrl: item.mediaUrl,
                         status: 'Queued (Ready for API)',
                         timestamp: Date.now()
                     });
+                });
+                
+                await batch.commit(); // Safely save 50 to Firebase
+                waSentCount += batchItems.length;
+                printLog(`✅ Batch successful! (${waSentCount}/${waTotalTasks})`, "success");
+                updateWAUI();
+                
+            } catch(e) {
+                printLog(`❌ Batch Failed: ${e.message}`, "error");
+                waFailedCount += batchItems.length;
+                waFailedQueue.push(...batchItems); // Add to retry pool
+                updateWAUI();
+            }
 
-                    successCount++;
-                    batchCount++;
-
-                    // Commit batches of 490 to avoid Firebase limit
-                    if(batchCount >= 490) {
-                        await batch.commit();
-                        batch = db.batch();
-                        batchCount = 0;
-                    }
-
-                    // Simulated live visual logs
-                    setTimeout(() => {
-                        logsDiv.innerHTML = `<div style="color:#059669; border-bottom:1px solid #e2e8f0; padding:4px 0;">✔ Queued for ${cb.dataset.name} (${cb.dataset.phone})</div>` + logsDiv.innerHTML;
-                    }, i * 30);
+            // Proceed to next batch ONLY if queue not empty, applying the Anti-Spam Delay
+            if(waQueue.length > 0) {
+                if(isBroadcastingWA) {
+                    printLog(`Anti-spam: Waiting ${WA_DELAY_MS/1000} seconds before next batch...`, "info");
+                    setTimeout(() => { processWAQueue(); }, WA_DELAY_MS);
                 }
-
-                if(batchCount > 0) {
-                    await batch.commit();
-                }
-
-                setTimeout(() => {
-                    logsDiv.innerHTML = `<div style="background:#10b981; color:white; padding:8px; border-radius:4px; margin-bottom:10px; font-weight:bold;">✅ All ${successCount} messages successfully saved to Broadcast Database! (API webhooks will process them)</div>` + logsDiv.innerHTML;
-                    document.getElementById('wa-message').value = '';
-                    document.getElementById('wa-media-url').value = '';
-                    document.getElementById('wa-select-all').checked = false;
-                    toggleAllWAMembers();
-                }, selectedBoxes.length * 30 + 500);
-
-            } catch (e) {
-                logsDiv.innerHTML = `<div style="color:red;">❌ Error processing broadcast: ${e.message}</div>` + logsDiv.innerHTML;
+            } else {
+                // If queue became empty after splice
+                isBroadcastingWA = false;
+                printLog(`Campaign Complete! Successfully sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                document.getElementById('wa-btn-start').disabled = false;
+                updateWAUI();
             }
         }
 
