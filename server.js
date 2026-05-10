@@ -9,76 +9,127 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 
-// 2. WHATSAPP CLIENT SETUP
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: { args: ['--no-sandbox', '--disable-setuid-sandbox'] }
-});
+// 2. WHATSAPP CLIENT SETUP (Stable Flags)
+let client;
 
-// Helper function to update Status to HTML UI
-async function updateStatus(state, qrUrl = "") {
-    await db.collection('wa_system').doc('status').set({
-        state: state,
-        qrCodeUrl: qrUrl,
-        updatedAt: Date.now()
+function initializeWhatsAppClient() {
+    updateStatus('STARTING');
+    
+    client = new Client({
+        authStrategy: new LocalAuth({ dataPath: './wa_session' }), // Saves session robustly
+        puppeteer: { 
+            headless: true,
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process', 
+                '--disable-gpu'
+            ] 
+        }
     });
-    console.log(`[STATUS] System state updated to: ${state}`);
+
+    // Helper: Update Firebase Status
+    async function updateStatus(state, qrUrl = "") {
+        await db.collection('wa_system').doc('status').set({
+            state: state,
+            qrCodeUrl: qrUrl,
+            updatedAt: Date.now()
+        });
+        console.log(`[STATUS] System state updated to: ${state}`);
+    }
+
+    client.on('qr', async (qr) => {
+        console.log('[WHATSAPP] Fresh QR Code generated. Sending to UI...');
+        // High quality rendering to prevent broken QR
+        const qrBase64 = await qrcode.toDataURL(qr, { errorCorrectionLevel: 'H', margin: 2, width: 400 });
+        await updateStatus('QR_READY', qrBase64);
+    });
+
+    client.on('authenticated', () => {
+        console.log('[WHATSAPP] Authenticated via Local Session!');
+        updateStatus('RECONNECTING'); // Visual state before ready
+    });
+
+    client.on('auth_failure', async msg => {
+        console.error('[WHATSAPP] Authentication Failed!', msg);
+        await updateStatus('DISCONNECTED');
+    });
+
+    client.on('ready', async () => {
+        console.log('[WHATSAPP] Client is completely READY!');
+        await updateStatus('CONNECTED');
+        startQueueProcessor(); 
+    });
+
+    client.on('disconnected', async (reason) => {
+        console.log('[WHATSAPP] Client was disconnected. Reason:', reason);
+        await updateStatus('DISCONNECTED');
+        // Auto Restart logic
+        setTimeout(() => {
+            console.log('Restarting client after disconnect...');
+            client.initialize();
+        }, 5000);
+    });
+
+    console.log('Booting WhatsApp Engine...');
+    client.initialize();
 }
 
-client.on('qr', async (qr) => {
-    console.log('[WHATSAPP] QR Code received. Generating Base64...');
-    const qrBase64 = await qrcode.toDataURL(qr);
-    await updateStatus('QR_READY', qrBase64);
-});
+initializeWhatsAppClient(); // Start for first time
 
-client.on('ready', async () => {
-    console.log('[WHATSAPP] Client is ready and connected!');
-    await updateStatus('CONNECTED');
-    startQueueProcessor(); // Start processing the Firebase queue
-});
-
-client.on('disconnected', async (reason) => {
-    console.log('[WHATSAPP] Client was logged out', reason);
-    await updateStatus('DISCONNECTED');
-});
-
-// Start the client
-console.log('Starting WhatsApp Web Engine...');
-updateStatus('STARTING');
-client.initialize();
-
-// 3. LOGOUT COMMAND LISTENER (Triggered from HTML button)
+// 3. ADMIN COMMAND LISTENER
 db.collection('wa_system').doc('commands').onSnapshot(async (doc) => {
-    if(doc.exists && doc.data().command === 'LOGOUT') {
-        console.log('[COMMAND] Admin requested Logout.');
-        await client.logout();
+    if(!doc.exists) return;
+    const data = doc.data();
+
+    if(data.command === 'LOGOUT') {
+        console.log('[COMMAND] Admin requested Logout. Erasing Session...');
+        try {
+            await client.logout(); 
+            // It will trigger disconnected event and start fresh
+        } catch(e) { console.error("Logout Error:", e); }
+        await db.collection('wa_system').doc('commands').delete();
+    }
+    
+    if(data.command === 'RESTART') {
+        console.log('[COMMAND] Admin requested Restart.');
+        try { await client.destroy(); } catch(e){}
+        setTimeout(() => initializeWhatsAppClient(), 2000);
         await db.collection('wa_system').doc('commands').delete();
     }
 });
 
-// 4. THE ANTI-SPAM QUEUE PROCESSOR
+// 4. ROBUST ANTI-SPAM QUEUE PROCESSOR
 let isProcessing = false;
 
 async function startQueueProcessor() {
     if(isProcessing) return;
     isProcessing = true;
 
-    // Check Firebase for Pending messages continuously every 3 seconds
     setInterval(async () => {
         try {
+            // Check if connected before trying to send
+            const statusDoc = await db.collection('wa_system').doc('status').get();
+            if(statusDoc.data().state !== 'CONNECTED') return;
+
             const snapshot = await db.collection('wa_queue')
                                      .where('status', '==', 'Pending')
                                      .orderBy('timestamp', 'asc')
-                                     .limit(1) // Pick 1 message at a time
+                                     .limit(1) 
                                      .get();
             
-            if(snapshot.empty) return; // Nothing to send
+            if(snapshot.empty) return; 
 
             const doc = snapshot.docs[0];
             const data = doc.data();
             
             let phoneStr = String(data.memberPhone).replace(/[^0-9]/g, '');
-            if(!phoneStr.startsWith('91')) phoneStr = '91' + phoneStr; // Default India code if missing
+            if(!phoneStr) { await doc.ref.update({ status: 'Failed', error: 'Invalid Number' }); return; }
+            if(!phoneStr.startsWith('91')) phoneStr = '91' + phoneStr; 
             const chatId = phoneStr + '@c.us';
 
             console.log(`[QUEUE] Sending message to ${data.memberName} (${chatId})...`);
@@ -91,7 +142,6 @@ async function startQueueProcessor() {
                     await client.sendMessage(chatId, data.messageText);
                 }
                 
-                // Success - Update Firebase
                 await doc.ref.update({ status: 'Sent', sentAt: Date.now() });
                 console.log(`✅ Sent successfully to ${data.memberName}.`);
 
@@ -100,14 +150,17 @@ async function startQueueProcessor() {
                 await doc.ref.update({ status: 'Failed', error: e.message });
             }
 
-            // --- ANTI-BAN DELAY ---
-            // Wait a random time between 5 and 12 seconds before processing the next message
+            // ANTI-BAN RANDOM DELAY (5 to 12 Seconds)
             const randomDelay = Math.floor(Math.random() * (12000 - 5000 + 1)) + 5000;
-            console.log(`[ANTI-SPAM] Waiting ${randomDelay/1000} seconds before next message...`);
+            console.log(`[ANTI-SPAM] Holding for ${randomDelay/1000} seconds...`);
             await new Promise(resolve => setTimeout(resolve, randomDelay));
 
         } catch(error) {
-            console.error('[PROCESSOR ERROR]', error);
+            console.error('[PROCESSOR ERROR]', error.message);
         }
-    }, 3000); // Polling interval
+    }, 3000); 
 }
+
+// Global Crash Handlers (Keeps server alive)
+process.on('unhandledRejection', (reason, promise) => { console.log('Unhandled Rejection at:', promise, 'reason:', reason); });
+process.on('uncaughtException', (error) => { console.log('Uncaught Exception:', error); });
