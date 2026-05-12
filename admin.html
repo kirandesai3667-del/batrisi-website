@@ -61,6 +61,9 @@
         .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; font-weight:600;}
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
+        
+        .file-upload-box { border: 1px dashed #94a3b8; padding: 10px; border-radius: 8px; background: #f8fafc; margin-top: 10px; }
+        .file-upload-box input { width: 100%; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -84,11 +87,7 @@
         <button class="nav-btn" onclick="initCMS('gallery', 'Gallery (Multi Image)')">Manage Gallery</button>
         <button class="nav-btn" onclick="initCMS('committee', 'Committee')">Manage Committee</button>
         <button class="nav-btn" onclick="initCMS('downloads', 'Downloads')">Manage Downloads</button>
-        
-        <!-- Manage Members Button -->
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="initCMS('members', 'Members Database')"><i class="fa-solid fa-users"></i> Manage Members</button>
-
-        <!-- WHATSAPP BROADCAST BUTTON -->
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> 1-Click Auto Sender</button>
         <button class="nav-btn" style="margin-top:auto; color:red;" onclick="location.reload()">Logout</button>
     </div>
@@ -96,7 +95,6 @@
     <div class="main-content">
         <div class="toolbar" id="topToolbar">
             <div><h1 id="cms-title">Manage Events</h1></div>
-            
             <div style="display:flex; gap:15px; align-items:center;">
                 <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
                 <div id="csvUploadBtnContainer" style="display:none; gap: 15px; align-items: center;">
@@ -123,9 +121,9 @@
                         <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> 1-Click Auto Sender (Local)
                     </h2>
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
-                        1. Apne computer me "node server.js" (Start-Bot) chalu karein.<br>
-                        2. Yahan diye gaye QR code ko scan karein (Agar pehle kar chuke hain toh auto-connect ho jayega).<br>
-                        3. Apna "Native" (Gao) select karein aur ek click me sabko message bhejein!
+                        1. Apne computer me "Start-Bot" chalu karein.<br>
+                        2. Yahan diye gaye QR code ko scan karein.<br>
+                        3. Apna "Native" select karein, Message/Photo attach karein aur 1 click me sabko bhejein!
                     </p>
                     <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
@@ -142,7 +140,6 @@
                     
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <input type="text" class="wa-input" id="wa-search" placeholder="Search Name..." onkeyup="filterWAMembers()" style="flex:1; margin-top:0;">
-                        <!-- Native Filter Dropdown -->
                         <select class="wa-input" id="wa-native-filter" onchange="filterWAMembers()" style="flex:1; margin-top:0; font-weight:600; color:var(--primary);">
                             <option value="ALL">All Natives (Gaam)</option>
                         </select>
@@ -158,13 +155,19 @@
                 </div>
 
                 <div class="wa-panel" style="flex:1; min-width:350px;">
-                    <h3 style="margin-bottom:10px;">Compose Message</h3>
-                    <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>Auto-Send Active:</b> Message likhein aur Send dabayein. PC Server khud ba khud sabko message bhej dega. Use <code style="color:red;">{{member_name}}</code>
-                    </div>
-                    <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="5" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
+                    <h3 style="margin-bottom:10px;">Compose Message & Attachment</h3>
                     
+                    <label style="font-weight:600; font-size:14px;">Message Text (Caption if file attached)</label>
+                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
+                    
+                    <!-- ATTACHMENT BOX -->
+                    <div class="file-upload-box">
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px; color:#475569;">
+                            <i class="fa-solid fa-paperclip"></i> Attach File (Image, PDF, Word) - <i>Max 16MB</i>
+                        </label>
+                        <input type="file" id="wa-attachment" accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    </div>
+
                     <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
                         <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
                     </button>
@@ -180,14 +183,14 @@
                     </div>
 
                     <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live PC Terminal Logs</h4>
-                    <div id="wa-logs" class="wa-logs">Make sure PC Server is running...</div>
+                    <div id="wa-logs" class="wa-logs">Waiting for connection...</div>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Modals and scripts config -->
+    <!-- Modals -->
     <div class="modal" id="cmsModal">
         <div class="modal-content">
             <h2 id="modalTitle" style="margin-bottom:20px;">Add/Edit Record</h2>
@@ -210,7 +213,6 @@
         // ==============================================================
         const WA_API_URL = "http://localhost:3000/api/whatsapp"; 
 
-        // SCHEMAS (Added Members Schema to allow manual Add/Edit)
         const schemas = {
             'events': [ {key:'title', label:'Event Title'}, {key:'date', label:'Event Date'}, {key:'desc', label:'Description', isArea:true}, {key:'image', label:'Image', isFile:true} ],
             'media': [ {key:'title', label:'Media / News Title'}, {key:'date', label:'Date (e.g. 15 Aug 2026)'}, {key:'images', label:'Upload Newspaper Image(s) - Select Multiple', isMultiFile:true} ],
@@ -218,7 +220,6 @@
             'gallery': [ {key:'title', label:'Album Caption'}, {key:'images', label:'Upload Multiple Images', isMultiFile:true} ],
             'committee': [ {key:'name', label:'Full Name'}, {key:'position', label:'Position'}, {key:'native', label:'Native Village'}, {key:'phone', label:'Mobile Number'}, {key:'photo', label:'Passport Photo', isFile:true} ],
             'downloads': [ {key:'title', label:'Document Title'}, {key:'desc', label:'Form Description', isArea:true}, {key:'file', label:'PDF Link (Google Drive)'} ],
-            // NEW MEMBERS SCHEMA FOR MANUAL ADDITION
             'members': [ 
                 {key:'memberNumber', label:'Member Number'}, 
                 {key:'memberName', label:'Full Name'}, 
@@ -246,7 +247,6 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             
-            // Allow manual Add for Members too!
             document.getElementById('standardAddBtn').style.display = 'flex';
             
             if(col === 'members') {
@@ -299,7 +299,6 @@
 
         function deleteDoc(id) { if(confirm("Are you sure?")) db.collection(currentCol).doc(id).delete(); }
         
-        // Modal functions
         function openAddModal() { currentEditId = null; document.getElementById('modalTitle').innerText = "Add Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
         function editDoc(id) { currentEditId = id; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(document.getElementById('f_'+f.key)) document.getElementById('f_'+f.key).value = data[f.key] || ""; }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
         function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
@@ -335,7 +334,7 @@
         }
 
         // ==============================================================
-        // 1-CLICK LOCAL WHATSAPP SENDER (WITH NATIVE FILTER)
+        // 1-CLICK LOCAL WHATSAPP SENDER (WITH ATTACHMENT)
         // ==============================================================
         let waMembersList =[];
         let isWABotConnected = false;
@@ -345,6 +344,7 @@
         let waSentCount = 0;
         let waFailedCount = 0;
         let statusInterval = null;
+        let globalAttachment = null; // Stores Base64 of selected file
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -367,7 +367,6 @@
                 }
             });
             
-            // Populate Native Dropdown
             let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
             Array.from(uniqueNatives).sort().forEach(n => {
                 nativeHtml += `<option value="${n}">${n}</option>`;
@@ -453,20 +452,51 @@
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
 
+        // Base64 Converter Helper
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Keep only Base64 raw data
+                reader.onerror = error => reject(error);
+            });
+        }
+
         async function initiateWABroadcast() {
             if(!isWABotConnected) return alert("WhatsApp is not connected!");
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
             if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
             
             const rawTemplate = document.getElementById('wa-message').value.trim();
-            if(!rawTemplate) return alert("Message box cannot be empty.");
+            const fileInput = document.getElementById('wa-attachment');
+
+            if(!rawTemplate && fileInput.files.length === 0) return alert("Message box empty AND no file selected. Please add something to send!");
             
-            if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} members?\nThe PC Server will send messages smoothly in the background.`)) return;
+            if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} members?`)) return;
 
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
             
+            // Handle Attachment if any
+            if(fileInput.files.length > 0) {
+                printLog(`Reading file: ${fileInput.files[0].name}...`, "info");
+                try {
+                    const base64Data = await getBase64(fileInput.files[0]);
+                    globalAttachment = {
+                        mediaBase64: base64Data,
+                        mimeType: fileInput.files[0].type,
+                        fileName: fileInput.files[0].name
+                    };
+                    printLog("File ready for broadcast!", "success");
+                } catch(e) {
+                    printLog("File reading error!", "error");
+                    return;
+                }
+            } else {
+                globalAttachment = null;
+            }
+
             waQueue = selectedBoxes.map(cb => {
                 return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no) };
             });
@@ -500,10 +530,19 @@
                 printLog(`❌ Failed: Invalid Number for ${item.name}`, "error");
             } else {
                 try {
+                    // API Payload construction
+                    let payload = { to: phoneStr, message: item.msgText };
+                    if(globalAttachment) {
+                        payload.mediaBase64 = globalAttachment.mediaBase64;
+                        payload.mimeType = globalAttachment.mimeType;
+                        payload.fileName = globalAttachment.fileName;
+                    }
+
                     const response = await fetch(WA_API_URL + '/send', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ to: phoneStr, message: item.msgText })
+                        body: JSON.stringify(payload)
                     });
+
                     if(response.ok) { waSentCount++; printLog(`✅ Sent to ${item.name}!`, "success"); } 
                     else { waFailedCount++; printLog(`❌ Failed to send to ${item.name}`, "error"); }
                 } catch(e) { waFailedCount++; printLog(`❌ PC Server Error for ${item.name}`, "error"); }
@@ -512,7 +551,6 @@
             updateWAUI();
 
             if(waQueue.length > 0) {
-                // Anti-Ban delay: 4 to 8 seconds
                 const randomDelay = Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000;
                 setTimeout(processLocalQueue, randomDelay);
             } else { processLocalQueue(); }
