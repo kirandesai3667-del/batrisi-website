@@ -120,7 +120,7 @@
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
                         1. Apne computer me "Start-Bot" chalu karein.<br>
                         2. Yahan diye gaye QR code ko scan karein.<br>
-                        3. Apna "Native" select karein aur 1 click me sabko message bhejein!
+                        3. Apna "Native" select karein, Message aur Link attach karein aur 1 click me sabko bhejein!
                     </p>
                     <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
@@ -155,11 +155,17 @@
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
                     <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>🔥 Pro Tip (For Photos & PDFs):</b> File upload karne se better hai ki aap file ko <b>Google Drive</b> ya <b>ImgBB</b> par daal kar uski Link yahan message me paste karein. WhatsApp khud photo/pdf ka preview dikha dega! Isse system kabhi crash nahi hoga.
+                        <b>🔥 Pro Tip:</b> Apni File ko Google Drive/ImgBB par daal kar uski link neeche alag box me paste karein. System apne aap link format karke bhej dega!
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="6" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai. Form yahan se download karein: https://drive.google.com/..."></textarea>
+                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
+                    
+                    <!-- DEDICATED LINK ATTACHMENT BOX -->
+                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
+                        <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
+                    </label>
+                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
 
                     <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
                         <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
@@ -325,7 +331,7 @@
         }
 
         // ==============================================================
-        // 1-CLICK LOCAL WHATSAPP SENDER
+        // 1-CLICK LOCAL WHATSAPP SENDER (WITH DEDICATED LINK BOX)
         // ==============================================================
         let waMembersList =[];
         let isWABotConnected = false;
@@ -448,16 +454,30 @@
             if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
             
             const rawTemplate = document.getElementById('wa-message').value.trim();
-            if(!rawTemplate) return alert("Message box empty! Type a message.");
+            const linkInput = document.getElementById('wa-link-input').value.trim();
+
+            if(!rawTemplate && !linkInput) return alert("Please type a message or paste a link.");
             
             if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} members?`)) return;
 
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
-            
+
             waQueue = selectedBoxes.map(cb => {
-                return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no) };
+                // Personalize the main text
+                let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no);
+                
+                // Smartly append the link if provided
+                if(linkInput) {
+                    if(userMsg) {
+                        userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + linkInput;
+                    } else {
+                        userMsg = '🔗 *Attachment:*\n' + linkInput;
+                    }
+                }
+                
+                return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
             });
 
             waTotalTasks = waQueue.length;
@@ -490,6 +510,7 @@
             } else {
                 try {
                     let payload = { to: phoneStr, message: item.msgText };
+                    
                     const response = await fetch(WA_API_URL + '/send', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
