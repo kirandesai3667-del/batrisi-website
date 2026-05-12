@@ -208,9 +208,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ==============================================================
         // LOCALHOST API URL
-        // ==============================================================
         const WA_API_URL = "http://localhost:3000/api/whatsapp"; 
 
         const schemas = {
@@ -334,7 +332,7 @@
         }
 
         // ==============================================================
-        // 1-CLICK LOCAL WHATSAPP SENDER (WITH ATTACHMENT)
+        // 1-CLICK LOCAL WHATSAPP SENDER (WITH ATTACHMENT FIX)
         // ==============================================================
         let waMembersList =[];
         let isWABotConnected = false;
@@ -344,7 +342,7 @@
         let waSentCount = 0;
         let waFailedCount = 0;
         let statusInterval = null;
-        let globalAttachment = null; // Stores Base64 of selected file
+        let globalAttachment = null; 
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -452,12 +450,12 @@
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
 
-        // Base64 Converter Helper
+        // Base64 Converter
         function getBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]); // Keep only Base64 raw data
+                reader.onload = () => resolve(reader.result.split(',')[1]);
                 reader.onerror = error => reject(error);
             });
         }
@@ -470,15 +468,15 @@
             const rawTemplate = document.getElementById('wa-message').value.trim();
             const fileInput = document.getElementById('wa-attachment');
 
-            if(!rawTemplate && fileInput.files.length === 0) return alert("Message box empty AND no file selected. Please add something to send!");
+            if(!rawTemplate && fileInput.files.length === 0) return alert("Message box empty AND no file selected. Add something to send!");
             
-            if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} members?`)) return;
+            if(!confirm(`Start 1-Click Sender for ${selectedBoxes.length} members?`)) return;
 
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
             
-            // Handle Attachment if any
+            // Handle Attachment
             if(fileInput.files.length > 0) {
                 printLog(`Reading file: ${fileInput.files[0].name}...`, "info");
                 try {
@@ -491,6 +489,7 @@
                     printLog("File ready for broadcast!", "success");
                 } catch(e) {
                     printLog("File reading error!", "error");
+                    document.getElementById('wa-btn-start').disabled = false;
                     return;
                 }
             } else {
@@ -530,7 +529,6 @@
                 printLog(`❌ Failed: Invalid Number for ${item.name}`, "error");
             } else {
                 try {
-                    // API Payload construction
                     let payload = { to: phoneStr, message: item.msgText };
                     if(globalAttachment) {
                         payload.mediaBase64 = globalAttachment.mediaBase64;
@@ -543,9 +541,18 @@
                         body: JSON.stringify(payload)
                     });
 
-                    if(response.ok) { waSentCount++; printLog(`✅ Sent to ${item.name}!`, "success"); } 
-                    else { waFailedCount++; printLog(`❌ Failed to send to ${item.name}`, "error"); }
-                } catch(e) { waFailedCount++; printLog(`❌ PC Server Error for ${item.name}`, "error"); }
+                    if(response.ok) { 
+                        waSentCount++; 
+                        printLog(`✅ Sent to ${item.name}!`, "success"); 
+                    } else { 
+                        const errData = await response.json();
+                        waFailedCount++; 
+                        printLog(`❌ Failed for ${item.name}: ${errData.error || 'Server Error'}`, "error"); 
+                    }
+                } catch(e) { 
+                    waFailedCount++; 
+                    printLog(`❌ PC Server Error for ${item.name}`, "error"); 
+                }
             }
 
             updateWAUI();
