@@ -151,7 +151,7 @@
                     </div>
                 </div>
 
-                <!-- NEW BLOCK: Other Family Member -->
+                <!-- NEW BLOCK: Other Family Member (With Smart Search) -->
                 <div class="row g-3 p-3 bg-white rounded mb-4 border border-warning shadow-sm">
                     <div class="col-md-12">
                         <label class="small fw-bold text-dark">Do you have any other member in your family?</label>
@@ -161,9 +161,11 @@
                         </select>
                     </div>
                     <div id="otherMemberFields" class="row g-2 mt-2 hidden">
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted">Other Member Number</label>
-                            <input type="text" id="otherMNo" class="form-control" placeholder="Enter Member No" onblur="fetchOtherMemberName()">
+                        <div class="col-md-6" style="position: relative;">
+                            <label class="small fw-bold text-muted">Other Member Search</label>
+                            <input type="text" id="otherMNo" class="form-control" placeholder="Search MNO, Name, Mobile" oninput="handleOtherMemberSearch()" onblur="fetchOtherMemberName()" autocomplete="off">
+                            <!-- Dropdown List for Autocomplete -->
+                            <div id="otherMemberDropdown" class="list-group position-absolute w-100 hidden" style="z-index: 1050; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 1px solid #ddd; top: 100%; left: 0;"></div>
                         </div>
                         <div class="col-md-6">
                             <label class="small fw-bold text-muted">Other Member Name</label>
@@ -542,26 +544,110 @@ function toggleOtherMemberFields() {
     }
 }
 
-async function fetchOtherMemberName() {
-    const mno = document.getElementById('otherMNo').value.trim().toUpperCase();
-    const nameInput = document.getElementById('otherMName');
-    if(!mno) { nameInput.value = ""; return; }
+// ==============================================================
+// --- NEW SMART SEARCH FUNCTIONALITY FOR OTHER FAMILY MEMBER ---
+// ==============================================================
+let globalAllMembersCache = null;
 
-    setLoader(true, "Searching Member...", "");
-    try {
-        const members = await fetchMasterDB();
-        const foundUser = members.find(m => m.mno === mno);
-        if(foundUser) {
-            nameInput.value = foundUser.name;
-        } else {
-            nameInput.value = "";
-            alert("Member not found in records");
-        }
-    } catch (e) {
-        alert("Error: " + e.message);
-    }
-    setLoader(false);
+// Helper to fetch and cache DB once to avoid exhausting Firebase Limits
+async function getCachedMasterDB() {
+    if (globalAllMembersCache) return globalAllMembersCache;
+    globalAllMembersCache = await fetchMasterDB();
+    return globalAllMembersCache;
 }
+
+// Function triggered dynamically on typing
+async function handleOtherMemberSearch() {
+    const inputElement = document.getElementById('otherMNo');
+    const query = inputElement.value.trim().toUpperCase();
+    const dropdown = document.getElementById('otherMemberDropdown');
+    const nameInput = document.getElementById('otherMName');
+
+    nameInput.value = ""; // Clear name box on new typing
+
+    if (query.length < 2) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+
+    // Show temporary loading UI if database is fetching for the first time
+    if (!globalAllMembersCache) {
+        dropdown.innerHTML = `<div class="list-group-item p-2 text-center text-muted small"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Fetching Member List...</div>`;
+        dropdown.classList.remove('hidden');
+    }
+
+    const members = await getCachedMasterDB();
+    
+    // Support split naming like "HITENDRA JASHWANT"
+    const searchTerms = query.split(" ").filter(t => t);
+
+    // Smart Filtering Logic (Find by Name OR Exact MNO OR Mobile)
+    const filtered = members.filter(m => {
+        const nameMatch = searchTerms.every(term => (m.name || "").toUpperCase().includes(term));
+        const mnoMatch = (m.mno || "").toUpperCase().includes(query);
+        const mobMatch = (m.mobile || "").includes(query);
+        return nameMatch || mnoMatch || mobMatch;
+    }).slice(0, 15); // limit visible results
+
+    if (filtered.length > 0) {
+        let html = "";
+        filtered.forEach(m => {
+            // using onmousedown instead of onclick prevents input onblur from breaking the selection flow
+            html += `<button type="button" class="list-group-item list-group-item-action p-2" onmousedown="selectOtherMember('${m.mno}', '${m.name.replace(/'/g, "\\'")}')">
+                        <div class="fw-bold text-primary" style="font-size: 13px;">${m.name}</div>
+                        <div class="text-muted" style="font-size: 11px;">MNO: <b>${m.mno}</b> | Mob: <b>${m.mobile}</b></div>
+                     </button>`;
+        });
+        dropdown.innerHTML = html;
+        dropdown.classList.remove('hidden');
+    } else {
+        dropdown.innerHTML = `<div class="list-group-item p-2 text-muted small">No member found</div>`;
+        dropdown.classList.remove('hidden');
+    }
+}
+
+// Final action when user selects someone from the dropdown
+function selectOtherMember(mno, name) {
+    document.getElementById('otherMNo').value = mno;
+    document.getElementById('otherMName').value = name;
+    document.getElementById('otherMemberDropdown').classList.add('hidden');
+}
+
+// Existing function upgraded to handle 'Exact MNO paste & click away' safely
+async function fetchOtherMemberName() {
+    // Timeout gives "selectOtherMember" (onmousedown) enough time to fire first
+    setTimeout(async () => {
+        const dropdown = document.getElementById('otherMemberDropdown');
+        if(dropdown) dropdown.classList.add('hidden'); // Close dropdown when clicked away
+
+        const mnoInput = document.getElementById('otherMNo').value.trim().toUpperCase();
+        const nameInput = document.getElementById('otherMName');
+        
+        // If box is empty, do nothing
+        if(!mnoInput) { nameInput.value = ""; return; }
+        // If name box is already correctly populated from dropdown selection, skip fetch
+        if(nameInput.value.length > 0) return;
+
+        setLoader(true, "Verifying Member...", "");
+        try {
+            const members = await getCachedMasterDB();
+            // Fallback exact match search
+            const foundUser = members.find(m => m.mno === mnoInput || m.mobile === mnoInput);
+            if(foundUser) {
+                document.getElementById('otherMNo').value = foundUser.mno;
+                nameInput.value = foundUser.name;
+            } else {
+                nameInput.value = "";
+                alert("Exact Match Not Found. Please type Name or Mobile number to search from dropdown.");
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+        setLoader(false);
+    }, 150);
+}
+// ==============================================================
+
 
 // --- LOAD STATISTICS & RECORDS TABLE ---
 async function loadStatistics() {
@@ -762,6 +848,7 @@ async function uploadMasterInstant() {
             }
             await db.collection("settings").doc("master_db").set({ data: JSON.stringify(membersArray) });
             alert(`⚡ UPLOAD SUCCESSFUL! ${membersArray.length} Members Uploaded Instantly in 1 Second.`);
+            globalAllMembersCache = null; // Clear Search cache to refresh
         } catch(err) { alert("Upload Error: " + err.message); }
         setLoader(false);
     };
@@ -811,6 +898,7 @@ async function updateMobileData() {
         await db.collection("settings").doc("master_db").update({ data: JSON.stringify(cachedDBData) });
         alert("Success! Mobile Number Updated. Member can now login.");
         document.getElementById('update-mob-res').classList.add('hidden'); document.getElementById('searchMno').value = "";
+        globalAllMembersCache = null; // Clear cache on update
     } catch(e) { alert("Error updating: " + e.message); }
     setLoader(false);
 }
@@ -854,6 +942,7 @@ async function addNewMember() {
         // Save updated list to Firebase
         await db.collection("settings").doc("master_db").set({ data: JSON.stringify(members) });
         alert(`Success! Member ${name} added successfully. They can now login using mobile number ${mobile}.`);
+        globalAllMembersCache = null; // Refresh Search cache
         
         // Clear input fields
         document.getElementById('newMemName').value = "";
@@ -1175,6 +1264,9 @@ function openRegistrationForm() {
     document.getElementById('dispNative').value = globalMemberData.native;
     document.getElementById('dispAddr').value = globalMemberData.addr;
     updateDynamicPricingUI();
+
+    // Prefetch Smart Search DB securely in background
+    getCachedMasterDB(); 
 
     // --- NEW FEATURE: AUTO-FILL PREVIOUS STUDENT & OTHER MEMBER DATA ---
     if(globalPastStudents && globalPastStudents.length > 0) {
