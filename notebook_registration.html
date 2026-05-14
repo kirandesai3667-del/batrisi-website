@@ -665,15 +665,75 @@ async function fetchOtherMemberName() {
 }
 // ==============================================================
 
-// Helper logic for OCR document verification matching
+// --- LIGHTWEIGHT GUJARATI TO ENGLISH TRANSLITERATION ---
+function gujaratiToLatin(text) {
+    if(!text) return "";
+    const gujMap = {
+        'અ':'a','આ':'aa','ઇ':'i','ઈ':'ee','ઉ':'u','ઊ':'oo','એ':'e','ઐ':'ai','ઓ':'o','ઔ':'au',
+        'ક':'k','ખ':'kh','ગ':'g','ઘ':'gh','ચ':'ch','છ':'chh','જ':'j','ઝ':'z','ટ':'t','ઠ':'th',
+        'ડ':'d','ઢ':'dh','ણ':'n','ત':'t','થ':'th','દ':'d','ધ':'dh','ન':'n','પ':'p','ફ':'f',
+        'બ':'b','ભ':'bh','મ':'m','ય':'y','ર':'r','લ':'l','વ':'v','શ':'sh','ષ':'sh','સ':'s',
+        'હ':'h','ળ':'l','ક્ષ':'ksh','જ્ઞ':'gn',
+        'ા':'a','િ':'i','ી':'ee','ુ':'u','ૂ':'oo','ે':'e','ૈ':'ai','ો':'o','ૌ':'au','ં':'n','ઃ':'h','ૃ':'ru',
+        '૦':'0','૧':'1','૨':'2','૩':'3','૪':'4','૫':'5','૬':'6','૭':'7','૮':'8','૯':'9'
+    };
+    let res = '';
+    for(let i=0; i<text.length; i++) {
+        res += gujMap[text[i]] || text[i];
+    }
+    return res;
+}
+
+// --- LIGHTWEIGHT FUZZY MATCHING (LEVENSHTEIN SIMILARITY) ---
+function getSimilarity(s1, s2) {
+    s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
+    let costs = [];
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i === 0) costs[j] = j;
+            else {
+                if (j > 0) {
+                    let newValue = costs[j - 1];
+                    if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                    costs[j - 1] = lastValue; lastValue = newValue;
+                }
+            }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+    }
+    let longer = Math.max(s1.length, s2.length);
+    if (longer === 0) return 1.0;
+    return (longer - costs[s2.length]) / parseFloat(longer);
+}
+
+// Helper logic for OCR document verification matching (UPDATED FOR GUJARATI + FUZZY MATCH)
 function calculateOCRMatch(ocrText, sName, fName, surname) {
-    const cleanOcr = ocrText.toUpperCase().replace(/[^A-Z0-9]/g, ' ');
+    const rawOcr = ocrText || "";
+    // 1. Transliterate Gujarati to Latin
+    const transliterated = gujaratiToLatin(rawOcr);
+    
+    // 2. Clean text (keep only alphanumerics)
+    const cleanOcr = transliterated.toUpperCase().replace(/[^A-Z0-9]/g, ' ');
+    const ocrWords = cleanOcr.split(' ').filter(w => w.length > 2);
+    
     const nameStr = `${sName} ${fName} ${surname}`.toUpperCase();
     const expectedWords = nameStr.split(' ').filter(w => w.trim().length > 2);
     
     let matchCount = 0;
     expectedWords.forEach(w => {
-        if (cleanOcr.includes(w)) matchCount++;
+        // Exact substring check first for speed
+        if (cleanOcr.includes(w)) {
+            matchCount++;
+        } else {
+            // Fuzzy Search
+            let bestMatch = 0;
+            for(let ow of ocrWords) {
+                let sim = getSimilarity(w, ow);
+                if(sim > bestMatch) bestMatch = sim;
+            }
+            if(bestMatch >= 0.70) matchCount++; // 70% threshold allows minor OCR typos
+        }
     });
     
     const percentage = expectedWords.length > 0 ? Math.round((matchCount / expectedWords.length) * 100) : 0;
@@ -689,7 +749,7 @@ function calculateOCRMatch(ocrText, sName, fName, surname) {
         statusClass = "warning text-dark";
     }
     
-    return { text: ocrText, percentage, statusText, statusClass };
+    return { text: rawOcr, percentage, statusText, statusClass };
 }
 
 function showOCRText(buttonElement) {
@@ -1399,6 +1459,31 @@ async function compressImage(file) {
     });
 }
 
+async function compressImageForOCR(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image(); img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Downscale aggressively for fast OCR (1000px width is sufficient for text)
+                const MAX_WIDTH = 1000; 
+                let scaleSize = 1;
+                if(img.width > MAX_WIDTH) { scaleSize = MAX_WIDTH / img.width; }
+                canvas.width = img.width * scaleSize; canvas.height = img.height * scaleSize;
+                const ctx = canvas.getContext('2d'); 
+                
+                // High contrast & grayscale for better OCR accuracy and speed
+                ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                canvas.toBlob((blob) => { resolve(blob); }, 'image/jpeg', 0.8); 
+            };
+        };
+        reader.onerror = error => reject(error);
+    });
+}
+
 async function finalSubmit() {
     const entries = document.querySelectorAll('.student-entry');
     if(entries.length === 0) return alert("Please select number of students!");
@@ -1507,11 +1592,13 @@ async function finalSubmit() {
             const fName = entry.querySelector('.s-fname').value.toUpperCase();
             const surname = entry.querySelector('.s-surname').value.toUpperCase();
             const compressedBlob = await compressImage(file);
+            const ocrBlob = await compressImageForOCR(file); // Lightweight blob for OCR processing
             
             const task = (async () => {
                 let ocrTextRaw = "OCR FAILED OR SKIPPED";
                 try {
-                    const ocrRes = await Tesseract.recognize(compressedBlob, 'eng');
+                    // Optimized OCR processing supporting English & Gujarati
+                    const ocrRes = await Tesseract.recognize(ocrBlob, 'eng+guj');
                     ocrTextRaw = ocrRes.data.text;
                 } catch(ocrErr) { 
                     console.error("OCR Error:", ocrErr); 
