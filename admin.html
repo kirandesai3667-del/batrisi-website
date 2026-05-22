@@ -54,7 +54,9 @@
         .wa-list-box { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 15px; background: #f8fafc; }
         .wa-member-item { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; transition: background 0.2s;}
         .wa-member-item:hover { background: #e2e8f0; }
+        .wa-checkbox { width: 16px; height: 16px; cursor: pointer; }
         .wa-logs { margin-top: 15px; max-height: 250px; overflow-y: auto; font-size: 12px; background: #1e293b; color:#a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid var(--dark);}
+        
         .wa-conn-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 20px;}
         .wa-qr-container { width: 220px; height: 220px; background: white; border-radius: 8px; border: 2px dashed #cbd5e1; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: hidden; flex-shrink: 0; position: relative;}
         .wa-qr-container img { max-width: 100%; max-height: 100%; object-fit: contain;}
@@ -109,9 +111,6 @@
         <div class="toolbar" id="topToolbar">
             <div><h1 id="cms-title">Manage Events</h1></div>
             <div style="display:flex; gap:15px; align-items:center;">
-                <!-- Auto Import Committee Button (Hidden by default, shown in Committee tab) -->
-                <button class="btn-add" id="importCommitteeBtn" style="display:none; background:#3b82f6;" onclick="autoImportCommittee()"><i class="fa-solid fa-user-tie"></i> Import Default 20 Members</button>
-                
                 <button class="btn-add" id="standardAddBtn" onclick="openAddModal()">+ Add New Record</button>
                 <div id="csvUploadBtnContainer" style="display:none; gap: 15px; align-items: center;">
                     <button class="btn-add" style="background:#ef4444;" onclick="deleteAllMembers()"><i class="fa-solid fa-trash-can"></i> Delete All</button>
@@ -139,7 +138,7 @@
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
                         1. Apne computer me "Start-Bot" chalu rakhein.<br>
                         2. Audience Type select karein (Members ya Committee).<br>
-                        3. Filters lagakar ek click me sabko message bhejein!
+                        3. Naye member add karne ho toh yahin list me "+ Add Member" daba dein!
                     </p>
                     <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
@@ -151,6 +150,7 @@
 
             <div style="display:flex; gap:20px; flex-wrap:wrap;">
                 
+                <!-- LEFT PANEL: AUDIENCE SELECTION -->
                 <div class="wa-panel" style="flex:1; min-width:350px;">
                     <h3 style="margin-bottom:10px;">Select Target Audience</h3>
                     
@@ -160,6 +160,13 @@
                         <button class="tab-btn" id="tab-committee" onclick="switchAudience('committee')">Committee Group</button>
                     </div>
                     
+                    <!-- ACTION BUTTONS (ADD / IMPORT) -->
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <button onclick="openWAAddModal()" style="flex:1; padding:10px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px;"><i class="fa-solid fa-user-plus"></i> Add New Member</button>
+                        <button id="wa-import-btn" onclick="autoImportCommittee()" style="display:none; flex:1; padding:10px; background:#8b5cf6; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px;"><i class="fa-solid fa-download"></i> Import 20 Names</button>
+                    </div>
+                    
+                    <!-- FILTERS -->
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <input type="text" class="wa-input" id="wa-search" placeholder="Search Name..." onkeyup="filterWAMembers()" style="flex:1; margin-top:0;">
                     </div>
@@ -179,14 +186,14 @@
                         <span id="wa-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
                     </div>
                     
-                    <!-- Extra action buttons -->
-                    <div style="margin-top:10px; display:flex; gap:10px;">
-                        <button onclick="removeSelectedMembers()" style="flex:1; padding:8px; font-size:12px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Remove Selected</button>
+                    <div style="margin-top:10px;">
+                        <button onclick="removeSelectedMembers()" style="width:100%; padding:8px; font-size:12px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Remove Selected from Group</button>
                     </div>
 
                     <div id="wa-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Audience...</p></div>
                 </div>
 
+                <!-- RIGHT PANEL: COMPOSE MESSAGE -->
                 <div class="wa-panel" style="flex:1; min-width:350px;">
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
@@ -197,7 +204,7 @@
                     </div>
 
                     <label style="font-weight:600; font-size:14px; display:block; margin-top:15px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}} ({{designation}}), aapki meeting rakhi gayi hai..."></textarea>
+                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapki meeting rakhi gayi hai..."></textarea>
                     
                     <!-- DEDICATED LINK BOX -->
                     <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
@@ -227,7 +234,7 @@
 
     </div>
 
-    <!-- Modals -->
+    <!-- MODAL (Used for both CMS and WA Panel Additions) -->
     <div class="modal" id="cmsModal">
         <div class="modal-content">
             <h2 id="modalTitle" style="margin-bottom:20px;">Add/Edit Record</h2>
@@ -260,7 +267,6 @@
 
         let currentCol = 'events'; window.tableData = {}; let currentEditId = null;
 
-        // Default 20 Committee Members Data
         const defaultCommitteeData = [
             {name: "HITENDRABHAI JASHWANTILAL SHAH", position: "PRESIDENT", native: "BAHIYAL", phone: "9825698298"},
             {name: "GUNVANTLAL CHANDULAL SHAH", position: "VICE PRESIDENT", native: "VALAD", phone: "9825441916"},
@@ -348,7 +354,7 @@
                             <td><span style="color:var(--primary); font-weight:600; font-size:15px;">${d.name || '-'}</span></td>
                             <td><span style="background:#dbeafe; color:#2563eb; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">${d.position || '-'}</span></td>
                             <td><b>${d.native || '-'}</b><br><small><i class="fa-solid fa-phone"></i> ${d.phone || '-'}</small></td>
-                            <td><button onclick="editDoc('${doc.id}')" style="color:#2563eb; cursor:pointer; border:none; background:none; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button><button onclick="deleteDoc('${doc.id}')" style="color:red; cursor:pointer; border:none; background:none;"><i class="fa-solid fa-trash"></i></button></td>
+                            <td><button onclick="editDoc('${doc.id}')" style="color:#2563eb; cursor:pointer; border:none; background:none; margin-right:15px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button><button onclick="deleteDoc('${doc.id}')" style="color:red; cursor:pointer; border:none; background:none;"><i class="fa-solid fa-trash"></i> Delete</button></td>
                         </tr>`;
                     } else {
                         tempHtml += `<tr><td><b>${d.title || d.name || 'No Name'}</b></td><td>-</td><td><button onclick="editDoc('${doc.id}')" style="color:#2563eb; cursor:pointer; border:none; background:none; margin-right:10px;"><i class="fa-solid fa-pen-to-square"></i> Edit</button><button onclick="deleteDoc('${doc.id}')" style="color:red; cursor:pointer; border:none; background:none;"><i class="fa-solid fa-trash"></i> Delete</button></td></tr>`;
@@ -359,14 +365,20 @@
         }
 
         function deleteDoc(id) { 
-            if(confirm(`Are you sure you want to remove this ${currentCol === 'committee' ? 'Committee Member from the group' : 'record'}?`)) {
+            if(confirm(`Are you sure you want to delete this record?`)) {
                 db.collection(currentCol).doc(id).delete(); 
-                showToast("Removed Successfully!");
+                showToast("Deleted Successfully!");
             }
         }
         
         async function autoImportCommittee() {
-            if(!confirm("This will instantly add the 20 default Committee Members to the database. Proceed?")) return;
+            const snap = await db.collection('committee').get();
+            if(snap.size > 0) {
+                if(!confirm("You already have Committee Members in the database. Are you sure you want to add the 20 default names again? (This might create duplicates)")) return;
+            } else {
+                if(!confirm("This will instantly add the 20 default Committee Members to the database. Proceed?")) return;
+            }
+            
             const t = document.getElementById('toast'); t.innerText = "Importing..."; t.style.background = "#3b82f6"; t.classList.add('show');
             let batch = db.batch();
             defaultCommitteeData.forEach((item, index) => {
@@ -378,6 +390,16 @@
         }
         
         function openAddModal() { currentEditId = null; document.getElementById('modalTitle').innerText = "Add Record"; generateModalFields(); document.getElementById('cmsModal').style.display = 'flex'; }
+        
+        // This function handles opening the add modal from the WhatsApp Broadcast Panel
+        function openWAAddModal() {
+            currentCol = currentTarget; // 'members' or 'committee'
+            currentEditId = null;
+            document.getElementById('modalTitle').innerText = currentTarget === 'committee' ? "Add Committee Member" : "Add Member";
+            generateModalFields();
+            document.getElementById('cmsModal').style.display = 'flex';
+        }
+
         function editDoc(id) { currentEditId = id; document.getElementById('modalTitle').innerText = "Edit Record"; generateModalFields(); const data = window.tableData[id]; setTimeout(() => { schemas[currentCol].forEach(f => { if(document.getElementById('f_'+f.key)) document.getElementById('f_'+f.key).value = data[f.key] || ""; }); }, 50); document.getElementById('cmsModal').style.display = 'flex'; }
         function generateModalFields() { const fields = schemas[currentCol]; let html = ""; fields.forEach(f => { if(f.isArea) { html += `<div class="form-group"><label>${f.label}</label><textarea id="f_${f.key}" rows="4"></textarea></div>`; } else { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="f_${f.key}"></div>`; } }); document.getElementById('dynamicFields').innerHTML = html; }
         async function saveDataToFirebase() { const btn = document.getElementById('saveBtn'); btn.innerText = "SAVING..."; btn.disabled = true; const fields = schemas[currentCol]; let dataObj = {}; fields.forEach(f => { dataObj[f.key] = document.getElementById('f_'+f.key).value; }); try { if (currentEditId) { await db.collection(currentCol).doc(currentEditId).update(dataObj); } else { dataObj.timestamp = Date.now(); await db.collection(currentCol).add(dataObj); } document.getElementById('cmsModal').style.display = 'none'; showToast("Saved Successfully!"); } catch(e) { alert("Error!"); } btn.innerText = "SAVE RECORD"; btn.disabled = false; }
@@ -412,7 +434,7 @@
         }
 
         // ==============================================================
-        // BROADCAST SENDER SYSTEM (MEMBERS + COMMITTEE)
+        // BROADCAST SENDER SYSTEM (MEMBERS + COMMITTEE) [REAL-TIME]
         // ==============================================================
         let currentTarget = 'members'; // 'members' or 'committee'
         let waMembersList = [];
@@ -421,6 +443,7 @@
         let waQueue =[];
         let waTotalTasks = 0, waSentCount = 0, waFailedCount = 0;
         let statusInterval = null;
+        let waUnsubscribe = null;
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -430,55 +453,63 @@
             event.target.classList.add('active');
 
             startAPIStatusPolling();
-            switchAudience('members'); // Default load
+            switchAudience('members'); 
         }
 
-        async function switchAudience(target) {
+        function switchAudience(target) {
             currentTarget = target;
             document.getElementById('tab-members').classList.remove('active');
             document.getElementById('tab-committee').classList.remove('active');
             document.getElementById(`tab-${target}`).classList.add('active');
             
+            // Show/Hide Import Button only for Committee
+            if(target === 'committee') {
+                document.getElementById('wa-import-btn').style.display = 'block';
+            } else {
+                document.getElementById('wa-import-btn').style.display = 'none';
+            }
+            
             document.getElementById('wa-members-list').innerHTML = '<p style="padding:20px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching Audience...</p>';
 
-            const snap = await db.collection(target).orderBy('timestamp', 'desc').get();
-            waMembersList = [];
-            let uniqueNatives = new Set();
-            let uniqueDesig = new Set();
-            
-            snap.forEach(doc => {
-                let d = doc.data();
-                // Normalize data structure for universal rendering
-                let normData = { 
-                    id: doc.id, 
-                    name: d.memberName || d.name || 'No Name', 
-                    phone: d.mobileNumber || d.phone || '', 
-                    native: d.nativeName || d.native || '',
-                    extra: d.memberNumber || d.position || ''
-                };
-                waMembersList.push(normData);
+            if(waUnsubscribe) waUnsubscribe(); // Stop listening to previous tab
+
+            // REAL-TIME LISTENER FOR THE BROADCAST LIST
+            waUnsubscribe = db.collection(target).orderBy('timestamp', 'desc').onSnapshot(snap => {
+                waMembersList = [];
+                let uniqueNatives = new Set();
+                let uniqueDesig = new Set();
                 
-                if(normData.native.trim()) uniqueNatives.add(normData.native.trim());
-                if(target === 'committee' && normData.extra.trim()) uniqueDesig.add(normData.extra.trim());
+                snap.forEach(doc => {
+                    let d = doc.data();
+                    let normData = { 
+                        id: doc.id, 
+                        name: d.memberName || d.name || 'No Name', 
+                        phone: d.mobileNumber || d.phone || '', 
+                        native: d.nativeName || d.native || '',
+                        extra: d.memberNumber || d.position || ''
+                    };
+                    waMembersList.push(normData);
+                    
+                    if(normData.native.trim()) uniqueNatives.add(normData.native.trim());
+                    if(target === 'committee' && normData.extra.trim()) uniqueDesig.add(normData.extra.trim());
+                });
+                
+                let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
+                Array.from(uniqueNatives).sort().forEach(n => { nativeHtml += `<option value="${n}">${n}</option>`; });
+                document.getElementById('wa-native-filter').innerHTML = nativeHtml;
+
+                const desigFilter = document.getElementById('wa-desig-filter');
+                if(target === 'committee') {
+                    desigFilter.style.display = 'block';
+                    let desigHtml = '<option value="ALL">All Designations</option>';
+                    Array.from(uniqueDesig).sort().forEach(d => { desigHtml += `<option value="${d}">${d}</option>`; });
+                    desigFilter.innerHTML = desigHtml;
+                } else {
+                    desigFilter.style.display = 'none';
+                }
+
+                filterWAMembers(); // Re-apply filters and render
             });
-            
-            // Populate Native Dropdown
-            let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
-            Array.from(uniqueNatives).sort().forEach(n => { nativeHtml += `<option value="${n}">${n}</option>`; });
-            document.getElementById('wa-native-filter').innerHTML = nativeHtml;
-
-            // Handle Designation Dropdown (Only for Committee)
-            const desigFilter = document.getElementById('wa-desig-filter');
-            if(target === 'committee') {
-                desigFilter.style.display = 'block';
-                let desigHtml = '<option value="ALL">All Designations</option>';
-                Array.from(uniqueDesig).sort().forEach(d => { desigHtml += `<option value="${d}">${d}</option>`; });
-                desigFilter.innerHTML = desigHtml;
-            } else {
-                desigFilter.style.display = 'none';
-            }
-
-            renderWAMembers(waMembersList);
         }
 
         function startAPIStatusPolling() {
@@ -563,7 +594,7 @@
             await batch.commit();
             
             showToast(`${selectedBoxes.length} members removed successfully.`);
-            switchAudience(currentTarget); // Refresh list
+            // No need to call switchAudience() manually because real-time snapshot will update list automatically!
         }
 
         function checkSMS() {
