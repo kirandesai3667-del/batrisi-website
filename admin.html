@@ -468,7 +468,6 @@
                     }
                 });
                 
-                // Safe manual sorting to prevent index errors
                 waMembersList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
                 let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
@@ -704,10 +703,10 @@
                 waCommitteeList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
                 waCommitteeList.forEach(data => {
-                    // Safe string handling to prevent UI crash if names contain quotes
-                    const safeName = (data.name || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-                    const safePhone = (data.phone || '').replace(/'/g, "&apos;");
-                    const safeId = data.id;
+                    // Safe string handling to prevent UI crash (Fixed Root Cause)
+                    const safeName = String(data.name || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                    const safePhone = String(data.phone || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                    const safeId = String(data.id || '');
 
                     html += `
                         <div class="wa-member-item" style="justify-content:space-between;">
@@ -780,8 +779,8 @@
                         if(name && phone) {
                             waCommitteeList.push({
                                 id: 'comm_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                                name: name,
-                                phone: phone,
+                                name: String(name),
+                                phone: String(phone),
                                 timestamp: Date.now() + addedCount
                             });
                             addedCount++;
@@ -828,9 +827,8 @@
 
         function editWACommittee(id, name, phone) {
             document.getElementById('waCommId').value = id;
-            // Decode simple quotes back into input box
-            document.getElementById('waCommName').value = name.replace(/&apos;/g, "'").replace(/&quot;/g, '"');
-            document.getElementById('waCommPhone').value = phone.replace(/&apos;/g, "'");
+            document.getElementById('waCommName').value = String(name).replace(/&apos;/g, "'").replace(/&quot;/g, '"');
+            document.getElementById('waCommPhone').value = String(phone).replace(/&apos;/g, "'").replace(/&quot;/g, '"');
             document.getElementById('waCommModalTitle').innerText = 'Edit Committee Contact';
             document.getElementById('waCommModal').style.display = 'flex';
         }
@@ -851,7 +849,7 @@
                 
                 if(!name || !phone) return alert('Name aur Mobile dono daalna jaruri he!');
                 
-                const payload = { id, name, phone, timestamp: Date.now() };
+                const payload = { id: String(id), name: String(name), phone: String(phone), timestamp: Date.now() };
                 
                 if(!Array.isArray(waCommitteeList)) waCommitteeList = [];
                 const index = waCommitteeList.findIndex(m => m.id === id);
@@ -901,7 +899,6 @@
             const commQueue = selectedBoxes.map(cb => {
                 let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name);
                 
-                // Inject the Attachment Link if provided
                 if(commLinkInput) {
                     if(userMsg) userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + commLinkInput;
                     else userMsg = '🔗 *Attachment:*\n' + commLinkInput;
