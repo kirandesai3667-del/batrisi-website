@@ -215,9 +215,25 @@
                     </label>
                     <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
 
-                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
-                        <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
-                    </button>
+                    <!-- SMART BROADCAST CONTROLS -->
+                    <div id="wa-active-banner" style="display:none; background:#fef3c7; border:1px solid #f59e0b; padding:12px; border-radius:8px; margin-top:15px; font-size:13px; color:#92400e;">
+                        <b>⚠️ Unfinished Campaign Detected:</b> You have an incomplete broadcast queue. You can resume it safely without duplicate messages, or stop to clear it.
+                    </div>
+
+                    <div id="wa-campaign-controls" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="flex:1;" disabled>
+                            <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
+                        </button>
+                        <button id="wa-btn-pause" onclick="pauseBroadcast()" class="wa-btn" style="display:none; background:#f59e0b; flex:1;">
+                            <i class="fa-solid fa-pause"></i> Pause
+                        </button>
+                        <button id="wa-btn-resume" onclick="resumeBroadcast()" class="wa-btn" style="display:none; background:#3b82f6; flex:1;">
+                            <i class="fa-solid fa-play"></i> Resume Queue
+                        </button>
+                        <button id="wa-btn-stop" onclick="stopBroadcast(false)" class="wa-btn" style="display:none; background:#ef4444; flex:1;">
+                            <i class="fa-solid fa-stop"></i> Stop & Clear
+                        </button>
+                    </div>
 
                     <div id="wa-progress-panel" style="margin-top:25px; display:none;">
                         <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
@@ -386,6 +402,9 @@
         let currentWASubTab = 'general'; // 'general' or 'committee'
         let isWABotConnected = false;
         let isBroadcastingWA = false;
+        
+        // --- SMART BROADCAST ENGINE STATE ---
+        let currentCampaignId = null;
         let waQueue = [];
         let waTotalTasks = 0;
         let waSentCount = 0;
@@ -447,6 +466,94 @@
 
             renderWAMembers(waMembersList);
             loadCommitteeSenderList();
+            
+            // Check for unfinished persistent campaign
+            checkExistingCampaign();
+        }
+
+        // --- SMART STATE MANAGEMENT (LOCALSTORAGE) ---
+        function saveCampaignState() {
+            const state = {
+                campaignId: currentCampaignId,
+                queue: waQueue,
+                total: waTotalTasks,
+                sent: waSentCount,
+                failed: waFailedCount
+            };
+            localStorage.setItem('wa_active_campaign', JSON.stringify(state));
+        }
+
+        function checkExistingCampaign() {
+            let saved = localStorage.getItem('wa_active_campaign');
+            if(saved) {
+                try {
+                    let data = JSON.parse(saved);
+                    if(data && data.queue && data.queue.length > 0) {
+                        waQueue = data.queue;
+                        waTotalTasks = data.total || 0;
+                        waSentCount = data.sent || 0;
+                        waFailedCount = data.failed || 0;
+                        currentCampaignId = data.campaignId;
+
+                        document.getElementById('wa-active-banner').style.display = 'block';
+                        document.getElementById('wa-btn-start').style.display = 'none';
+                        document.getElementById('wa-btn-pause').style.display = 'none';
+                        document.getElementById('wa-btn-resume').style.display = 'flex';
+                        document.getElementById('wa-btn-stop').style.display = 'flex';
+
+                        document.getElementById('wa-progress-panel').style.display = 'block';
+                        updateWAUI();
+                        printLog(`♻️ Recovered persistent campaign (${waSentCount}/${waTotalTasks} sent). Waiting to resume.`, "info");
+                    }
+                } catch(e) {
+                    localStorage.removeItem('wa_active_campaign');
+                }
+            }
+        }
+
+        function pauseBroadcast() {
+            isBroadcastingWA = false;
+            printLog("⏸️ Campaign paused.", "info");
+            document.getElementById('wa-btn-pause').style.display = 'none';
+            document.getElementById('wa-btn-resume').style.display = 'flex';
+        }
+
+        function resumeBroadcast() {
+            if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
+            isBroadcastingWA = true;
+            printLog("▶️ Resuming campaign queue...", "info");
+            document.getElementById('wa-btn-resume').style.display = 'none';
+            document.getElementById('wa-btn-pause').style.display = 'flex';
+            processLocalQueue();
+        }
+
+        function stopBroadcast(completed = false) {
+            if(!completed && !confirm("Are you sure you want to STOP and CLEAR this campaign? This cannot be undone.")) return;
+            isBroadcastingWA = false;
+            localStorage.removeItem('wa_active_campaign');
+            
+            waQueue = [];
+            waTotalTasks = 0;
+            waSentCount = 0;
+            waFailedCount = 0;
+            currentCampaignId = null;
+
+            document.getElementById('wa-active-banner').style.display = 'none';
+            if (isWABotConnected) {
+                document.getElementById('wa-btn-start').style.display = 'flex';
+                document.getElementById('wa-btn-start').disabled = false;
+            }
+            document.getElementById('wa-btn-pause').style.display = 'none';
+            document.getElementById('wa-btn-resume').style.display = 'none';
+            document.getElementById('wa-btn-stop').style.display = 'none';
+            document.getElementById('wa-progress-panel').style.display = 'none';
+
+            if(completed) {
+                printLog("✅ Campaign completed successfully and cleared from memory.", "success");
+            } else {
+                printLog("🛑 Campaign manually stopped and cleared.", "error");
+            }
+            updateWAUI();
         }
 
         function switchWASubTab(tab) {
@@ -578,7 +685,6 @@
         function startAPIStatusPolling() {
             if(statusInterval) clearInterval(statusInterval);
             statusInterval = setInterval(async () => {
-                if(isBroadcastingWA) return; 
                 const statusTxt = document.getElementById('wa-status-text');
                 const qrImg = document.getElementById('wa-qr-img');
                 const sendBtn = document.getElementById('wa-btn-start');
@@ -592,13 +698,22 @@
                         statusTxt.innerText = "🟢 CONNECTED (Ready to Send)";
                         statusTxt.style.color = "#10b981";
                         qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
-                        sendBtn.disabled = false;
+                        
+                        // Enable Start Button ONLY if no active campaign is locking the UI
+                        if (!isBroadcastingWA && !localStorage.getItem('wa_active_campaign')) {
+                            sendBtn.disabled = false;
+                        }
                     } else if (data.status === 'QR_READY') {
                         isWABotConnected = false;
                         statusTxt.innerText = "🟡 Scan the QR Code";
                         statusTxt.style.color = "#f59e0b";
                         qrImg.src = WA_API_URL + '/qr.png?t=' + Date.now();
                         sendBtn.disabled = true;
+
+                        if(isBroadcastingWA) {
+                            printLog("🔴 PC Server waiting for QR. Auto-pausing campaign.", "error");
+                            pauseBroadcast();
+                        }
                     }
                 } catch(e) {
                     isWABotConnected = false;
@@ -606,6 +721,11 @@
                     statusTxt.style.color = "#ef4444";
                     qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23ef4444' font-weight='bold'>Turn on PC Server</text></svg>";
                     sendBtn.disabled = true;
+
+                    if(isBroadcastingWA) {
+                        printLog("🔴 PC Server disconnected. Auto-pausing campaign.", "error");
+                        pauseBroadcast();
+                    }
                 }
             }, 2500);
         }
@@ -684,6 +804,10 @@
 
         async function initiateWABroadcast() {
             if(!isWABotConnected) return alert("WhatsApp is not connected!");
+
+            if(localStorage.getItem('wa_active_campaign')) {
+                if(!confirm("An unfinished campaign exists in memory. Starting a new one will OVERWRITE it. Proceed?")) return;
+            }
             
             let selectedBoxes = [];
             if(currentWASubTab === 'general') {
@@ -701,10 +825,18 @@
             
             if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} contacts?`)) return;
 
-            document.getElementById('wa-btn-start').disabled = true;
+            // UI Setup
+            document.getElementById('wa-btn-start').style.display = 'none';
+            document.getElementById('wa-btn-pause').style.display = 'flex';
+            document.getElementById('wa-btn-stop').style.display = 'flex';
+            document.getElementById('wa-btn-resume').style.display = 'none';
+            document.getElementById('wa-active-banner').style.display = 'none';
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
 
+            currentCampaignId = 'CAMP_' + Date.now();
+
+            // Build Smart Queue Elements
             waQueue = selectedBoxes.map(cb => {
                 let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no || '');
                 
@@ -716,34 +848,63 @@
                     }
                 }
                 
-                return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
+                return { 
+                    id: cb.dataset.phone + '_' + Date.now(),
+                    name: cb.dataset.name, 
+                    phone: cb.dataset.phone, 
+                    msgText: userMsg,
+                    status: 'pending',
+                    retries: 0
+                };
             });
 
             waTotalTasks = waQueue.length;
-            waSentCount = 0; waFailedCount = 0;
+            waSentCount = 0; 
+            waFailedCount = 0;
             isBroadcastingWA = true;
 
-            printLog(`Campaign Started for ${waTotalTasks} targets...`, "info");
+            saveCampaignState();
+
+            printLog(`🚀 Campaign Started for ${waTotalTasks} targets...`, "info");
             updateWAUI();
             processLocalQueue();
         }
 
         async function processLocalQueue() {
-            if(waQueue.length === 0) {
-                isBroadcastingWA = false;
-                printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
-                document.getElementById('wa-btn-start').disabled = false;
-                updateWAUI();
+            if(!isBroadcastingWA) return; // Paused or Stopped
+            if(!isWABotConnected) {
+                printLog("⚠️ WhatsApp disconnected. Auto-pausing broadcast.", "error");
+                pauseBroadcast();
                 return;
             }
 
-            const item = waQueue.shift();
+            // Find next pending item
+            let itemIndex = waQueue.findIndex(q => q.status === 'pending');
+            
+            // If no pending, check if any failed items are eligible for retry
+            if(itemIndex === -1) {
+                itemIndex = waQueue.findIndex(q => q.status === 'failed' && (q.retries || 0) < 2);
+                
+                if(itemIndex === -1) {
+                    // Campaign completely finished
+                    isBroadcastingWA = false;
+                    printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                    stopBroadcast(true); 
+                    return;
+                } else {
+                    printLog(`♻️ Retrying failed message for ${waQueue[itemIndex].name}...`, "info");
+                }
+            }
+
+            let item = waQueue[itemIndex];
             let phoneStr = String(item.phone).replace(/[^0-9]/g, '');
             if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
 
             printLog(`Sending to ${item.name}...`, "info");
 
             if(!phoneStr || phoneStr.length < 10) {
+                item.status = 'failed';
+                item.retries = 3; // Block further retries
                 waFailedCount++;
                 printLog(`❌ Failed: Invalid Number for ${item.name}`, "error");
             } else {
@@ -756,31 +917,49 @@
                     });
 
                     if(response.ok) { 
-                        waSentCount++; 
+                        // Successfully sent. Lock the status permanently.
+                        item.status = 'sent';
+                        waSentCount++;
+                        if (item.retries > 0) waFailedCount--; // Fix counts if it succeeded on a retry
                         printLog(`✅ Sent to ${item.name}!`, "success"); 
                     } else { 
                         const errData = await response.json();
-                        waFailedCount++; 
-                        printLog(`❌ Failed for ${item.name}: ${errData.error || 'Server Error'}`, "error"); 
+                        item.retries = (item.retries || 0) + 1;
+                        if(item.retries >= 2) {
+                            item.status = 'failed';
+                            waFailedCount++;
+                            printLog(`❌ Failed for ${item.name}: ${errData.error || 'Server Error'}`, "error"); 
+                        } else {
+                            printLog(`⚠️ Will retry ${item.name} later.`, "info");
+                        }
                     }
                 } catch(e) { 
-                    waFailedCount++; 
-                    printLog(`❌ PC Server Error for ${item.name}`, "error"); 
+                    item.retries = (item.retries || 0) + 1;
+                    printLog(`❌ PC Server Network Error for ${item.name}. Auto-pausing to prevent spam.`, "error"); 
+                    pauseBroadcast();
+                    return;
                 }
             }
 
+            // Persistence: Save state after every single operation guarantees no duplicate sends
+            saveCampaignState();
             updateWAUI();
 
-            if(waQueue.length > 0) {
+            // Controlled Batching logic with random safe delay (4 to 8 seconds)
+            if(isBroadcastingWA) {
                 const randomDelay = Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000;
                 setTimeout(processLocalQueue, randomDelay);
-            } else { processLocalQueue(); }
+            }
         }
 
         function updateWAUI() {
-            document.getElementById('wa-stat-pending').innerText = waQueue.length;
+            // Count purely from array status to be perfectly accurate
+            const pendingCount = waQueue.filter(q => q.status === 'pending').length;
+            
+            document.getElementById('wa-stat-pending').innerText = pendingCount;
             document.getElementById('wa-stat-sent').innerText = waSentCount;
             document.getElementById('wa-stat-failed').innerText = waFailedCount;
+            
             let percent = waTotalTasks === 0 ? 0 : Math.round(((waSentCount + waFailedCount) / waTotalTasks) * 100);
             document.getElementById('wa-progress-bar').style.width = `${percent}%`;
         }
