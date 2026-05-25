@@ -205,16 +205,21 @@
                 </div>
             </div>
 
-            <!-- NEW COMMITTEE SENDER -->
+            <!-- NEW COMMITTEE SENDER WITH CSV UPLOAD -->
             <div id="wa-tab-committee" style="display:none;">
                 <div class="wa-committee-grid">
                     
                     <!-- Manage & Select -->
                     <div class="wa-panel" style="flex:1; min-width:350px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                             <h3>Committee Mailing List</h3>
-                            <div style="display:flex; gap:10px;">
-                                <button onclick="openAddWACommitteeModal()" class="btn-add" style="padding: 6px 12px; font-size: 13px;">+ Add Member</button>
+                            <div style="display:flex; gap:8px;">
+                                <!-- CSV Upload Feature Built specifically for Committee Tab -->
+                                <input type="file" id="waCommCsvInput" accept=".csv" style="display:none;" onchange="handleWACommCSVUpload(this)">
+                                <button onclick="document.getElementById('waCommCsvInput').click()" class="btn-add" style="padding: 6px 12px; font-size: 13px; background:#10b981;"><i class="fa-solid fa-file-csv"></i> Upload CSV</button>
+                                
+                                <button onclick="openAddWACommitteeModal()" class="btn-add" style="padding: 6px 12px; font-size: 13px;">+ Add</button>
+                                <button onclick="clearAllWACommittee()" class="btn-add" style="padding: 6px 12px; font-size: 13px; background:#ef4444;" title="Clear List"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                         
@@ -224,7 +229,7 @@
                             </label>
                             <span id="wa-comm-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
                         </div>
-                        <div id="wa-committee-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
+                        <div id="wa-committee-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;">Loading...</p></div>
                     </div>
 
                     <!-- Compose, Send & Receipts -->
@@ -640,7 +645,7 @@
 
 
         // ==============================================================
-        // NEW FEATURE: BUG-FREE COMMITTEE MEMBER SENDER (WITH SMART FALLBACK)
+        // NEW FEATURE: BUG-FREE COMMITTEE MEMBER SENDER (PURE LOCAL STORAGE + CSV)
         // ==============================================================
 
         function switchWATab(tab) {
@@ -661,34 +666,19 @@
 
         let waCommitteeList = [];
         
-        async function loadWACommittee() {
-            const box = document.getElementById('wa-committee-list');
-            box.innerHTML = '<p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p>';
-            
-            try {
-                // Try fetching from Firebase
-                const snap = await db.collection('wa_committee_contacts').get();
+        function loadWACommittee() {
+            // Instant load using local storage only to bypass ALL Firebase Permission bugs
+            const localData = localStorage.getItem('wa_committee_fallback');
+            if(localData) {
+                waCommitteeList = JSON.parse(localData);
+            } else {
                 waCommitteeList = [];
-                snap.forEach(doc => {
-                    waCommitteeList.push({ id: doc.id, ...doc.data() });
-                });
-            } catch(e) {
-                console.error("Firebase Read Blocked, Using Local Storage Fallback.");
-                // If Firebase denies permission, silently fall back to local storage so UI doesn't hang
-                const localData = localStorage.getItem('wa_committee_fallback');
-                if(localData) {
-                    waCommitteeList = JSON.parse(localData);
-                } else {
-                    waCommitteeList = [];
-                }
             }
-            
             renderWACommitteeUI();
         }
 
         function renderWACommitteeUI() {
             let html = '';
-            // Safely sort newest first
             waCommitteeList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             waCommitteeList.forEach(data => {
@@ -709,10 +699,7 @@
             if(waCommitteeList.length === 0) {
                 html = `
                     <div style="padding:25px; text-align:center;">
-                        <p style="color:gray; margin-bottom:15px;">No committee members added to this sender list yet.</p>
-                        <button onclick="importMainCommittee()" class="btn-add" style="margin: 0 auto; background:#10b981;">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Sync from Main Database
-                        </button>
+                        <p style="color:gray; margin-bottom:15px;">List is empty. Use the buttons above to manually Add or Upload CSV!</p>
                     </div>`;
             }
             
@@ -720,41 +707,63 @@
             updateWACommCount();
         }
 
-        // Imports the 20 members directly from main committee list
-        async function importMainCommittee() {
-            if(!confirm("Import existing members from 'Manage Committee' database?")) return;
-            const box = document.getElementById('wa-committee-list');
-            box.innerHTML = '<p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Importing from Main Database...</p>';
+        // --- NEW CSV UPLOAD FEATURE FOR COMMITTEE SENDER ---
+        function handleWACommCSVUpload(el) {
+            const file = el.files[0]; if(!file) return;
             
-            try {
-                const snap = await db.collection('committee').get();
-                let count = 0;
-                
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    if(data.name && data.phone) {
-                        const id = db.collection('wa_committee_contacts').doc().id;
-                        const payload = { id, name: data.name, phone: data.phone, timestamp: Date.now() + count };
-                        waCommitteeList.push(payload);
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const rows = results.data;
+                    if(rows.length === 0) return alert("CSV is empty.");
+                    
+                    let addedCount = 0;
+                    rows.forEach(row => {
+                        // Smart Key Mapping
+                        const getVal = (possibleKeys) => { 
+                            for(let k in row) { 
+                                let cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+                                if(possibleKeys.includes(cleanK)) return row[k] ? String(row[k]).trim() : ''; 
+                            } 
+                            return ''; 
+                        };
                         
-                        // Fire and forget Firebase save (if rules block it, catch ignores it)
-                        db.collection('wa_committee_contacts').doc(id).set(payload).catch(e=>{});
-                        count++;
+                        const name = getVal(['name', 'membername', 'fullname']);
+                        const phone = getVal(['mobilenumber', 'mobileno', 'mobile', 'phone']);
+                        
+                        if(name && phone) {
+                            waCommitteeList.push({
+                                id: 'comm_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                                name: name,
+                                phone: phone,
+                                timestamp: Date.now() + addedCount
+                            });
+                            addedCount++;
+                        }
+                    });
+                    
+                    localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
+                    renderWACommitteeUI();
+                    
+                    if(addedCount > 0) {
+                        alert(`Successfully mapped and uploaded ${addedCount} committee members!`);
+                    } else {
+                        alert("No matching 'Name' and 'Mobile Number' columns found in the CSV.");
                     }
-                });
-                
-                // Save locally to ensure it works regardless of Firestore rules
-                localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
-
-                if(count > 0) {
-                    alert(`Successfully imported ${count} committee members!`);
-                } else {
-                    alert("Main Committee database is empty! Please add members there first or add them manually here.");
+                    el.value = ""; // reset input
                 }
-            } catch(e) {
-                alert("Import failed. Try adding manually using the '+ Add Member' button.");
+            });
+        }
+
+        // CLEAR ALL BUTTON
+        function clearAllWACommittee() {
+            if(waCommitteeList.length === 0) return alert("List is already empty.");
+            if(confirm("Are you sure you want to completely clear the Committee Sender List?")) {
+                waCommitteeList = [];
+                localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
+                renderWACommitteeUI();
             }
-            renderWACommitteeUI();
         }
 
         function openAddWACommitteeModal() {
@@ -773,51 +782,33 @@
             document.getElementById('waCommModal').style.display = 'flex';
         }
 
-        async function deleteWACommittee(id) {
+        function deleteWACommittee(id) {
             if(!confirm('Are you sure you want to delete this contact?')) return;
-            
-            try {
-                await db.collection('wa_committee_contacts').doc(id).delete();
-            } catch(e) {}
-            
-            // Backup handling for instant UI fix
             waCommitteeList = waCommitteeList.filter(m => m.id !== id);
             localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
             renderWACommitteeUI();
         }
 
-        async function saveWACommitteeContact() {
+        function saveWACommitteeContact() {
             const idInput = document.getElementById('waCommId').value;
-            const id = idInput || db.collection('wa_committee_contacts').doc().id;
+            const id = idInput || 'comm_' + Date.now();
             const name = document.getElementById('waCommName').value.trim();
             const phone = document.getElementById('waCommPhone').value.trim();
             
             if(!name || !phone) return alert('Please enter both name and mobile number!');
             
-            const payload = { name, phone, timestamp: Date.now() };
+            const payload = { id, name, phone, timestamp: Date.now() };
             
-            // Try saving to Firebase
-            try {
-                if(idInput) {
-                    await db.collection('wa_committee_contacts').doc(id).update(payload);
-                } else {
-                    await db.collection('wa_committee_contacts').doc(id).set(payload);
-                }
-            } catch(e) {
-                console.log("Saving locally (Firestore block handled safely).");
-            }
-            
-            // Instantly update the local list and storage to bypass any waiting times
             const index = waCommitteeList.findIndex(m => m.id === id);
             if(index >= 0) {
-                waCommitteeList[index] = {id, ...payload};
+                waCommitteeList[index] = payload;
             } else {
-                waCommitteeList.push({id, ...payload});
+                waCommitteeList.push(payload);
             }
-            localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
             
+            localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
             document.getElementById('waCommModal').style.display = 'none';
-            renderWACommitteeUI(); // Instantly displays member
+            renderWACommitteeUI();
         }
 
         function toggleAllWACommittee() {
