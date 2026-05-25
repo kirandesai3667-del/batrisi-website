@@ -225,7 +225,7 @@
                         
                         <div style="margin-top:10px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                             <label style="font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                                <input type="checkbox" id="wa-comm-select-all" class="wa-checkbox" onchange="toggleAllWACommittee()"> Select All
+                                <input type="checkbox" id="wa-comm-select-all" class="wa-checkbox" onchange="toggleAllWACommittee()" checked> Select All
                             </label>
                             <span id="wa-comm-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
                         </div>
@@ -657,26 +657,55 @@
 
 
         // ==============================================================
-        // NEW FEATURE: BULLET-PROOF COMMITTEE SENDER (CRASH-FREE)
+        // NEW FEATURE: BULLET-PROOF COMMITTEE SENDER (PRE-LOADED 20 MEMBERS)
         // ==============================================================
 
-        // Secure Memory Wrapper - Will never crash even if browser blocks storage
+        // Hardcoded 20 members as requested to fix "Loading..." permanently
+        const defaultCommitteeMembers = [
+            { id: 'c1', name: 'HITENDRABHAI JASHWANTLAL SHAH', phone: '9825698298' },
+            { id: 'c2', name: 'GUNWANTLAL CHANDULAL SHAH', phone: '9825441916' },
+            { id: 'c3', name: 'MAYANKKUMAR RAMANLAL SHAH', phone: '9537714100' },
+            { id: 'c4', name: 'SRUJAL PANKAJKUMAR SHAH', phone: '9824010710' },
+            { id: 'c5', name: 'PRAGNESHBHAI RAMESHCHANDRA SHAH', phone: '9426083001' },
+            { id: 'c6', name: 'HIMANSHU MAHENDRAKUMAR SHAH', phone: '9426084338' },
+            { id: 'c7', name: 'ASHVINKUMAR PUNAMCHAND SHAH', phone: '9426327144' },
+            { id: 'c8', name: 'BHAVESH BIPINCHANDRA SHAH', phone: '9824313180' },
+            { id: 'c9', name: 'CHIRAGBHAI RASIKLAL SHAH', phone: '9898986763' },
+            { id: 'c10', name: 'JAYESHKUMAR CHINUBHAI SHAH', phone: '9825580044' },
+            { id: 'c11', name: 'NAYANKUMAR ARVINDKUMAR SHAH', phone: '9924446767' },
+            { id: 'c12', name: 'NAILESHBHAI JAYANTILAL SHAH', phone: '9824499844' },
+            { id: 'c13', name: 'PRAVINCHANDRA POPATLAL SHAH', phone: '9898251001' },
+            { id: 'c14', name: 'SANDIP MAHENDARABHAI SHAH', phone: '9327054179' },
+            { id: 'c15', name: 'SAUMILKUMAR SOMCHAND SHAH', phone: '9374005997' },
+            { id: 'c16', name: 'SHRENIKKUMAR SAKARCHAND SHAH', phone: '9879033203' },
+            { id: 'c17', name: 'MINESH DEVENDRABHAI SHAH', phone: '9327513549' },
+            { id: 'c18', name: 'RAKESH BHARATBHAI SHAH', phone: '9825253932' },
+            { id: 'c19', name: 'MIHIR DINESHBHAI SHAH', phone: '9909902687' },
+            { id: 'c20', name: 'HARDIK ATULBHAI SHAH', phone: '9426828088' }
+        ];
+
         const CommStorage = {
             data: [],
             load: function() {
                 try { 
-                    const d = localStorage.getItem('batrisi_wa_comm');
-                    this.data = d ? JSON.parse(d) : [];
+                    const d = localStorage.getItem('batrisi_wa_comm_v2');
+                    if (d) {
+                        this.data = JSON.parse(d);
+                    } else {
+                        this.data = [...defaultCommitteeMembers];
+                    }
                 } catch(e) { 
-                    console.warn("Storage blocked by browser. Using Temp Memory."); 
+                    this.data = [...defaultCommitteeMembers];
                 }
-                if(!Array.isArray(this.data)) this.data = [];
+                if(!Array.isArray(this.data) || this.data.length === 0) {
+                    this.data = [...defaultCommitteeMembers];
+                }
                 return this.data;
             },
             save: function(list) {
                 this.data = list;
                 try { 
-                    localStorage.setItem('batrisi_wa_comm', JSON.stringify(list)); 
+                    localStorage.setItem('batrisi_wa_comm_v2', JSON.stringify(list)); 
                 } catch(e) {}
             }
         };
@@ -706,8 +735,7 @@
 
         function renderWACommitteeUI() {
             let html = '';
-            waCommitteeList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
+            
             waCommitteeList.forEach(data => {
                 const n = String(data.name || '').replace(/"/g, '&quot;');
                 const p = String(data.phone || '');
@@ -716,7 +744,7 @@
                 html += `
                     <div class="wa-member-item" style="justify-content:space-between;">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" class="wa-comm-checkbox" data-phone="${p}" data-name="${n}" onchange="updateWACommCount()">
+                            <input type="checkbox" class="wa-comm-checkbox" data-phone="${p}" data-name="${n}" onchange="updateWACommCount()" checked>
                             <div><b>${n}</b><br><small><i class="fa-brands fa-whatsapp"></i> ${p}</small></div>
                         </div>
                         <div>
@@ -727,47 +755,9 @@
                 `;
             });
 
-            if(waCommitteeList.length === 0) {
-                html = `
-                    <div style="padding:30px; text-align:center;">
-                        <p style="color:gray; margin-bottom:15px;">Aapki Committee Sender list abhi khali hai.</p>
-                        <button onclick="syncFromMainCommittee()" class="btn-add" style="margin: 0 auto; background:#3b82f6;">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Auto-Sync Database
-                        </button>
-                    </div>`;
-            }
-            
             const listEl = document.getElementById('wa-committee-list');
-            if(listEl) listEl.innerHTML = html;
+            listEl.innerHTML = html;
             updateWACommCount();
-        }
-
-        // Instant Sync directly from the existing "Manage Committee" Database
-        async function syncFromMainCommittee() {
-            document.getElementById('wa-committee-list').innerHTML = '<p style="padding:20px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Syncing from Database...</p>';
-            try {
-                const snap = await db.collection('committee').get();
-                let count = 0;
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    if(d.name && d.phone) {
-                        waCommitteeList.push({
-                            id: 'sync_' + doc.id,
-                            name: String(d.name),
-                            phone: String(d.phone),
-                            timestamp: Date.now() + count
-                        });
-                        count++;
-                    }
-                });
-                CommStorage.save(waCommitteeList);
-                renderWACommitteeUI();
-                if(count > 0) alert(`✅ Success: ${count} members auto-synced!`);
-                else alert("Main Database me koi member nahi mila. Kripya pehle waha add karein ya yaha '+ Add' button dabayein.");
-            } catch(e) {
-                alert("Database load nahi hua. Aap manually + Add karke list bana lijiye.");
-                renderWACommitteeUI();
-            }
         }
 
         // --- SAFE CSV UPLOAD ---
@@ -866,7 +856,7 @@
             
             const index = waCommitteeList.findIndex(m => m.id === id);
             if(index >= 0) waCommitteeList[index] = payload;
-            else waCommitteeList.push(payload);
+            else waCommitteeList.unshift(payload); // Adds new member to the top
             
             CommStorage.save(waCommitteeList);
             document.getElementById('waCommModal').style.display = 'none';
