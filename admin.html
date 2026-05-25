@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced CMS Panel - Batrisi</title>
+    <title>Advanced CMS Panel - Batrisi (Enterprise Edition)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Firebase App, Firestore, AND Storage (Added for Direct Media Upload) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
@@ -65,6 +67,13 @@
         /* Sub-tab navigation styles */
         .wa-tab-btn { background: #e2e8f0; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 8px; color: var(--dark); }
         .wa-tab-btn.active { background: var(--primary); color: white; }
+
+        /* Enterprise Edition Additions */
+        .settings-box { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-top: 15px; font-size: 13px; }
+        .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .mini-input { width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #cbd5e1; text-align: center; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-outline:hover { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
@@ -119,7 +128,7 @@
                 </div>
                 <div style="flex:1;">
                     <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
-                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> 1-Click Auto Sender (Local)
+                        <i class="fa-brands fa-whatsapp" style="color:#25D366; font-size:28px;"></i> 1-Click Auto Sender (Enterprise)
                     </h2>
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
                         1. Apne computer me "Start-Bot" chalu karein.<br>
@@ -203,17 +212,38 @@
                     <h3 style="margin-bottom:10px;">Compose Message</h3>
                     
                     <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>🔥 Pro Tip:</b> Apni File ko Google Drive/ImgBB par daal kar uski link neeche alag box me paste karein. System apne aap link format karke bhej dega!
+                        <b>🔥 Spintax Pro Tip (Anti-Ban):</b> Use <code>{Hello|Hi|Namaste}</code> to send unique variations to everyone! System will pick one randomly to prevent bans.
                     </div>
 
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
+                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: {Hello|Hi|Namaste} {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
                     
                     <!-- DEDICATED LINK ATTACHMENT BOX -->
-                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
-                        <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
+                    <label style="font-weight:600; font-size:14px; display:flex; justify-content: space-between; align-items:center; margin-top:15px; color:#10b981;">
+                        <span><i class="fa-solid fa-link"></i> Attachment Link</span>
+                        <!-- ENTERPRISE FILE UPLOAD BUTTON -->
+                        <div>
+                            <input type="file" id="wa-direct-upload" style="display:none;" onchange="uploadFileToFirebaseForWA(this)">
+                            <button onclick="document.getElementById('wa-direct-upload').click()" class="btn-outline" style="padding:4px 10px; font-size:12px;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Direct Upload File
+                            </button>
+                        </div>
                     </label>
-                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
+                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link or use Direct Upload button ->">
+
+                    <!-- ENTERPRISE ANTI-BAN SETTINGS -->
+                    <div class="settings-box">
+                        <div style="font-weight:600; color:var(--dark); margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+                            <i class="fa-solid fa-shield-halved"></i> Smart Anti-Ban Settings
+                        </div>
+                        <div class="settings-row">
+                            <span>Take a pause of</span>
+                            <input type="number" id="ab-pause-sec" value="60" class="mini-input">
+                            <span>Seconds after every</span>
+                            <input type="number" id="ab-msg-count" value="100" class="mini-input">
+                            <span>msgs.</span>
+                        </div>
+                    </div>
 
                     <!-- SMART BROADCAST CONTROLS -->
                     <div id="wa-active-banner" style="display:none; background:#fef3c7; border:1px solid #f59e0b; padding:12px; border-radius:8px; margin-top:15px; font-size:13px; color:#92400e;">
@@ -236,13 +266,22 @@
                     </div>
 
                     <div id="wa-progress-panel" style="margin-top:25px; display:none;">
-                        <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
+                        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="color:var(--dark);">Live Progress</h4>
+                            <!-- ENTERPRISE ETA & REPORT BUTTON -->
+                            <span id="wa-stat-eta" style="font-size:12px; font-weight:600; color:#3b82f6; background:#eff6ff; padding:4px 8px; border-radius:4px;">ETA: Calculating...</span>
+                        </div>
+                        
                         <div class="wa-stat-box">
                             <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
                             <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
                             <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
                         </div>
                         <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
+                        
+                        <button id="wa-btn-report" onclick="downloadCampaignReport()" class="btn-outline" style="width:100%; margin-top:15px; display:none; border-color:#10b981; color:#10b981;">
+                            <i class="fa-solid fa-file-excel"></i> Download Excel Report (Errors/Sent)
+                        </button>
                     </div>
 
                     <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live PC Terminal Logs</h4>
@@ -267,9 +306,10 @@
     <div id="toast">Success!</div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app" };
+        const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app", storageBucket: "batrisi-latest-app.appspot.com" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const storage = firebase.storage(); // Added for Direct Upload
 
         // LOCALHOST API URL
         const WA_API_URL = "http://localhost:3000/api/whatsapp"; 
@@ -412,7 +452,11 @@
         let statusInterval = null;
         let receiptInterval = null;
 
-        // Static seed data for Committee Members (loaded if database is empty)
+        // --- ENTERPRISE ANTI-BAN & ETA Tracking ---
+        let abSessionCount = 0; 
+        let campaignStartTime = null;
+
+        // Static seed data for Committee Members
         const SEED_COMMITTEE_MEMBERS = [
             { memberName: "HITENDRABHAI JASHWANTLAL SHAH", mobileNumber: "9825698298" },
             { memberName: "GUNWANTLAL CHANDULAL SHAH", mobileNumber: "9825441916" },
@@ -435,6 +479,65 @@
             { memberName: "MIHIR DINESHBHAI SHAH", mobileNumber: "9909902687" },
             { memberName: "HARDIK ATULBHAI SHAH", mobileNumber: "9426828088" }
         ];
+
+        // --- ENTERPRISE: Voice Notification ---
+        function playVoiceAlert(text) {
+            try {
+                let msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'en-IN';
+                window.speechSynthesis.speak(msg);
+            } catch(e) {} // Ignore if browser blocks it
+        }
+
+        // --- ENTERPRISE: Direct Upload to Firebase ---
+        async function uploadFileToFirebaseForWA(el) {
+            const file = el.files[0];
+            if(!file) return;
+            const inputLink = document.getElementById('wa-link-input');
+            inputLink.value = "Uploading to Cloud... Please wait.";
+            inputLink.disabled = true;
+
+            try {
+                const ref = storage.ref('wa_broadcasts/' + Date.now() + '_' + file.name);
+                const snapshot = await ref.put(file);
+                const url = await snapshot.ref.getDownloadURL();
+                inputLink.value = url;
+                printLog("✅ File directly uploaded to secure cloud storage!", "success");
+            } catch(e) {
+                inputLink.value = "";
+                alert("Upload failed. Try again.");
+            }
+            inputLink.disabled = false;
+        }
+
+        // --- ENTERPRISE: Spintax Engine ---
+        function applySpintax(text) {
+            // Parses {A|B|C} dynamically at send-time
+            return text.replace(/\{([^{}]+)\}/g, function(match, contents) {
+                var choices = contents.split('|');
+                return choices[Math.floor(Math.random() * choices.length)];
+            });
+        }
+
+        // --- ENTERPRISE: Download CSV Report ---
+        function downloadCampaignReport() {
+            if(!waQueue || waQueue.length === 0) return alert("No data available to download.");
+            let csvContent = "data:text/csv;charset=utf-8,Name,Phone,Status\n";
+            
+            waQueue.forEach(function(rowArray) {
+                let statusClean = rowArray.status || 'pending';
+                let row = `"${rowArray.name}","${rowArray.phone}","${statusClean}"`;
+                csvContent += row + "\r\n";
+            });
+
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Broadcast_Report_" + Date.now() + ".csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -502,6 +605,7 @@
                         document.getElementById('wa-btn-stop').style.display = 'flex';
 
                         document.getElementById('wa-progress-panel').style.display = 'block';
+                        document.getElementById('wa-btn-report').style.display = 'block'; // Show report option
                         updateWAUI();
                         printLog(`♻️ Recovered persistent campaign (${waSentCount}/${waTotalTasks} sent). Waiting to resume.`, "info");
                     }
@@ -519,8 +623,13 @@
         }
 
         function resumeBroadcast() {
-            if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
+            if(!isWABotConnected) {
+                playVoiceAlert("Error. PC server is disconnected.");
+                return alert("WhatsApp is not connected! Turn on PC Server.");
+            }
             isBroadcastingWA = true;
+            campaignStartTime = Date.now(); // Reset ETA timer base on resume
+            abSessionCount = 0; 
             printLog("▶️ Resuming campaign queue...", "info");
             document.getElementById('wa-btn-resume').style.display = 'none';
             document.getElementById('wa-btn-pause').style.display = 'flex';
@@ -532,12 +641,8 @@
             isBroadcastingWA = false;
             localStorage.removeItem('wa_active_campaign');
             
-            waQueue = [];
-            waTotalTasks = 0;
-            waSentCount = 0;
-            waFailedCount = 0;
-            currentCampaignId = null;
-
+            // Note: We keep waQueue populated temporarily so the Report button can still work after stop!
+            
             document.getElementById('wa-active-banner').style.display = 'none';
             if (isWABotConnected) {
                 document.getElementById('wa-btn-start').style.display = 'flex';
@@ -546,14 +651,19 @@
             document.getElementById('wa-btn-pause').style.display = 'none';
             document.getElementById('wa-btn-resume').style.display = 'none';
             document.getElementById('wa-btn-stop').style.display = 'none';
-            document.getElementById('wa-progress-panel').style.display = 'none';
+            
+            document.getElementById('wa-btn-report').style.display = 'block'; // Enterprise: Leave report button available
 
             if(completed) {
                 printLog("✅ Campaign completed successfully and cleared from memory.", "success");
+                playVoiceAlert("Congratulations. Broadcast campaign completed successfully.");
             } else {
-                printLog("🛑 Campaign manually stopped and cleared.", "error");
+                printLog("🛑 Campaign manually stopped and cleared. You can download the report below.", "error");
             }
             updateWAUI();
+            
+            // Clear ETA
+            document.getElementById('wa-stat-eta').innerText = "Finished";
         }
 
         function switchWASubTab(tab) {
@@ -711,6 +821,7 @@
                         sendBtn.disabled = true;
 
                         if(isBroadcastingWA) {
+                            playVoiceAlert("Alert. Scanner disconnected.");
                             printLog("🔴 PC Server waiting for QR. Auto-pausing campaign.", "error");
                             pauseBroadcast();
                         }
@@ -723,6 +834,7 @@
                     sendBtn.disabled = true;
 
                     if(isBroadcastingWA) {
+                        playVoiceAlert("Alert. Server went offline.");
                         printLog("🔴 PC Server disconnected. Auto-pausing campaign.", "error");
                         pauseBroadcast();
                     }
@@ -749,9 +861,7 @@
                             });
                         }
                     }
-                } catch(e) {
-                    // Fail silently to keep logs clean if API endpoint does not exist
-                }
+                } catch(e) {}
             }, 4500);
         }
 
@@ -823,7 +933,7 @@
 
             if(!rawTemplate && !linkInput) return alert("Please type a message or paste an attachment link.");
             
-            if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} contacts?`)) return;
+            if(!confirm(`Start Enterprise Auto-Sender for ${selectedBoxes.length} contacts?`)) return;
 
             // UI Setup
             document.getElementById('wa-btn-start').style.display = 'none';
@@ -832,27 +942,21 @@
             document.getElementById('wa-btn-resume').style.display = 'none';
             document.getElementById('wa-active-banner').style.display = 'none';
             document.getElementById('wa-progress-panel').style.display = 'block';
+            document.getElementById('wa-btn-report').style.display = 'none';
             document.getElementById('wa-logs').innerHTML = ''; 
 
             currentCampaignId = 'CAMP_' + Date.now();
+            campaignStartTime = Date.now();
+            abSessionCount = 0;
 
-            // Build Smart Queue Elements
+            // Enterprise: We store RAW template so Spintax can generate random variations LIVE during send
             waQueue = selectedBoxes.map(cb => {
-                let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no || '');
-                
-                if(linkInput) {
-                    if(userMsg) {
-                        userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + linkInput;
-                    } else {
-                        userMsg = '🔗 *Attachment:*\n' + linkInput;
-                    }
-                }
-                
                 return { 
                     id: cb.dataset.phone + '_' + Date.now(),
                     name: cb.dataset.name, 
                     phone: cb.dataset.phone, 
-                    msgText: userMsg,
+                    rawMsgTemplate: rawTemplate,
+                    rawLink: linkInput,
                     status: 'pending',
                     retries: 0
                 };
@@ -865,7 +969,8 @@
 
             saveCampaignState();
 
-            printLog(`🚀 Campaign Started for ${waTotalTasks} targets...`, "info");
+            playVoiceAlert("Campaign started. Please do not close the window.");
+            printLog(`🚀 Enterprise Campaign Started for ${waTotalTasks} targets...`, "info");
             updateWAUI();
             processLocalQueue();
         }
@@ -875,6 +980,18 @@
             if(!isWABotConnected) {
                 printLog("⚠️ WhatsApp disconnected. Auto-pausing broadcast.", "error");
                 pauseBroadcast();
+                return;
+            }
+
+            // --- ENTERPRISE: Anti-Ban Sleep Logic ---
+            let maxCount = parseInt(document.getElementById('ab-msg-count').value) || 100;
+            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value) || 60;
+            
+            if(abSessionCount > 0 && abSessionCount % maxCount === 0) {
+                printLog(`🛡️ Anti-Ban Sleep active: Pausing for ${pauseSec} seconds...`, "info");
+                document.getElementById('wa-stat-eta').innerText = `Sleeping for ${pauseSec}s...`;
+                abSessionCount++; // increment so it doesn't loop infinitely
+                setTimeout(processLocalQueue, pauseSec * 1000);
                 return;
             }
 
@@ -897,6 +1014,15 @@
             }
 
             let item = waQueue[itemIndex];
+            
+            // --- ENTERPRISE: Spintax & Live Parsing ---
+            let parsedMsg = applySpintax(item.rawMsgTemplate);
+            let userMsg = parsedMsg.replace(/{{member_name}}/gi, item.name);
+            if(item.rawLink) {
+                if(userMsg) userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + item.rawLink;
+                else userMsg = '🔗 *Attachment:*\n' + item.rawLink;
+            }
+
             let phoneStr = String(item.phone).replace(/[^0-9]/g, '');
             if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
 
@@ -909,7 +1035,7 @@
                 printLog(`❌ Failed: Invalid Number for ${item.name}`, "error");
             } else {
                 try {
-                    let payload = { to: phoneStr, message: item.msgText };
+                    let payload = { to: phoneStr, message: userMsg };
                     
                     const response = await fetch(WA_API_URL + '/send', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -920,6 +1046,7 @@
                         // Successfully sent. Lock the status permanently.
                         item.status = 'sent';
                         waSentCount++;
+                        abSessionCount++; // Only increment session counter on valid hits
                         if (item.retries > 0) waFailedCount--; // Fix counts if it succeeded on a retry
                         printLog(`✅ Sent to ${item.name}!`, "success"); 
                     } else { 
@@ -945,9 +1072,9 @@
             saveCampaignState();
             updateWAUI();
 
-            // Controlled Batching logic with random safe delay (4 to 8 seconds)
+            // Controlled Batching logic with random safe delay (3 to 6 seconds)
             if(isBroadcastingWA) {
-                const randomDelay = Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000;
+                const randomDelay = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
                 setTimeout(processLocalQueue, randomDelay);
             }
         }
@@ -962,6 +1089,22 @@
             
             let percent = waTotalTasks === 0 ? 0 : Math.round(((waSentCount + waFailedCount) / waTotalTasks) * 100);
             document.getElementById('wa-progress-bar').style.width = `${percent}%`;
+
+            // --- ENTERPRISE: Live ETA Calculator ---
+            if(isBroadcastingWA && campaignStartTime && (waSentCount + waFailedCount) > 0) {
+                let msElapsed = Date.now() - campaignStartTime;
+                let itemsDoneThisSession = abSessionCount; // Using abSessionCount for active time parsing
+                
+                if(itemsDoneThisSession > 1) {
+                    let avgMsPerItem = msElapsed / itemsDoneThisSession;
+                    let remainingMs = avgMsPerItem * pendingCount;
+                    
+                    let totalSec = Math.floor(remainingMs / 1000);
+                    let min = Math.floor(totalSec / 60);
+                    let sec = totalSec % 60;
+                    document.getElementById('wa-stat-eta').innerText = `ETA: ${min}m ${sec}s`;
+                }
+            }
         }
 
         initCMS('events', 'Events');
