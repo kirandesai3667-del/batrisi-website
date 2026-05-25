@@ -8,10 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase App, Firestore, AND Storage (Added for Direct Media Upload) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
@@ -218,18 +216,11 @@
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
                     <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: {Hello|Hi|Namaste} {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
                     
-                    <!-- DEDICATED LINK ATTACHMENT BOX -->
-                    <label style="font-weight:600; font-size:14px; display:flex; justify-content: space-between; align-items:center; margin-top:15px; color:#10b981;">
-                        <span><i class="fa-solid fa-link"></i> Attachment Link</span>
-                        <!-- ENTERPRISE FILE UPLOAD BUTTON -->
-                        <div>
-                            <input type="file" id="wa-direct-upload" style="display:none;" onchange="uploadFileToFirebaseForWA(this)">
-                            <button onclick="document.getElementById('wa-direct-upload').click()" class="btn-outline" style="padding:4px 10px; font-size:12px;">
-                                <i class="fa-solid fa-cloud-arrow-up"></i> Direct Upload File
-                            </button>
-                        </div>
+                    <!-- ORIGINAL SIMPLE LINK INPUT (Restored) -->
+                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
+                        <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
                     </label>
-                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link or use Direct Upload button ->">
+                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
 
                     <!-- ENTERPRISE ANTI-BAN SETTINGS -->
                     <div class="settings-box">
@@ -306,10 +297,9 @@
     <div id="toast">Success!</div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app", storageBucket: "batrisi-latest-app.appspot.com" };
+        const firebaseConfig = { apiKey: "AIzaSyDbZ4T8264CDQ5LSoH_4L0luB5VKQbiqkU", authDomain: "batrisi-latest-app.firebaseapp.com", projectId: "batrisi-latest-app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const storage = firebase.storage(); // Added for Direct Upload
 
         // LOCALHOST API URL
         const WA_API_URL = "http://localhost:3000/api/whatsapp"; 
@@ -487,27 +477,6 @@
                 msg.lang = 'en-IN';
                 window.speechSynthesis.speak(msg);
             } catch(e) {} // Ignore if browser blocks it
-        }
-
-        // --- ENTERPRISE: Direct Upload to Firebase ---
-        async function uploadFileToFirebaseForWA(el) {
-            const file = el.files[0];
-            if(!file) return;
-            const inputLink = document.getElementById('wa-link-input');
-            inputLink.value = "Uploading to Cloud... Please wait.";
-            inputLink.disabled = true;
-
-            try {
-                const ref = storage.ref('wa_broadcasts/' + Date.now() + '_' + file.name);
-                const snapshot = await ref.put(file);
-                const url = await snapshot.ref.getDownloadURL();
-                inputLink.value = url;
-                printLog("✅ File directly uploaded to secure cloud storage!", "success");
-            } catch(e) {
-                inputLink.value = "";
-                alert("Upload failed. Try again.");
-            }
-            inputLink.disabled = false;
         }
 
         // --- ENTERPRISE: Spintax Engine ---
