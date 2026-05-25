@@ -62,15 +62,9 @@
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
 
-        /* NEW ADDITIONS FOR COMMITTEE WA SENDER UI */
-        .wa-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; flex-wrap: wrap;}
-        .wa-tab-btn { background: none; border: none; padding: 10px 20px; font-weight: 600; cursor: pointer; color: #64748b; font-size: 16px; border-radius: 8px; transition: 0.3s; }
+        /* Sub-tab navigation styles */
+        .wa-tab-btn { background: #e2e8f0; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 8px; color: var(--dark); }
         .wa-tab-btn.active { background: var(--primary); color: white; }
-        .wa-committee-grid { display: flex; gap: 20px; flex-wrap: wrap; }
-        .read-receipt-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 200px; overflow-y: auto; margin-top: 10px; }
-        .read-item { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #0f172a; display: flex; align-items: center; gap: 10px; transition: 0.2s;}
-        .read-item:hover { background: #f8fafc; }
-        .read-item i { color: #3b82f6; font-size: 16px;} 
     </style>
 </head>
 <body>
@@ -130,7 +124,7 @@
                     <p style="margin-bottom:10px; color:#475569; font-size:14px; line-height: 1.6;">
                         1. Apne computer me "Start-Bot" chalu karein.<br>
                         2. Yahan diye gaye QR code ko scan karein.<br>
-                        3. Apna "Native" select karein, Message aur Link attach karein aur 1 click me sabko bhejein!
+                        3. Apna group select karein, Message aur Link attach karein aur 1 click me sabko bhejein!
                     </p>
                     <div style="display:flex; align-items:center; gap:15px; margin-top: 15px;">
                         <div style="background:#e2e8f0; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:14px;">
@@ -140,17 +134,23 @@
                 </div>
             </div>
 
-            <!-- NEW TAB SELECTION -->
-            <div class="wa-tabs">
-                <button class="wa-tab-btn active" id="tabBtn-general" onclick="switchWATab('general')"><i class="fa-solid fa-users"></i> General Members Sender</button>
-                <button class="wa-tab-btn" id="tabBtn-committee" onclick="switchWATab('committee')"><i class="fa-solid fa-user-tie"></i> Committee Member Sender</button>
+            <!-- TAB CONTROLS -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom: 2px solid var(--border); padding-bottom:12px;">
+                <button id="subtab-general-btn" class="wa-tab-btn active" onclick="switchWASubTab('general')">
+                    <i class="fa-solid fa-users"></i> General Members
+                </button>
+                <button id="subtab-committee-btn" class="wa-tab-btn" onclick="switchWASubTab('committee')">
+                    <i class="fa-solid fa-user-shield"></i> Committee Member Sender
+                </button>
             </div>
 
-            <!-- EXISTING GENERAL SENDER (Wrapped in Div) -->
-            <div id="wa-tab-general">
-                <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                
+                <!-- LEFT SIDEBAR: AUDIENCE LIST -->
+                <div class="wa-panel" style="flex:1; min-width:350px;">
                     
-                    <div class="wa-panel" style="flex:1; min-width:350px;">
+                    <!-- PANEL A: GENERAL MEMBERS -->
+                    <div id="wa-general-panel">
                         <h3 style="margin-bottom:10px;">Select Audience & Group</h3>
                         
                         <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -169,101 +169,70 @@
                         <div id="wa-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Members...</p></div>
                     </div>
 
-                    <div class="wa-panel" style="flex:1; min-width:350px;">
-                        <h3 style="margin-bottom:10px;">Compose Message</h3>
+                    <!-- PANEL B: COMMITTEE MEMBERS -->
+                    <div id="wa-committee-panel" style="display:none;">
+                        <h3 style="margin-bottom:10px;">Committee Member Sender</h3>
                         
-                        <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                            <b>🔥 Pro Tip:</b> Apni File ko Google Drive/ImgBB par daal kar uski link neeche alag box me paste karein. System apne aap link format karke bhej dega!
-                        </div>
-
-                        <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                        <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
-                        
-                        <!-- DEDICATED LINK ATTACHMENT BOX -->
-                        <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
-                            <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
-                        </label>
-                        <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
-
-                        <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
-                            <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
-                        </button>
-
-                        <div id="wa-progress-panel" style="margin-top:25px; display:none;">
-                            <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
-                            <div class="wa-stat-box">
-                                <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
-                                <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
-                                <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
-                            </div>
-                            <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
-                        </div>
-
-                        <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live PC Terminal Logs</h4>
-                        <div id="wa-logs" class="wa-logs">Waiting for connection...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NEW COMMITTEE SENDER WITH CSV UPLOAD -->
-            <div id="wa-tab-committee" style="display:none;">
-                <div class="wa-committee-grid">
-                    
-                    <!-- Manage & Select -->
-                    <div class="wa-panel" style="flex:1; min-width:350px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-                            <h3>Committee Mailing List</h3>
-                            <div style="display:flex; gap:8px;">
-                                <!-- CSV Upload Feature Built specifically for Committee Tab -->
-                                <input type="file" id="waCommCsvInput" accept=".csv" style="display:none;" onchange="handleWACommCSVUpload(this)">
-                                <button onclick="document.getElementById('waCommCsvInput').click()" class="btn-add" style="padding: 6px 12px; font-size: 13px; background:#10b981;"><i class="fa-solid fa-file-csv"></i> Upload CSV</button>
-                                
-                                <button onclick="openAddWACommitteeModal()" class="btn-add" style="padding: 6px 12px; font-size: 13px;">+ Add</button>
-                                <button onclick="resetWACommittee()" class="btn-add" style="padding: 6px 12px; font-size: 13px; background:#ef4444;" title="Reset Default 20 Members"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                        <!-- Quick Add Committee Member -->
+                        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:15px; margin-bottom:15px;">
+                            <h4 style="margin-bottom:8px; font-size:13px; color:var(--primary);"><i class="fa-solid fa-user-plus"></i> Add Committee Contact</h4>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <input type="text" id="wa-comm-add-name" class="wa-input" placeholder="Name" style="flex:1; margin-top:0; padding:8px 12px; font-size:13px;">
+                                <input type="text" id="wa-comm-add-phone" class="wa-input" placeholder="Mobile Number" style="flex:1; margin-top:0; padding:8px 12px; font-size:13px;">
+                                <button onclick="addCommitteeSenderMember()" class="btn-add" style="padding:8px 15px; height:42px; font-size:13px;">Add</button>
                             </div>
                         </div>
-                        
-                        <div style="margin-top:10px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <input type="text" class="wa-input" id="wa-comm-search" placeholder="Search Committee Member..." onkeyup="filterWACommittee()" style="flex:1; margin-top:0;">
+                        </div>
+
+                        <div style="margin-top:15px; padding:10px; background:#ecfdf5; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                             <label style="font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                                <input type="checkbox" id="wa-comm-select-all" class="wa-checkbox" onchange="toggleAllWACommittee()" checked> Select All
+                                <input type="checkbox" id="wa-comm-select-all" class="wa-checkbox" onchange="toggleAllWACommittee()"> Select All
                             </label>
                             <span id="wa-comm-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
                         </div>
-                        <!-- UI WILL INSTANTLY LOAD HERE, NO "LOADING..." POSSBILE -->
-                        <div id="wa-committee-list" class="wa-list-box"></div>
-                    </div>
-
-                    <!-- Compose, Send & Receipts -->
-                    <div class="wa-panel" style="flex:1; min-width:350px;">
-                        <h3 style="margin-bottom:10px;">Instant Committee Broadcaster</h3>
-                        <label style="font-weight:600; font-size:14px;">Meeting / Update Message *</label>
-                        <textarea id="wa-comm-message" class="wa-input" rows="4" placeholder="Example: Committee meeting today at 4 PM. Please attend."></textarea>
-                        
-                        <!-- NEW ATTACHMENT FIELD FOR COMMITTEE SENDER -->
-                        <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
-                            <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB) (Optional)
-                        </label>
-                        <input type="url" id="wa-comm-link-input" class="wa-input" placeholder="Paste link here (https://...)">
-                        
-                        <button id="wa-comm-btn-start" onclick="initiateWACommitteeBroadcast()" class="wa-btn" style="margin-top:20px; background:#0f172a;" disabled>
-                            <i class="fa-solid fa-paper-plane"></i> Send to Selected Committee
-                        </button>
-
-                        <!-- Read Receipts Box -->
-                        <div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;">
-                            <h4 style="display:flex; align-items:center; gap:8px; color:#0f172a; margin-bottom: 5px;">
-                                <i class="fa-solid fa-check-double" style="color:#3b82f6;"></i> Live Read Notifications
-                            </h4>
-                            <p style="font-size:12px; color:#64748b; margin-bottom:10px;">Real-time read receipts from committee members.</p>
-                            <div id="wa-read-receipts" class="read-receipt-box">
-                                <div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Listening for seen activity...</div>
-                            </div>
-                        </div>
+                        <div id="wa-committee-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
                     </div>
 
                 </div>
-            </div>
 
+                <!-- RIGHT SIDEBAR: MESSAGE COMPOSER & STATUS -->
+                <div class="wa-panel" style="flex:1; min-width:350px;">
+                    <h3 style="margin-bottom:10px;">Compose Message</h3>
+                    
+                    <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
+                        <b>🔥 Pro Tip:</b> Apni File ko Google Drive/ImgBB par daal kar uski link neeche alag box me paste karein. System apne aap link format karke bhej dega!
+                    </div>
+
+                    <label style="font-weight:600; font-size:14px;">Message Text *</label>
+                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
+                    
+                    <!-- DEDICATED LINK ATTACHMENT BOX -->
+                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
+                        <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
+                    </label>
+                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
+
+                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
+                        <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
+                    </button>
+
+                    <div id="wa-progress-panel" style="margin-top:25px; display:none;">
+                        <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
+                        <div class="wa-stat-box">
+                            <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
+                            <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
+                            <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
+                        </div>
+                        <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
+                    </div>
+
+                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live PC Terminal Logs</h4>
+                    <div id="wa-logs" class="wa-logs">Waiting for connection...</div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -279,26 +248,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- New WA Committee Modal -->
-    <div class="modal" id="waCommModal">
-        <div class="modal-content">
-            <h2 id="waCommModalTitle" style="margin-bottom:20px;">Add Committee Member</h2>
-            <div class="form-group">
-                <label>Member Name</label>
-                <input type="text" id="waCommName" placeholder="e.g. Rajesh Patel">
-            </div>
-            <div class="form-group">
-                <label>Mobile Number (WhatsApp)</label>
-                <input type="text" id="waCommPhone" placeholder="e.g. 9876543210">
-            </div>
-            <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:25px;">
-                <button onclick="document.getElementById('waCommModal').style.display='none'" style="padding:10px 20px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
-                <button onclick="saveWACommitteeContact()" style="padding:10px 25px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700;">SAVE CONTACT</button>
-            </div>
-        </div>
-    </div>
-
     <div id="toast">Success!</div>
 
     <script>
@@ -352,12 +301,7 @@
                 document.getElementById('standardAddBtn').innerText = '+ Add New Record';
                 document.getElementById('csvUploadBtnContainer').style.display = 'none';
             }
-            
-            try {
-                fetchTableData();
-            } catch (e) {
-                console.error("Init Error:", e);
-            }
+            fetchTableData();
         }
 
         function fetchTableData() {
@@ -435,16 +379,43 @@
         }
 
         // ==============================================================
-        // 1-CLICK LOCAL WHATSAPP SENDER
+        // 1-CLICK LOCAL WHATSAPP SENDER & COMMITTEE SENDER
         // ==============================================================
-        let waMembersList =[];
+        let waMembersList = [];
+        let waCommitteeList = [];
+        let currentWASubTab = 'general'; // 'general' or 'committee'
         let isWABotConnected = false;
         let isBroadcastingWA = false;
-        let waQueue =[];
+        let waQueue = [];
         let waTotalTasks = 0;
         let waSentCount = 0;
         let waFailedCount = 0;
         let statusInterval = null;
+        let receiptInterval = null;
+
+        // Static seed data for Committee Members (loaded if database is empty)
+        const SEED_COMMITTEE_MEMBERS = [
+            { memberName: "HITENDRABHAI JASHWANTLAL SHAH", mobileNumber: "9825698298" },
+            { memberName: "GUNWANTLAL CHANDULAL SHAH", mobileNumber: "9825441916" },
+            { memberName: "MAYANKKUMAR RAMANLAL SHAH", mobileNumber: "9537714100" },
+            { memberName: "SRUJAL PANKAJKUMAR SHAH", mobileNumber: "9824010710" },
+            { memberName: "PRAGNESHBHAI RAMESHCHANDRA SHAH", mobileNumber: "9426083001" },
+            { memberName: "HIMANSHU MAHENDRAKUMAR SHAH", mobileNumber: "9426084338" },
+            { memberName: "ASHVINKUMAR PUNAMCHAND SHAH", mobileNumber: "9426327144" },
+            { memberName: "BHAVESH BIPINCHANDRA SHAH", mobileNumber: "9824313180" },
+            { memberName: "CHIRAGBHAI RASIKLAL SHAH", mobileNumber: "9898986763" },
+            { memberName: "JAYESHKUMAR CHINUBHAI SHAH", mobileNumber: "9825580044" },
+            { memberName: "NAYANKUMAR ARVINDKUMAR SHAH", mobileNumber: "9924446767" },
+            { memberName: "NAILESHBHAI JAYANTILAL SHAH", mobileNumber: "9824499844" },
+            { memberName: "PRAVINCHANDRA POPATLAL SHAH", mobileNumber: "9898251001" },
+            { memberName: "SANDIP MAHENDARABHAI SHAH", mobileNumber: "9327054179" },
+            { memberName: "SAUMILKUMAR SOMCHAND SHAH", mobileNumber: "9374005997" },
+            { memberName: "SHRENIKKUMAR SAKARCHAND SHAH", mobileNumber: "9879033203" },
+            { memberName: "MINESH DEVENDRABHAI SHAH", mobileNumber: "9327513549" },
+            { memberName: "RAKESH BHARATBHAI SHAH", mobileNumber: "9825253932" },
+            { memberName: "MIHIR DINESHBHAI SHAH", mobileNumber: "9909902687" },
+            { memberName: "HARDIK ATULBHAI SHAH", mobileNumber: "9426828088" }
+        ];
 
         async function openWABroadcast() {
             document.getElementById('wa-broadcast-container').style.display = 'block';
@@ -454,35 +425,156 @@
             event.target.classList.add('active');
 
             startAPIStatusPolling();
+            startReadReceiptTracking();
 
+            const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
+            waMembersList = [];
+            let uniqueNatives = new Set();
+            
+            snap.forEach(doc => {
+                let data = doc.data();
+                waMembersList.push({ id: doc.id, ...data });
+                if(data.nativeName && data.nativeName.trim() !== "") {
+                    uniqueNatives.add(data.nativeName.trim());
+                }
+            });
+            
+            let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
+            Array.from(uniqueNatives).sort().forEach(n => {
+                nativeHtml += `<option value="${n}">${n}</option>`;
+            });
+            document.getElementById('wa-native-filter').innerHTML = nativeHtml;
+
+            renderWAMembers(waMembersList);
+            loadCommitteeSenderList();
+        }
+
+        function switchWASubTab(tab) {
+            currentWASubTab = tab;
+            document.getElementById('subtab-general-btn').classList.remove('active');
+            document.getElementById('subtab-committee-btn').classList.remove('active');
+            document.getElementById('wa-general-panel').style.display = 'none';
+            document.getElementById('wa-committee-panel').style.display = 'none';
+
+            if(tab === 'general') {
+                document.getElementById('subtab-general-btn').classList.add('active');
+                document.getElementById('wa-general-panel').style.display = 'block';
+            } else {
+                document.getElementById('subtab-committee-btn').classList.add('active');
+                document.getElementById('wa-committee-panel').style.display = 'block';
+                loadCommitteeSenderList();
+            }
+            updateWACount();
+        }
+
+        // --- SUBTAB: COMMITTEE SENDER DATABASE OPERATIONS ---
+        async function loadCommitteeSenderList() {
+            const listDiv = document.getElementById('wa-committee-members-list');
+            listDiv.innerHTML = `<p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p>`;
+            
             try {
-                const snap = await db.collection('members').get();
-                waMembersList =[];
-                let uniqueNatives = new Set();
-                
+                const snap = await db.collection('committee_broadcast').orderBy('timestamp', 'asc').get();
+                if(snap.empty) {
+                    printLog("Seeding default committee members list into database...", "info");
+                    const batch = db.batch();
+                    SEED_COMMITTEE_MEMBERS.forEach((item, i) => {
+                        const ref = db.collection('committee_broadcast').doc();
+                        batch.set(ref, { memberName: item.memberName, mobileNumber: item.mobileNumber, timestamp: Date.now() + i });
+                    });
+                    await batch.commit();
+                    return loadCommitteeSenderList();
+                }
+
+                waCommitteeList = [];
                 snap.forEach(doc => {
-                    let data = doc.data();
-                    waMembersList.push({ id: doc.id, ...data });
-                    if(data.nativeName && data.nativeName.trim() !== "") {
-                        uniqueNatives.add(data.nativeName.trim());
-                    }
+                    waCommitteeList.push({ id: doc.id, ...doc.data() });
                 });
-                
-                waMembersList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-                let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
-                Array.from(uniqueNatives).sort().forEach(n => {
-                    nativeHtml += `<option value="${n}">${n}</option>`;
-                });
-                document.getElementById('wa-native-filter').innerHTML = nativeHtml;
-
-                renderWAMembers(waMembersList);
+                renderWACommittee(waCommitteeList);
             } catch(e) {
-                console.error("General members loading error:", e);
-                document.getElementById('wa-members-list').innerHTML = '<p style="color:red; text-align:center;">Failed to load members from database.</p>';
+                listDiv.innerHTML = `<p style="padding:20px; text-align:center; color:red;">Error loading committee database.</p>`;
             }
         }
 
+        function renderWACommittee(list) {
+            let html = '';
+            if(list.length === 0) {
+                html = '<p style="padding:20px; text-align:center; color:gray;">No committee members stored.</p>';
+                document.getElementById('wa-committee-members-list').innerHTML = html;
+                updateWACount();
+                return;
+            }
+            list.forEach(m => {
+                html += `
+                <div class="wa-member-item" style="justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="checkbox" class="wa-comm-checkbox" data-phone="${m.mobileNumber||''}" data-name="${m.memberName||''}" onchange="updateWACount()">
+                        <div>
+                            <b>${m.memberName||'No Name'}</b><br>
+                            <small><i class="fa-brands fa-whatsapp"></i> ${m.mobileNumber||'N/A'}</small>
+                        </div>
+                    </div>
+                    <button onclick="deleteCommitteeSenderMember('${m.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:5px 10px;">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>`;
+            });
+            document.getElementById('wa-committee-members-list').innerHTML = html;
+            updateWACount();
+        }
+
+        async function addCommitteeSenderMember() {
+            const nameEl = document.getElementById('wa-comm-add-name');
+            const phoneEl = document.getElementById('wa-comm-add-phone');
+            const name = nameEl.value.trim();
+            const phone = phoneEl.value.trim();
+
+            if(!name || !phone) {
+                alert("Please fill in both Name and Mobile Number.");
+                return;
+            }
+
+            try {
+                await db.collection('committee_broadcast').add({
+                    memberName: name,
+                    mobileNumber: phone,
+                    timestamp: Date.now()
+                });
+                nameEl.value = '';
+                phoneEl.value = '';
+                showToast();
+                loadCommitteeSenderList();
+            } catch(e) {
+                alert("Database Error!");
+            }
+        }
+
+        async function deleteCommitteeSenderMember(id) {
+            if(!confirm("Remove this member from Committee Sender?")) return;
+            try {
+                await db.collection('committee_broadcast').doc(id).delete();
+                showToast();
+                loadCommitteeSenderList();
+            } catch(e) {
+                alert("Database Error!");
+            }
+        }
+
+        function filterWACommittee() {
+            const q = document.getElementById('wa-comm-search').value.toLowerCase();
+            const filtered = waCommitteeList.filter(m => {
+                return (m.memberName && m.memberName.toLowerCase().includes(q)) || (m.mobileNumber && String(m.mobileNumber).toLowerCase().includes(q));
+            });
+            renderWACommittee(filtered);
+            document.getElementById('wa-comm-select-all').checked = false;
+        }
+
+        function toggleAllWACommittee() {
+            const isChecked = document.getElementById('wa-comm-select-all').checked;
+            document.querySelectorAll('.wa-comm-checkbox').forEach(cb => cb.checked = isChecked);
+            updateWACount();
+        }
+
+        // --- CORE STATUS / UTILITY LOGICS ---
         function startAPIStatusPolling() {
             if(statusInterval) clearInterval(statusInterval);
             statusInterval = setInterval(async () => {
@@ -490,7 +582,6 @@
                 const statusTxt = document.getElementById('wa-status-text');
                 const qrImg = document.getElementById('wa-qr-img');
                 const sendBtn = document.getElementById('wa-btn-start');
-                const commSendBtn = document.getElementById('wa-comm-btn-start');
 
                 try {
                     const res = await fetch(WA_API_URL + '/status');
@@ -502,14 +593,12 @@
                         statusTxt.style.color = "#10b981";
                         qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
                         sendBtn.disabled = false;
-                        if(commSendBtn) commSendBtn.disabled = false;
                     } else if (data.status === 'QR_READY') {
                         isWABotConnected = false;
                         statusTxt.innerText = "🟡 Scan the QR Code";
                         statusTxt.style.color = "#f59e0b";
                         qrImg.src = WA_API_URL + '/qr.png?t=' + Date.now();
                         sendBtn.disabled = true;
-                        if(commSendBtn) commSendBtn.disabled = true;
                     }
                 } catch(e) {
                     isWABotConnected = false;
@@ -517,9 +606,33 @@
                     statusTxt.style.color = "#ef4444";
                     qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23ef4444' font-weight='bold'>Turn on PC Server</text></svg>";
                     sendBtn.disabled = true;
-                    if(commSendBtn) commSendBtn.disabled = true;
                 }
             }, 2500);
+        }
+
+        // Live Seen/Receipt Polling Loop
+        function startReadReceiptTracking() {
+            if(receiptInterval) clearInterval(receiptInterval);
+            receiptInterval = setInterval(async () => {
+                if(!isWABotConnected) return;
+                try {
+                    const res = await fetch(WA_API_URL + '/acks');
+                    if(res.ok) {
+                        const ackList = await res.json();
+                        if(ackList && ackList.length > 0) {
+                            ackList.forEach(ack => {
+                                if(ack.status === 'read') {
+                                    printLog(`📖 [Read Receipt] ${ack.name || ack.to} has read your message.`, "success");
+                                } else if(ack.status === 'delivered') {
+                                    printLog(`🚚 [Delivery] Message delivered to ${ack.name || ack.to}.`, "info");
+                                }
+                            });
+                        }
+                    }
+                } catch(e) {
+                    // Fail silently to keep logs clean if API endpoint does not exist
+                }
+            }, 4500);
         }
 
         function renderWAMembers(list) {
@@ -552,7 +665,13 @@
         }
 
         function updateWACount() {
-            document.getElementById('wa-count-badge').innerText = `${document.querySelectorAll('.wa-checkbox:checked').length} Selected`;
+            if(currentWASubTab === 'general') {
+                const count = document.querySelectorAll('.wa-checkbox:checked').length;
+                document.getElementById('wa-count-badge').innerText = `${count} Selected`;
+            } else {
+                const count = document.querySelectorAll('.wa-comm-checkbox:checked').length;
+                document.getElementById('wa-comm-count-badge').innerText = `${count} Selected`;
+            }
         }
 
         function printLog(msg, type="info") {
@@ -565,26 +684,38 @@
 
         async function initiateWABroadcast() {
             if(!isWABotConnected) return alert("WhatsApp is not connected!");
-            const selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
-            if(selectedBoxes.length === 0) return alert("Select at least 1 member.");
+            
+            let selectedBoxes = [];
+            if(currentWASubTab === 'general') {
+                selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
+            } else {
+                selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
+            }
+
+            if(selectedBoxes.length === 0) return alert("Select at least 1 recipient.");
             
             const rawTemplate = document.getElementById('wa-message').value.trim();
             const linkInput = document.getElementById('wa-link-input').value.trim();
 
-            if(!rawTemplate && !linkInput) return alert("Please type a message or paste a link.");
+            if(!rawTemplate && !linkInput) return alert("Please type a message or paste an attachment link.");
             
-            if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} members?`)) return;
+            if(!confirm(`Start 1-Click Auto-Sender for ${selectedBoxes.length} contacts?`)) return;
 
             document.getElementById('wa-btn-start').disabled = true;
             document.getElementById('wa-progress-panel').style.display = 'block';
             document.getElementById('wa-logs').innerHTML = ''; 
 
             waQueue = selectedBoxes.map(cb => {
-                let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no);
+                let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no || '');
+                
                 if(linkInput) {
-                    if(userMsg) userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + linkInput;
-                    else userMsg = '🔗 *Attachment:*\n' + linkInput;
+                    if(userMsg) {
+                        userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + linkInput;
+                    } else {
+                        userMsg = '🔗 *Attachment:*\n' + linkInput;
+                    }
                 }
+                
                 return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
             });
 
@@ -592,7 +723,7 @@
             waSentCount = 0; waFailedCount = 0;
             isBroadcastingWA = true;
 
-            printLog(`Campaign Started for ${waTotalTasks} members...`, "info");
+            printLog(`Campaign Started for ${waTotalTasks} targets...`, "info");
             updateWAUI();
             processLocalQueue();
         }
@@ -618,6 +749,7 @@
             } else {
                 try {
                     let payload = { to: phoneStr, message: item.msgText };
+                    
                     const response = await fetch(WA_API_URL + '/send', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -654,318 +786,6 @@
         }
 
         initCMS('events', 'Events');
-
-
-        // ==============================================================
-        // NEW FEATURE: 100% BULLET-PROOF COMMITTEE SENDER (HARDCODED)
-        // ==============================================================
-
-        // Bhai, yaha aapke 20 members humesha fixed rahenge, chahe jo ho jaye ye kabhi crash nahi honge!
-        const defaultCommitteeMembers = [
-            { id: 'c1', name: 'HITENDRABHAI JASHWANTLAL SHAH', phone: '9825698298' },
-            { id: 'c2', name: 'GUNWANTLAL CHANDULAL SHAH', phone: '9825441916' },
-            { id: 'c3', name: 'MAYANKKUMAR RAMANLAL SHAH', phone: '9537714100' },
-            { id: 'c4', name: 'SRUJAL PANKAJKUMAR SHAH', phone: '9824010710' },
-            { id: 'c5', name: 'PRAGNESHBHAI RAMESHCHANDRA SHAH', phone: '9426083001' },
-            { id: 'c6', name: 'HIMANSHU MAHENDRAKUMAR SHAH', phone: '9426084338' },
-            { id: 'c7', name: 'ASHVINKUMAR PUNAMCHAND SHAH', phone: '9426327144' },
-            { id: 'c8', name: 'BHAVESH BIPINCHANDRA SHAH', phone: '9824313180' },
-            { id: 'c9', name: 'CHIRAGBHAI RASIKLAL SHAH', phone: '9898986763' },
-            { id: 'c10', name: 'JAYESHKUMAR CHINUBHAI SHAH', phone: '9825580044' },
-            { id: 'c11', name: 'NAYANKUMAR ARVINDKUMAR SHAH', phone: '9924446767' },
-            { id: 'c12', name: 'NAILESHBHAI JAYANTILAL SHAH', phone: '9824499844' },
-            { id: 'c13', name: 'PRAVINCHANDRA POPATLAL SHAH', phone: '9898251001' },
-            { id: 'c14', name: 'SANDIP MAHENDARABHAI SHAH', phone: '9327054179' },
-            { id: 'c15', name: 'SAUMILKUMAR SOMCHAND SHAH', phone: '9374005997' },
-            { id: 'c16', name: 'SHRENIKKUMAR SAKARCHAND SHAH', phone: '9879033203' },
-            { id: 'c17', name: 'MINESH DEVENDRABHAI SHAH', phone: '9327513549' },
-            { id: 'c18', name: 'RAKESH BHARATBHAI SHAH', phone: '9825253932' },
-            { id: 'c19', name: 'MIHIR DINESHBHAI SHAH', phone: '9909902687' },
-            { id: 'c20', name: 'HARDIK ATULBHAI SHAH', phone: '9426828088' }
-        ];
-
-        let waCommitteeList = [];
-
-        function switchWATab(tab) {
-            document.getElementById('tabBtn-general').classList.remove('active');
-            document.getElementById('tabBtn-committee').classList.remove('active');
-            document.getElementById('wa-tab-general').style.display = 'none';
-            document.getElementById('wa-tab-committee').style.display = 'none';
-
-            document.getElementById('tabBtn-' + tab).classList.add('active');
-            
-            if(tab === 'general') {
-                document.getElementById('wa-tab-general').style.display = 'block';
-            } else {
-                document.getElementById('wa-tab-committee').style.display = 'block';
-                loadWACommittee();
-            }
-        }
-
-        // Ab koi Loading... nahi! Direct array se data aayega.
-        function loadWACommittee() {
-            let deletedIds = [];
-            let customList = [];
-            
-            // Sirf wahi load karo jo aapne naya dala hai ya delete kiya hai
-            try {
-                const dStr = localStorage.getItem('batrisi_wa_del_v3');
-                if(dStr) deletedIds = JSON.parse(dStr);
-                
-                const cStr = localStorage.getItem('batrisi_wa_cust_v3');
-                if(cStr) customList = JSON.parse(cStr);
-            } catch(e) {}
-
-            if(!Array.isArray(deletedIds)) deletedIds = [];
-            if(!Array.isArray(customList)) customList = [];
-
-            // Default me se deleted ko hata kar custom ko jod lo
-            let activeDefaults = defaultCommitteeMembers.filter(m => !deletedIds.includes(m.id));
-            waCommitteeList = [...activeDefaults, ...customList];
-            
-            renderWACommitteeUI();
-        }
-
-        function renderWACommitteeUI() {
-            let html = '';
-            
-            waCommitteeList.forEach(data => {
-                const n = data.name;
-                const p = data.phone;
-                const i = data.id;
-
-                html += `
-                    <div class="wa-member-item" style="justify-content:space-between;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" class="wa-comm-checkbox" data-phone="${p}" data-name="${n}" onchange="updateWACommCount()" checked>
-                            <div><b>${n}</b><br><small><i class="fa-brands fa-whatsapp"></i> ${p}</small></div>
-                        </div>
-                        <div>
-                            <button onclick="deleteWACommittee('${i}')" style="background:none;border:none;color:#ef4444;cursor:pointer;" title="Delete Member"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            if(waCommitteeList.length === 0) {
-                html = `<p style="padding:20px; text-align:center; color:gray;">List khali hai. Wapas lane ke liye 'Reset' button dabayein.</p>`;
-            }
-            
-            document.getElementById('wa-committee-list').innerHTML = html;
-            updateWACommCount();
-        }
-
-        // Reset All - Yeh daba kar aap kisi bhi waqt un 20 members ko wapas la sakte hain
-        function resetWACommittee() {
-            if(confirm("Kya aap sabhi members ko DEFAULT (Original 20 Members) par reset karna chahte hain?")) {
-                localStorage.removeItem('batrisi_wa_del_v3');
-                localStorage.removeItem('batrisi_wa_cust_v3');
-                loadWACommittee();
-            }
-        }
-
-        function deleteWACommittee(id) {
-            if(!confirm('Are you sure you want to remove this member?')) return;
-            
-            if(id.startsWith('c')) {
-                // Default list ka member hai
-                let deletedIds = [];
-                try {
-                    let saved = localStorage.getItem('batrisi_wa_del_v3');
-                    if(saved) deletedIds = JSON.parse(saved);
-                } catch(e){}
-                deletedIds.push(id);
-                localStorage.setItem('batrisi_wa_del_v3', JSON.stringify(deletedIds));
-            } else {
-                // Naya Add kiya hua member hai
-                let customList = [];
-                try {
-                    let saved = localStorage.getItem('batrisi_wa_cust_v3');
-                    if(saved) customList = JSON.parse(saved);
-                } catch(e){}
-                customList = customList.filter(m => m.id !== id);
-                localStorage.setItem('batrisi_wa_cust_v3', JSON.stringify(customList));
-            }
-            
-            loadWACommittee();
-        }
-
-        function openAddWACommitteeModal() {
-            document.getElementById('waCommName').value = '';
-            document.getElementById('waCommPhone').value = '';
-            document.getElementById('waCommModal').style.display = 'flex';
-        }
-
-        function saveWACommitteeContact() {
-            const name = document.getElementById('waCommName').value.trim();
-            const phone = document.getElementById('waCommPhone').value.trim();
-            
-            if(!name || !phone) return alert('Name aur Mobile dono daalna jaruri hai!');
-            
-            let customList = [];
-            try {
-                const cStr = localStorage.getItem('batrisi_wa_cust_v3');
-                if(cStr) customList = JSON.parse(cStr);
-            } catch(e){}
-
-            customList.push({
-                id: 'cust_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                name: name,
-                phone: phone
-            });
-            
-            localStorage.setItem('batrisi_wa_cust_v3', JSON.stringify(customList));
-            
-            document.getElementById('waCommModal').style.display = 'none';
-            loadWACommittee();
-        }
-
-        function handleWACommCSVUpload(el) {
-            const file = el.files[0]; 
-            if(!file) return;
-            
-            if(!file.name.toLowerCase().endsWith('.csv')) {
-                alert("❌ GALAT FORMAT! \n\nPlease aap apni Excel sheet ko open karein, 'File > Save As' par click karein aur usko 'CSV (Comma delimited)' format me save karein. Fir wo nayi .csv file ko yaha upload karein.");
-                el.value = "";
-                return;
-            }
-            
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    const rows = results.data;
-                    if(!rows || rows.length === 0) {
-                        alert("❌ Ye CSV file khali he.");
-                        el.value = ""; return;
-                    }
-                    
-                    let addedCount = 0;
-                    let customList = [];
-                    try {
-                        const cStr = localStorage.getItem('batrisi_wa_cust_v3');
-                        if(cStr) customList = JSON.parse(cStr);
-                    } catch(e){}
-
-                    rows.forEach(row => {
-                        let n='', p='';
-                        for(let k in row) { 
-                            let cleanK = String(k).toLowerCase().replace(/[^a-z]/g, ''); 
-                            if(['name', 'membername', 'fullname', 'committee'].includes(cleanK)) n = row[k];
-                            if(['mobile', 'mobilenumber', 'mobileno', 'phone', 'contact'].includes(cleanK)) p = row[k];
-                        }
-                        
-                        if(n && p) {
-                            customList.push({
-                                id: 'cust_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                                name: String(n).trim(),
-                                phone: String(p).trim()
-                            });
-                            addedCount++;
-                        }
-                    });
-                    
-                    localStorage.setItem('batrisi_wa_cust_v3', JSON.stringify(customList));
-                    loadWACommittee();
-                    
-                    if(addedCount > 0) alert(`✅ Success! ${addedCount} naye members add ho gaye!`);
-                    else alert("❌ Error: Aapki file me 'Name' or 'Mobile Number' ke columns nahi mile.");
-                    el.value = "";
-                }
-            });
-        }
-
-        function toggleAllWACommittee() {
-            const isChecked = document.getElementById('wa-comm-select-all').checked;
-            document.querySelectorAll('.wa-comm-checkbox').forEach(cb => cb.checked = isChecked);
-            updateWACommCount();
-        }
-
-        function updateWACommCount() {
-            const badge = document.getElementById('wa-comm-count-badge');
-            if(badge) badge.innerText = `${document.querySelectorAll('.wa-comm-checkbox:checked').length} Selected`;
-        }
-
-        // Send to Committee Logic
-        async function initiateWACommitteeBroadcast() {
-            if(!isWABotConnected) return alert("WhatsApp connect nahi he! Pehle QR Scan karein.");
-            const selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
-            if(selectedBoxes.length === 0) return alert("Kam se kam 1 member select karein.");
-            
-            const rawTemplate = document.getElementById('wa-comm-message').value.trim();
-            const commLinkInput = document.getElementById('wa-comm-link-input').value.trim();
-
-            if(!rawTemplate && !commLinkInput) return alert("Kripya message likhein ya link dalein.");
-            if(isBroadcastingWA) return alert("Ek message campaign pehle se hi chal raha he. Uske khtm hone ka wait karein.");
-            if(!confirm(`Kya aap in ${selectedBoxes.length} members ko message bhejna chahte he?`)) return;
-
-            document.getElementById('wa-comm-btn-start').disabled = true;
-            document.getElementById('wa-comm-btn-start').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-
-            const commQueue = selectedBoxes.map(cb => {
-                let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name);
-                if(commLinkInput) {
-                    if(userMsg) userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + commLinkInput;
-                    else userMsg = '🔗 *Attachment:*\n' + commLinkInput;
-                }
-                return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
-            });
-
-            isBroadcastingWA = true; 
-            let sent = 0, failed = 0;
-
-            for(let i=0; i<commQueue.length; i++) {
-                const item = commQueue[i];
-                let phoneStr = String(item.phone).replace(/[^0-9]/g, '');
-                if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
-
-                if(!phoneStr || phoneStr.length < 10) {
-                    failed++;
-                } else {
-                    try {
-                        let payload = { to: phoneStr, message: item.msgText };
-                        const response = await fetch(WA_API_URL + '/send', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if(response.ok) sent++; else failed++;
-                    } catch(e) { failed++; }
-                }
-                
-                if(i < commQueue.length - 1) {
-                    await new Promise(r => setTimeout(r, Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000));
-                }
-            }
-
-            isBroadcastingWA = false;
-            document.getElementById('wa-comm-btn-start').disabled = false;
-            document.getElementById('wa-comm-btn-start').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send to Selected Committee';
-            alert(`✅ Committee Messages Sent Successfully!\n\nSent: ${sent}\nFailed: ${failed}`);
-        }
-
-        // Live Read Notifications Tracker
-        try {
-            db.collection('wa_read_receipts').onSnapshot(snap => {
-                const box = document.getElementById('wa-read-receipts');
-                if(!box) return;
-                
-                let tempReceipts = [];
-                snap.forEach(doc => tempReceipts.push(doc.data()));
-                tempReceipts.sort((a,b) => b.timestamp - a.timestamp);
-                let html = '';
-                
-                tempReceipts.slice(0, 20).forEach(data => {
-                    const d = new Date(data.timestamp);
-                    const timeStr = isNaN(d.getTime()) ? 'Just now' : d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    html += `<div class="read-item">
-                                <i class="fa-solid fa-check-double"></i> 
-                                <span><b>${data.name || 'A Committee Member'}</b> has read your message at ${timeStr}.</span>
-                             </div>`;
-                });
-                if(html !== '') box.innerHTML = html;
-            }, error => {});
-        } catch(e) {}
-
     </script>
 </body>
 </html>
