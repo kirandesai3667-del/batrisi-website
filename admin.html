@@ -61,6 +61,16 @@
         .wa-stat-box { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; font-weight:600;}
         .wa-bar-bg { width:100%; background:#e2e8f0; height:12px; border-radius:10px; overflow:hidden; position: relative;}
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
+
+        /* NEW ADDITIONS FOR COMMITTEE WA SENDER UI */
+        .wa-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .wa-tab-btn { background: none; border: none; padding: 10px 20px; font-weight: 600; cursor: pointer; color: #64748b; font-size: 16px; border-radius: 8px; transition: 0.3s; }
+        .wa-tab-btn.active { background: var(--primary); color: white; }
+        .wa-committee-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+        .read-receipt-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        .read-item { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #0f172a; display: flex; align-items: center; gap: 10px; transition: 0.2s;}
+        .read-item:hover { background: #f8fafc; }
+        .read-item i { color: #3b82f6; font-size: 16px;} 
     </style>
 </head>
 <body>
@@ -130,61 +140,116 @@
                 </div>
             </div>
 
-            <div style="display:flex; gap:20px; flex-wrap:wrap;">
-                
-                <div class="wa-panel" style="flex:1; min-width:350px;">
-                    <h3 style="margin-bottom:10px;">Select Audience & Group</h3>
+            <!-- NEW TAB SELECTION -->
+            <div class="wa-tabs">
+                <button class="wa-tab-btn active" id="tabBtn-general" onclick="switchWATab('general')"><i class="fa-solid fa-users"></i> General Members Sender</button>
+                <button class="wa-tab-btn" id="tabBtn-committee" onclick="switchWATab('committee')"><i class="fa-solid fa-user-tie"></i> Committee Member Sender</button>
+            </div>
+
+            <!-- EXISTING GENERAL SENDER (Wrapped in Div) -->
+            <div id="wa-tab-general">
+                <div style="display:flex; gap:20px; flex-wrap:wrap;">
                     
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <input type="text" class="wa-input" id="wa-search" placeholder="Search Name..." onkeyup="filterWAMembers()" style="flex:1; margin-top:0;">
-                        <select class="wa-input" id="wa-native-filter" onchange="filterWAMembers()" style="flex:1; margin-top:0; font-weight:600; color:var(--primary);">
-                            <option value="ALL">All Natives (Gaam)</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-top:15px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                        <label style="font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                            <input type="checkbox" id="wa-select-all" class="wa-checkbox" onchange="toggleAllWAMembers()"> Select All
-                        </label>
-                        <span id="wa-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
-                    </div>
-                    <div id="wa-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Members...</p></div>
-                </div>
-
-                <div class="wa-panel" style="flex:1; min-width:350px;">
-                    <h3 style="margin-bottom:10px;">Compose Message</h3>
-                    
-                    <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
-                        <b>🔥 Pro Tip:</b> Apni File ko Google Drive/ImgBB par daal kar uski link neeche alag box me paste karein. System apne aap link format karke bhej dega!
-                    </div>
-
-                    <label style="font-weight:600; font-size:14px;">Message Text *</label>
-                    <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
-                    
-                    <!-- DEDICATED LINK ATTACHMENT BOX -->
-                    <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
-                        <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
-                    </label>
-                    <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
-
-                    <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
-                        <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
-                    </button>
-
-                    <div id="wa-progress-panel" style="margin-top:25px; display:none;">
-                        <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
-                        <div class="wa-stat-box">
-                            <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
-                            <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
-                            <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
+                    <div class="wa-panel" style="flex:1; min-width:350px;">
+                        <h3 style="margin-bottom:10px;">Select Audience & Group</h3>
+                        
+                        <div style="display:flex; gap:10px; margin-bottom:10px;">
+                            <input type="text" class="wa-input" id="wa-search" placeholder="Search Name..." onkeyup="filterWAMembers()" style="flex:1; margin-top:0;">
+                            <select class="wa-input" id="wa-native-filter" onchange="filterWAMembers()" style="flex:1; margin-top:0; font-weight:600; color:var(--primary);">
+                                <option value="ALL">All Natives (Gaam)</option>
+                            </select>
                         </div>
-                        <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
+
+                        <div style="margin-top:15px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <label style="font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                                <input type="checkbox" id="wa-select-all" class="wa-checkbox" onchange="toggleAllWAMembers()"> Select All
+                            </label>
+                            <span id="wa-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
+                        </div>
+                        <div id="wa-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Members...</p></div>
                     </div>
 
-                    <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live PC Terminal Logs</h4>
-                    <div id="wa-logs" class="wa-logs">Waiting for connection...</div>
+                    <div class="wa-panel" style="flex:1; min-width:350px;">
+                        <h3 style="margin-bottom:10px;">Compose Message</h3>
+                        
+                        <div style="background:#ecfdf5; border-left:4px solid #10b981; padding:10px; font-size:13px; margin-bottom:15px; border-radius:4px;">
+                            <b>🔥 Pro Tip:</b> Apni File ko Google Drive/ImgBB par daal kar uski link neeche alag box me paste karein. System apne aap link format karke bhej dega!
+                        </div>
+
+                        <label style="font-weight:600; font-size:14px;">Message Text *</label>
+                        <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: Hello {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
+                        
+                        <!-- DEDICATED LINK ATTACHMENT BOX -->
+                        <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
+                            <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
+                        </label>
+                        <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
+
+                        <button id="wa-btn-start" onclick="initiateWABroadcast()" class="wa-btn" style="margin-top:20px;" disabled>
+                            <i class="fa-solid fa-paper-plane"></i> 1-Click Send All
+                        </button>
+
+                        <div id="wa-progress-panel" style="margin-top:25px; display:none;">
+                            <h4 style="margin-bottom:10px; color:var(--dark);">Live Campaign Progress</h4>
+                            <div class="wa-stat-box">
+                                <span>Pending: <span id="wa-stat-pending" style="color:#f59e0b;">0</span></span>
+                                <span>Sent: <span id="wa-stat-sent" style="color:#10b981;">0</span></span>
+                                <span>Failed: <span id="wa-stat-failed" style="color:#ef4444;">0</span></span>
+                            </div>
+                            <div class="wa-bar-bg"><div id="wa-progress-bar" class="wa-bar-fill"></div></div>
+                        </div>
+
+                        <h4 style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">Live PC Terminal Logs</h4>
+                        <div id="wa-logs" class="wa-logs">Waiting for connection...</div>
+                    </div>
                 </div>
             </div>
+
+            <!-- NEW COMMITTEE SENDER -->
+            <div id="wa-tab-committee" style="display:none;">
+                <div class="wa-committee-grid">
+                    
+                    <!-- Manage & Select -->
+                    <div class="wa-panel" style="flex:1; min-width:350px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h3>Committee Mailing List</h3>
+                            <button onclick="openAddWACommitteeModal()" class="btn-add" style="padding: 6px 12px; font-size: 13px;">+ Add Member</button>
+                        </div>
+                        
+                        <div style="margin-top:10px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <label style="font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                                <input type="checkbox" id="wa-comm-select-all" class="wa-checkbox" onchange="toggleAllWACommittee()"> Select All
+                            </label>
+                            <span id="wa-comm-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
+                        </div>
+                        <div id="wa-committee-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;">Loading Committee...</p></div>
+                    </div>
+
+                    <!-- Compose, Send & Receipts -->
+                    <div class="wa-panel" style="flex:1; min-width:350px;">
+                        <h3 style="margin-bottom:10px;">Instant Committee Broadcaster</h3>
+                        <label style="font-weight:600; font-size:14px;">Meeting / Update Message *</label>
+                        <textarea id="wa-comm-message" class="wa-input" rows="4" placeholder="Example: Committee meeting today at 4 PM. Please attend."></textarea>
+                        
+                        <button id="wa-comm-btn-start" onclick="initiateWACommitteeBroadcast()" class="wa-btn" style="margin-top:20px; background:#0f172a;" disabled>
+                            <i class="fa-solid fa-paper-plane"></i> Send to Selected Committee
+                        </button>
+
+                        <!-- Read Receipts Box -->
+                        <div style="margin-top:30px; border-top:1px solid var(--border); padding-top:20px;">
+                            <h4 style="display:flex; align-items:center; gap:8px; color:#0f172a; margin-bottom: 5px;">
+                                <i class="fa-solid fa-check-double" style="color:#3b82f6;"></i> Live Read Notifications
+                            </h4>
+                            <p style="font-size:12px; color:#64748b; margin-bottom:10px;">Real-time read receipts from committee members.</p>
+                            <div id="wa-read-receipts" class="read-receipt-box">
+                                <div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Listening for seen activity...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -200,6 +265,27 @@
             </div>
         </div>
     </div>
+    
+    <!-- New WA Committee Modal -->
+    <div class="modal" id="waCommModal">
+        <div class="modal-content">
+            <h2 id="waCommModalTitle" style="margin-bottom:20px;">Add Committee Member (For Sender)</h2>
+            <input type="hidden" id="waCommId">
+            <div class="form-group">
+                <label>Member Name</label>
+                <input type="text" id="waCommName" placeholder="e.g. Rajesh Patel">
+            </div>
+            <div class="form-group">
+                <label>Mobile Number (WhatsApp)</label>
+                <input type="text" id="waCommPhone" placeholder="e.g. 9876543210">
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:25px;">
+                <button onclick="document.getElementById('waCommModal').style.display='none'" style="padding:10px 20px; background:#e2e8f0; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
+                <button onclick="saveWACommitteeContact()" style="padding:10px 25px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700;">SAVE CONTACT</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast">Success!</div>
 
     <script>
@@ -379,6 +465,7 @@
                 const statusTxt = document.getElementById('wa-status-text');
                 const qrImg = document.getElementById('wa-qr-img');
                 const sendBtn = document.getElementById('wa-btn-start');
+                const commSendBtn = document.getElementById('wa-comm-btn-start');
 
                 try {
                     const res = await fetch(WA_API_URL + '/status');
@@ -390,12 +477,14 @@
                         statusTxt.style.color = "#10b981";
                         qrImg.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/150px-WhatsApp.svg.png";
                         sendBtn.disabled = false;
+                        if(commSendBtn) commSendBtn.disabled = false;
                     } else if (data.status === 'QR_READY') {
                         isWABotConnected = false;
                         statusTxt.innerText = "🟡 Scan the QR Code";
                         statusTxt.style.color = "#f59e0b";
                         qrImg.src = WA_API_URL + '/qr.png?t=' + Date.now();
                         sendBtn.disabled = true;
+                        if(commSendBtn) commSendBtn.disabled = true;
                     }
                 } catch(e) {
                     isWABotConnected = false;
@@ -403,6 +492,7 @@
                     statusTxt.style.color = "#ef4444";
                     qrImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f1f5f9'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23ef4444' font-weight='bold'>Turn on PC Server</text></svg>";
                     sendBtn.disabled = true;
+                    if(commSendBtn) commSendBtn.disabled = true;
                 }
             }, 2500);
         }
@@ -547,6 +637,176 @@
         }
 
         initCMS('events', 'Events');
+
+
+        // ==============================================================
+        // NEW FEATURE: COMMITTEE MEMBER SENDER (STRICTLY ISOLATED)
+        // ==============================================================
+
+        function switchWATab(tab) {
+            document.getElementById('tabBtn-general').classList.remove('active');
+            document.getElementById('tabBtn-committee').classList.remove('active');
+            document.getElementById('wa-tab-general').style.display = 'none';
+            document.getElementById('wa-tab-committee').style.display = 'none';
+
+            document.getElementById('tabBtn-' + tab).classList.add('active');
+            
+            if(tab === 'general') {
+                document.getElementById('wa-tab-general').style.display = 'block';
+            } else {
+                document.getElementById('wa-tab-committee').style.display = 'block';
+                loadWACommittee();
+            }
+        }
+
+        // Manage Dedicated Committee WhatsApp List (Safe logic, does not modify "Manage Committee")
+        let waCommitteeList = [];
+        
+        function loadWACommittee() {
+            db.collection('wa_committee_contacts').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                waCommitteeList = [];
+                let html = '';
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    waCommitteeList.push({ id: doc.id, ...data });
+                    html += `
+                        <div class="wa-member-item" style="justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" class="wa-comm-checkbox" data-phone="${data.phone||''}" data-name="${data.name||''}" onchange="updateWACommCount()">
+                                <div><b>${data.name}</b><br><small><i class="fa-brands fa-whatsapp"></i> ${data.phone}</small></div>
+                            </div>
+                            <div>
+                                <button onclick="editWACommittee('${doc.id}', '${data.name}', '${data.phone}')" style="background:none;border:none;color:#2563eb;cursor:pointer;margin-right:10px;"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteWACommittee('${doc.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+                if(waCommitteeList.length === 0) html = '<p style="padding:20px; text-align:center; color:gray;">No committee members added yet.</p>';
+                document.getElementById('wa-committee-list').innerHTML = html;
+                updateWACommCount();
+            });
+        }
+
+        function openAddWACommitteeModal() {
+            document.getElementById('waCommId').value = '';
+            document.getElementById('waCommName').value = '';
+            document.getElementById('waCommPhone').value = '';
+            document.getElementById('waCommModalTitle').innerText = 'Add Committee Contact';
+            document.getElementById('waCommModal').style.display = 'flex';
+        }
+
+        function editWACommittee(id, name, phone) {
+            document.getElementById('waCommId').value = id;
+            document.getElementById('waCommName').value = name;
+            document.getElementById('waCommPhone').value = phone;
+            document.getElementById('waCommModalTitle').innerText = 'Edit Committee Contact';
+            document.getElementById('waCommModal').style.display = 'flex';
+        }
+
+        function deleteWACommittee(id) {
+            if(confirm('Are you sure you want to delete this contact?')) {
+                db.collection('wa_committee_contacts').doc(id).delete();
+            }
+        }
+
+        function saveWACommitteeContact() {
+            const id = document.getElementById('waCommId').value;
+            const name = document.getElementById('waCommName').value.trim();
+            const phone = document.getElementById('waCommPhone').value.trim();
+            if(!name || !phone) return alert('Please enter both name and mobile number!');
+            
+            const payload = { name, phone, timestamp: Date.now() };
+            if(id) {
+                db.collection('wa_committee_contacts').doc(id).update(payload);
+            } else {
+                db.collection('wa_committee_contacts').add(payload);
+            }
+            document.getElementById('waCommModal').style.display = 'none';
+        }
+
+        function toggleAllWACommittee() {
+            const isChecked = document.getElementById('wa-comm-select-all').checked;
+            document.querySelectorAll('.wa-comm-checkbox').forEach(cb => cb.checked = isChecked);
+            updateWACommCount();
+        }
+
+        function updateWACommCount() {
+            document.getElementById('wa-comm-count-badge').innerText = `${document.querySelectorAll('.wa-comm-checkbox:checked').length} Selected`;
+        }
+
+        // Send to Committee Logic
+        async function initiateWACommitteeBroadcast() {
+            if(!isWABotConnected) return alert("WhatsApp is not connected!");
+            const selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
+            if(selectedBoxes.length === 0) return alert("Select at least 1 committee member to send a message.");
+            
+            const rawTemplate = document.getElementById('wa-comm-message').value.trim();
+            if(!rawTemplate) return alert("Please type your committee message.");
+            
+            if(isBroadcastingWA) return alert("Another broadcast is already running. Please wait for it to finish.");
+
+            if(!confirm(`Send message to ${selectedBoxes.length} committee members?`)) return;
+
+            document.getElementById('wa-comm-btn-start').disabled = true;
+            document.getElementById('wa-comm-btn-start').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+            const commQueue = selectedBoxes.map(cb => {
+                let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name);
+                return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
+            });
+
+            isBroadcastingWA = true; 
+            let sent = 0, failed = 0;
+
+            for(let i=0; i<commQueue.length; i++) {
+                const item = commQueue[i];
+                let phoneStr = String(item.phone).replace(/[^0-9]/g, '');
+                if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
+
+                if(!phoneStr || phoneStr.length < 10) {
+                    failed++;
+                } else {
+                    try {
+                        let payload = { to: phoneStr, message: item.msgText };
+                        const response = await fetch(WA_API_URL + '/send', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if(response.ok) sent++; else failed++;
+                    } catch(e) { failed++; }
+                }
+                
+                // Add natural delay to avoid bot blocking
+                if(i < commQueue.length - 1) {
+                    await new Promise(r => setTimeout(r, Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000));
+                }
+            }
+
+            isBroadcastingWA = false;
+            document.getElementById('wa-comm-btn-start').disabled = false;
+            document.getElementById('wa-comm-btn-start').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send to Selected Committee';
+            alert(`Committee Dispatch Complete!\nSuccessfully Sent: ${sent}\nFailed: ${failed}`);
+        }
+
+        // Live Read Notifications Tracker (Real-time DB Listener)
+        db.collection('wa_read_receipts').orderBy('timestamp', 'desc').limit(20).onSnapshot(snap => {
+            const box = document.getElementById('wa-read-receipts');
+            let html = '';
+            snap.forEach(doc => {
+                const data = doc.data();
+                const d = new Date(data.timestamp);
+                const timeStr = isNaN(d.getTime()) ? 'Just now' : d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                html += `<div class="read-item">
+                            <i class="fa-solid fa-check-double"></i> 
+                            <span><b>${data.name || 'A Committee Member'}</b> has read your message at ${timeStr}.</span>
+                         </div>`;
+            });
+            if(html !== '') {
+                box.innerHTML = html;
+            }
+        });
+
     </script>
 </body>
 </html>
