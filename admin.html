@@ -63,7 +63,7 @@
         .wa-bar-fill { height:100%; background:linear-gradient(90deg, #10b981, #34d399); transition:width 0.4s ease; width:0%; border-radius:10px;}
 
         /* NEW ADDITIONS FOR COMMITTEE WA SENDER UI */
-        .wa-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .wa-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; flex-wrap: wrap;}
         .wa-tab-btn { background: none; border: none; padding: 10px 20px; font-weight: 600; cursor: pointer; color: #64748b; font-size: 16px; border-radius: 8px; transition: 0.3s; }
         .wa-tab-btn.active { background: var(--primary); color: white; }
         .wa-committee-grid { display: flex; gap: 20px; flex-wrap: wrap; }
@@ -213,7 +213,9 @@
                     <div class="wa-panel" style="flex:1; min-width:350px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <h3>Committee Mailing List</h3>
-                            <button onclick="openAddWACommitteeModal()" class="btn-add" style="padding: 6px 12px; font-size: 13px;">+ Add Member</button>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="openAddWACommitteeModal()" class="btn-add" style="padding: 6px 12px; font-size: 13px;">+ Add Member</button>
+                            </div>
                         </div>
                         
                         <div style="margin-top:10px; padding:10px; background:#e0f2fe; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
@@ -222,7 +224,7 @@
                             </label>
                             <span id="wa-comm-count-badge" style="background:var(--primary); color:white; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:bold;">0 Selected</span>
                         </div>
-                        <div id="wa-committee-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;">Loading Committee...</p></div>
+                        <div id="wa-committee-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
                     </div>
 
                     <!-- Compose, Send & Receipts -->
@@ -230,6 +232,12 @@
                         <h3 style="margin-bottom:10px;">Instant Committee Broadcaster</h3>
                         <label style="font-weight:600; font-size:14px;">Meeting / Update Message *</label>
                         <textarea id="wa-comm-message" class="wa-input" rows="4" placeholder="Example: Committee meeting today at 4 PM. Please attend."></textarea>
+                        
+                        <!-- NEW ATTACHMENT FIELD FOR COMMITTEE SENDER -->
+                        <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
+                            <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB) (Optional)
+                        </label>
+                        <input type="url" id="wa-comm-link-input" class="wa-input" placeholder="Paste link here (https://...)">
                         
                         <button id="wa-comm-btn-start" onclick="initiateWACommitteeBroadcast()" class="wa-btn" style="margin-top:20px; background:#0f172a;" disabled>
                             <i class="fa-solid fa-paper-plane"></i> Send to Selected Committee
@@ -555,18 +563,11 @@
             document.getElementById('wa-logs').innerHTML = ''; 
 
             waQueue = selectedBoxes.map(cb => {
-                // Personalize the main text
                 let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name).replace(/{{member_no}}/gi, cb.dataset.no);
-                
-                // Smartly append the link if provided
                 if(linkInput) {
-                    if(userMsg) {
-                        userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + linkInput;
-                    } else {
-                        userMsg = '🔗 *Attachment:*\n' + linkInput;
-                    }
+                    if(userMsg) userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + linkInput;
+                    else userMsg = '🔗 *Attachment:*\n' + linkInput;
                 }
-                
                 return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
             });
 
@@ -600,7 +601,6 @@
             } else {
                 try {
                     let payload = { to: phoneStr, message: item.msgText };
-                    
                     const response = await fetch(WA_API_URL + '/send', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -659,16 +659,23 @@
             }
         }
 
-        // Manage Dedicated Committee WhatsApp List (Safe logic, does not modify "Manage Committee")
+        // Manage Dedicated Committee WhatsApp List (Safe logic without composite index bug)
         let waCommitteeList = [];
         
         function loadWACommittee() {
-            db.collection('wa_committee_contacts').orderBy('timestamp', 'desc').onSnapshot(snap => {
+            // Bug Fix: Removed orderBy('timestamp') to prevent Firestore Missing Index error on initial load
+            db.collection('wa_committee_contacts').onSnapshot(snap => {
                 waCommitteeList = [];
                 let html = '';
                 snap.forEach(doc => {
                     const data = doc.data();
                     waCommitteeList.push({ id: doc.id, ...data });
+                });
+                
+                // Sort manually on frontend
+                waCommitteeList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                waCommitteeList.forEach(data => {
                     html += `
                         <div class="wa-member-item" style="justify-content:space-between;">
                             <div style="display:flex; align-items:center; gap:10px;">
@@ -676,16 +683,57 @@
                                 <div><b>${data.name}</b><br><small><i class="fa-brands fa-whatsapp"></i> ${data.phone}</small></div>
                             </div>
                             <div>
-                                <button onclick="editWACommittee('${doc.id}', '${data.name}', '${data.phone}')" style="background:none;border:none;color:#2563eb;cursor:pointer;margin-right:10px;"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteWACommittee('${doc.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                                <button onclick="editWACommittee('${data.id}', '${data.name}', '${data.phone}')" style="background:none;border:none;color:#2563eb;cursor:pointer;margin-right:10px;"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteWACommittee('${data.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                     `;
                 });
-                if(waCommitteeList.length === 0) html = '<p style="padding:20px; text-align:center; color:gray;">No committee members added yet.</p>';
+
+                if(waCommitteeList.length === 0) {
+                    html = `
+                        <div style="padding:25px; text-align:center;">
+                            <p style="color:gray; margin-bottom:15px;">No committee members added to this sender list yet.</p>
+                            <button onclick="importMainCommittee()" class="btn-add" style="margin: 0 auto; background:#10b981;">
+                                <i class="fa-solid fa-cloud-arrow-down"></i> Sync from Main Committee
+                            </button>
+                        </div>`;
+                }
                 document.getElementById('wa-committee-list').innerHTML = html;
                 updateWACommCount();
+            }, error => {
+                console.error("Firestore Loading Error:", error);
+                document.getElementById('wa-committee-list').innerHTML = '<p style="padding:20px; text-align:center; color:red;">Failed to load members.</p>';
             });
+        }
+
+        // Import helper to fetch existing 20 members automatically
+        async function importMainCommittee() {
+            if(!confirm("Import existing members from 'Manage Committee' database?")) return;
+            document.getElementById('wa-committee-list').innerHTML = '<p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Importing from Main Database...</p>';
+            
+            try {
+                const snap = await db.collection('committee').get();
+                let batch = db.batch();
+                let count = 0;
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    if(data.name && data.phone) {
+                        const newRef = db.collection('wa_committee_contacts').doc();
+                        batch.set(newRef, { name: data.name, phone: data.phone, timestamp: Date.now() + count });
+                        count++;
+                    }
+                });
+                
+                if(count > 0) {
+                    await batch.commit();
+                    alert(`Successfully imported ${count} committee members!`);
+                } else {
+                    alert("Main Committee database is empty! Please add members there first or add them manually here.");
+                }
+            } catch(e) {
+                alert("Import failed. Try adding manually.");
+            }
         }
 
         function openAddWACommitteeModal() {
@@ -735,14 +783,16 @@
             document.getElementById('wa-comm-count-badge').innerText = `${document.querySelectorAll('.wa-comm-checkbox:checked').length} Selected`;
         }
 
-        // Send to Committee Logic
+        // Send to Committee Logic (With Attachments)
         async function initiateWACommitteeBroadcast() {
             if(!isWABotConnected) return alert("WhatsApp is not connected!");
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
             if(selectedBoxes.length === 0) return alert("Select at least 1 committee member to send a message.");
             
             const rawTemplate = document.getElementById('wa-comm-message').value.trim();
-            if(!rawTemplate) return alert("Please type your committee message.");
+            const commLinkInput = document.getElementById('wa-comm-link-input').value.trim();
+
+            if(!rawTemplate && !commLinkInput) return alert("Please type a message or paste an attachment link.");
             
             if(isBroadcastingWA) return alert("Another broadcast is already running. Please wait for it to finish.");
 
@@ -753,6 +803,12 @@
 
             const commQueue = selectedBoxes.map(cb => {
                 let userMsg = rawTemplate.replace(/{{member_name}}/gi, cb.dataset.name);
+                
+                if(commLinkInput) {
+                    if(userMsg) userMsg = userMsg + '\n\n🔗 *Attachment:*\n' + commLinkInput;
+                    else userMsg = '🔗 *Attachment:*\n' + commLinkInput;
+                }
+                
                 return { name: cb.dataset.name, phone: cb.dataset.phone, msgText: userMsg };
             });
 
@@ -789,12 +845,17 @@
             alert(`Committee Dispatch Complete!\nSuccessfully Sent: ${sent}\nFailed: ${failed}`);
         }
 
-        // Live Read Notifications Tracker (Real-time DB Listener)
-        db.collection('wa_read_receipts').orderBy('timestamp', 'desc').limit(20).onSnapshot(snap => {
+        // Live Read Notifications Tracker
+        // Note: Due to lack of index on initial startup, avoiding orderBy inside onSnapshot.
+        db.collection('wa_read_receipts').onSnapshot(snap => {
             const box = document.getElementById('wa-read-receipts');
+            let tempReceipts = [];
+            snap.forEach(doc => tempReceipts.push(doc.data()));
+            
+            tempReceipts.sort((a,b) => b.timestamp - a.timestamp);
             let html = '';
-            snap.forEach(doc => {
-                const data = doc.data();
+            
+            tempReceipts.slice(0, 20).forEach(data => {
                 const d = new Date(data.timestamp);
                 const timeStr = isNaN(d.getTime()) ? 'Just now' : d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 html += `<div class="read-item">
@@ -802,9 +863,7 @@
                             <span><b>${data.name || 'A Committee Member'}</b> has read your message at ${timeStr}.</span>
                          </div>`;
             });
-            if(html !== '') {
-                box.innerHTML = html;
-            }
+            if(html !== '') box.innerHTML = html;
         });
 
     </script>
