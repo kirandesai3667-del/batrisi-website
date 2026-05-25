@@ -352,7 +352,12 @@
                 document.getElementById('standardAddBtn').innerText = '+ Add New Record';
                 document.getElementById('csvUploadBtnContainer').style.display = 'none';
             }
-            fetchTableData();
+            
+            try {
+                fetchTableData();
+            } catch (e) {
+                console.error("Init Error:", e);
+            }
         }
 
         function fetchTableData() {
@@ -450,25 +455,33 @@
 
             startAPIStatusPolling();
 
-            const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
-            waMembersList =[];
-            let uniqueNatives = new Set();
-            
-            snap.forEach(doc => {
-                let data = doc.data();
-                waMembersList.push({ id: doc.id, ...data });
-                if(data.nativeName && data.nativeName.trim() !== "") {
-                    uniqueNatives.add(data.nativeName.trim());
-                }
-            });
-            
-            let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
-            Array.from(uniqueNatives).sort().forEach(n => {
-                nativeHtml += `<option value="${n}">${n}</option>`;
-            });
-            document.getElementById('wa-native-filter').innerHTML = nativeHtml;
+            try {
+                const snap = await db.collection('members').get();
+                waMembersList =[];
+                let uniqueNatives = new Set();
+                
+                snap.forEach(doc => {
+                    let data = doc.data();
+                    waMembersList.push({ id: doc.id, ...data });
+                    if(data.nativeName && data.nativeName.trim() !== "") {
+                        uniqueNatives.add(data.nativeName.trim());
+                    }
+                });
+                
+                // Safe manual sorting to prevent index errors
+                waMembersList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-            renderWAMembers(waMembersList);
+                let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
+                Array.from(uniqueNatives).sort().forEach(n => {
+                    nativeHtml += `<option value="${n}">${n}</option>`;
+                });
+                document.getElementById('wa-native-filter').innerHTML = nativeHtml;
+
+                renderWAMembers(waMembersList);
+            } catch(e) {
+                console.error("General members loading error:", e);
+                document.getElementById('wa-members-list').innerHTML = '<p style="color:red; text-align:center;">Failed to load members from database.</p>';
+            }
         }
 
         function startAPIStatusPolling() {
@@ -645,7 +658,7 @@
 
 
         // ==============================================================
-        // NEW FEATURE: BUG-FREE COMMITTEE MEMBER SENDER (PURE LOCAL STORAGE + CSV)
+        // NEW FEATURE: BUG-FREE COMMITTEE MEMBER SENDER (CRASH-PROOF)
         // ==============================================================
 
         function switchWATab(tab) {
@@ -667,70 +680,102 @@
         let waCommitteeList = [];
         
         function loadWACommittee() {
-            // Instant load using local storage only to bypass ALL Firebase Permission bugs
-            const localData = localStorage.getItem('wa_committee_fallback');
-            if(localData) {
-                waCommitteeList = JSON.parse(localData);
-            } else {
+            try {
+                const localData = localStorage.getItem('wa_committee_fallback');
+                if(localData) {
+                    waCommitteeList = JSON.parse(localData);
+                    if(!Array.isArray(waCommitteeList)) waCommitteeList = [];
+                } else {
+                    waCommitteeList = [];
+                }
+            } catch (e) {
+                console.error("Local storage reset due to bad data.");
                 waCommitteeList = [];
+                localStorage.removeItem('wa_committee_fallback');
             }
             renderWACommitteeUI();
         }
 
         function renderWACommitteeUI() {
-            let html = '';
-            waCommitteeList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            try {
+                let html = '';
+                if(!Array.isArray(waCommitteeList)) waCommitteeList = [];
+                
+                waCommitteeList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-            waCommitteeList.forEach(data => {
-                html += `
-                    <div class="wa-member-item" style="justify-content:space-between;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" class="wa-comm-checkbox" data-phone="${data.phone||''}" data-name="${data.name||''}" onchange="updateWACommCount()">
-                            <div><b>${data.name}</b><br><small><i class="fa-brands fa-whatsapp"></i> ${data.phone}</small></div>
-                        </div>
-                        <div>
-                            <button onclick="editWACommittee('${data.id}', '${data.name}', '${data.phone}')" style="background:none;border:none;color:#2563eb;cursor:pointer;margin-right:10px;"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteWACommittee('${data.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
+                waCommitteeList.forEach(data => {
+                    // Safe string handling to prevent UI crash if names contain quotes
+                    const safeName = (data.name || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                    const safePhone = (data.phone || '').replace(/'/g, "&apos;");
+                    const safeId = data.id;
 
-            if(waCommitteeList.length === 0) {
-                html = `
-                    <div style="padding:25px; text-align:center;">
-                        <p style="color:gray; margin-bottom:15px;">List is empty. Use the buttons above to manually Add or Upload CSV!</p>
-                    </div>`;
+                    html += `
+                        <div class="wa-member-item" style="justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" class="wa-comm-checkbox" data-phone="${safePhone}" data-name="${safeName}" onchange="updateWACommCount()">
+                                <div><b>${safeName}</b><br><small><i class="fa-brands fa-whatsapp"></i> ${safePhone}</small></div>
+                            </div>
+                            <div>
+                                <button onclick="editWACommittee('${safeId}', '${safeName}', '${safePhone}')" style="background:none;border:none;color:#2563eb;cursor:pointer;margin-right:10px;"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteWACommittee('${safeId}')" style="background:none;border:none;color:#ef4444;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if(waCommitteeList.length === 0) {
+                    html = `
+                        <div style="padding:25px; text-align:center;">
+                            <p style="color:gray; margin-bottom:15px;">List is empty. Click "+ Add" or "Upload CSV" to begin!</p>
+                        </div>`;
+                }
+                
+                document.getElementById('wa-committee-list').innerHTML = html;
+                updateWACommCount();
+            } catch (e) {
+                console.error("Render error:", e);
+                document.getElementById('wa-committee-list').innerHTML = '<p style="color:red; text-align:center;">Error rendering UI. Please refresh.</p>';
             }
-            
-            document.getElementById('wa-committee-list').innerHTML = html;
-            updateWACommCount();
         }
 
         // --- NEW CSV UPLOAD FEATURE FOR COMMITTEE SENDER ---
         function handleWACommCSVUpload(el) {
-            const file = el.files[0]; if(!file) return;
+            const file = el.files[0]; 
+            if(!file) return;
+            
+            // SMART CHECK: Prevent user from directly uploading .xlsx
+            if(!file.name.toLowerCase().endsWith('.csv')) {
+                alert("❌ GALAT FORMAT! \n\nPlease aap apni Excel sheet ko open karein, 'File > Save As' par click karein aur usko 'CSV (Comma delimited)' format me save karein. Fir wo nayi .csv file ko yaha upload karein.");
+                el.value = "";
+                return;
+            }
             
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
                     const rows = results.data;
-                    if(rows.length === 0) return alert("CSV is empty.");
+                    if(!rows || rows.length === 0) {
+                        alert("❌ Ye CSV file khali he.");
+                        el.value = "";
+                        return;
+                    }
                     
                     let addedCount = 0;
+                    if(!Array.isArray(waCommitteeList)) waCommitteeList = [];
+
                     rows.forEach(row => {
-                        // Smart Key Mapping
+                        // Smart Header Check - Automatically matches 'Name' and 'Mobile' columns
                         const getVal = (possibleKeys) => { 
                             for(let k in row) { 
-                                let cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+                                let cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, ''); 
                                 if(possibleKeys.includes(cleanK)) return row[k] ? String(row[k]).trim() : ''; 
                             } 
                             return ''; 
                         };
                         
-                        const name = getVal(['name', 'membername', 'fullname']);
-                        const phone = getVal(['mobilenumber', 'mobileno', 'mobile', 'phone']);
+                        const name = getVal(['name', 'membername', 'fullname', 'committee']);
+                        const phone = getVal(['mobilenumber', 'mobileno', 'mobile', 'phone', 'contact']);
                         
                         if(name && phone) {
                             waCommitteeList.push({
@@ -743,23 +788,30 @@
                         }
                     });
                     
-                    localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
+                    try {
+                        localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
+                    } catch(e) { console.error(e); }
+                    
                     renderWACommitteeUI();
                     
                     if(addedCount > 0) {
-                        alert(`Successfully mapped and uploaded ${addedCount} committee members!`);
+                        alert(`✅ Success! ${addedCount} committee members upload ho gaye!`);
                     } else {
-                        alert("No matching 'Name' and 'Mobile Number' columns found in the CSV.");
+                        alert("❌ Error: Aapki file me 'Name' or 'Mobile Number' ke columns nahi mile. Kripya column ke naam theek karein.");
                     }
                     el.value = ""; // reset input
+                },
+                error: function(err) {
+                    alert("Upload Failed: " + err.message);
+                    el.value = "";
                 }
             });
         }
 
         // CLEAR ALL BUTTON
         function clearAllWACommittee() {
-            if(waCommitteeList.length === 0) return alert("List is already empty.");
-            if(confirm("Are you sure you want to completely clear the Committee Sender List?")) {
+            if(!Array.isArray(waCommitteeList) || waCommitteeList.length === 0) return alert("List pehle se hi khali he.");
+            if(confirm("Are you sure? Kya aap sabhi Committee members ko hatana chahte he?")) {
                 waCommitteeList = [];
                 localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
                 renderWACommitteeUI();
@@ -776,8 +828,9 @@
 
         function editWACommittee(id, name, phone) {
             document.getElementById('waCommId').value = id;
-            document.getElementById('waCommName').value = name;
-            document.getElementById('waCommPhone').value = phone;
+            // Decode simple quotes back into input box
+            document.getElementById('waCommName').value = name.replace(/&apos;/g, "'").replace(/&quot;/g, '"');
+            document.getElementById('waCommPhone').value = phone.replace(/&apos;/g, "'");
             document.getElementById('waCommModalTitle').innerText = 'Edit Committee Contact';
             document.getElementById('waCommModal').style.display = 'flex';
         }
@@ -790,25 +843,31 @@
         }
 
         function saveWACommitteeContact() {
-            const idInput = document.getElementById('waCommId').value;
-            const id = idInput || 'comm_' + Date.now();
-            const name = document.getElementById('waCommName').value.trim();
-            const phone = document.getElementById('waCommPhone').value.trim();
-            
-            if(!name || !phone) return alert('Please enter both name and mobile number!');
-            
-            const payload = { id, name, phone, timestamp: Date.now() };
-            
-            const index = waCommitteeList.findIndex(m => m.id === id);
-            if(index >= 0) {
-                waCommitteeList[index] = payload;
-            } else {
-                waCommitteeList.push(payload);
+            try {
+                const idInput = document.getElementById('waCommId').value;
+                const id = idInput || 'comm_' + Date.now();
+                const name = document.getElementById('waCommName').value.trim();
+                const phone = document.getElementById('waCommPhone').value.trim();
+                
+                if(!name || !phone) return alert('Name aur Mobile dono daalna jaruri he!');
+                
+                const payload = { id, name, phone, timestamp: Date.now() };
+                
+                if(!Array.isArray(waCommitteeList)) waCommitteeList = [];
+                const index = waCommitteeList.findIndex(m => m.id === id);
+                if(index >= 0) {
+                    waCommitteeList[index] = payload;
+                } else {
+                    waCommitteeList.push(payload);
+                }
+                
+                localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
+                document.getElementById('waCommModal').style.display = 'none';
+                renderWACommitteeUI();
+            } catch (e) {
+                console.error("Save Crash Error:", e);
+                alert("Koi technical error aaya he. Page refresh karke dobara try karein.");
             }
-            
-            localStorage.setItem('wa_committee_fallback', JSON.stringify(waCommitteeList));
-            document.getElementById('waCommModal').style.display = 'none';
-            renderWACommitteeUI();
         }
 
         function toggleAllWACommittee() {
@@ -823,18 +882,18 @@
 
         // Send to Committee Logic (With Attachments)
         async function initiateWACommitteeBroadcast() {
-            if(!isWABotConnected) return alert("WhatsApp is not connected!");
+            if(!isWABotConnected) return alert("WhatsApp connect nahi he! Pehle QR Scan karein.");
             const selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
-            if(selectedBoxes.length === 0) return alert("Select at least 1 committee member to send a message.");
+            if(selectedBoxes.length === 0) return alert("Kam se kam 1 member select karein.");
             
             const rawTemplate = document.getElementById('wa-comm-message').value.trim();
             const commLinkInput = document.getElementById('wa-comm-link-input').value.trim();
 
-            if(!rawTemplate && !commLinkInput) return alert("Please type a message or paste an attachment link.");
+            if(!rawTemplate && !commLinkInput) return alert("Kripya message likhein ya link dalein.");
             
-            if(isBroadcastingWA) return alert("Another broadcast is already running. Please wait for it to finish.");
+            if(isBroadcastingWA) return alert("Ek message campaign pehle se hi chal raha he. Uske khtm hone ka wait karein.");
 
-            if(!confirm(`Send message to ${selectedBoxes.length} committee members?`)) return;
+            if(!confirm(`Kya aap ${selectedBoxes.length} members ko message bhejna chahte he?`)) return;
 
             document.getElementById('wa-comm-btn-start').disabled = true;
             document.getElementById('wa-comm-btn-start').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
@@ -881,7 +940,7 @@
             isBroadcastingWA = false;
             document.getElementById('wa-comm-btn-start').disabled = false;
             document.getElementById('wa-comm-btn-start').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send to Selected Committee';
-            alert(`Committee Dispatch Complete!\nSuccessfully Sent: ${sent}\nFailed: ${failed}`);
+            alert(`✅ Committee Messages Sent Successfully!\n\nSent: ${sent}\nFailed: ${failed}`);
         }
 
         // Live Read Notifications Tracker (Wrapped in silent catch)
