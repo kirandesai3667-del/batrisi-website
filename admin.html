@@ -235,7 +235,7 @@
                             <span>msgs.</span>
                         </div>
                         <div style="color:#10b981; margin-top: 10px; font-weight: 600; font-size: 12px; background: #d1fae5; padding: 8px; border-radius: 6px;">
-                            <i class="fa-solid fa-robot"></i> AI Human Simulation Enabled: System uses random 2-8s per-message delay & smart batch micro-pauses automatically!
+                            <i class="fa-solid fa-robot"></i> Ultra-Safe AI Simulation Active: System automatically pauses for 180s after every 40 msgs, plus adds 2-8s human-like random delays per message!
                         </div>
                     </div>
 
@@ -969,8 +969,9 @@
             }
 
             // --- ENTERPRISE: Anti-Ban Sleep Logic (Long Pauses - Ultra Safe Defaults) ---
-            let maxCount = parseInt(document.getElementById('ab-msg-count').value) || 40;
-            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value) || 180;
+            // Yahan code HTML field se values uthayega. Fallback 40 aur 180 set hai explicitly.
+            let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 40;
+            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 180;
             
             if(abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
