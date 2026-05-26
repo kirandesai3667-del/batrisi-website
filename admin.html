@@ -222,16 +222,16 @@
                     </label>
                     <input type="url" id="wa-link-input" class="wa-input" placeholder="Paste link here (https://...)">
 
-                    <!-- ENTERPRISE ANTI-BAN SETTINGS -->
+                    <!-- ENTERPRISE ANTI-BAN SETTINGS (ULTRA-SAFE) -->
                     <div class="settings-box">
                         <div style="font-weight:600; color:var(--dark); margin-bottom:8px; display:flex; align-items:center; gap:5px;">
                             <i class="fa-solid fa-shield-halved"></i> Smart Anti-Ban Settings
                         </div>
                         <div class="settings-row">
                             <span>Take a pause of</span>
-                            <input type="number" id="ab-pause-sec" value="60" class="mini-input">
+                            <input type="number" id="ab-pause-sec" value="180" class="mini-input">
                             <span>Seconds after every</span>
-                            <input type="number" id="ab-msg-count" value="100" class="mini-input">
+                            <input type="number" id="ab-msg-count" value="40" class="mini-input">
                             <span>msgs.</span>
                         </div>
                         <div style="color:#10b981; margin-top: 10px; font-weight: 600; font-size: 12px; background: #d1fae5; padding: 8px; border-radius: 6px;">
@@ -968,9 +968,9 @@
                 return;
             }
 
-            // --- ENTERPRISE: Anti-Ban Sleep Logic (Long Pauses) ---
-            let maxCount = parseInt(document.getElementById('ab-msg-count').value) || 100;
-            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value) || 60;
+            // --- ENTERPRISE: Anti-Ban Sleep Logic (Long Pauses - Ultra Safe Defaults) ---
+            let maxCount = parseInt(document.getElementById('ab-msg-count').value) || 40;
+            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value) || 180;
             
             if(abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
