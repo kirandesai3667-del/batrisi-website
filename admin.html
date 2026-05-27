@@ -334,8 +334,15 @@
                         <h3 style="margin-bottom:10px;">WhatsApp Native Announcements</h3>
                         <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Send ONE message directly to an entire Native WhatsApp Group/Community without sending hundreds of individual messages.</p>
                         
+                        <!-- NEW AUTOMATED GROUP CREATOR SECTION -->
+                        <div style="background:#f0fdf4; border:1px solid #6ee7b7; border-radius:8px; padding:15px; margin-bottom:15px;">
+                            <h4 style="margin-bottom:8px; font-size:14px; color:#047857;"><i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Auto Group Setup</h4>
+                            <p style="font-size:12px; color:#065f46; margin-bottom:12px;">System will scan all unmapped Natives, automatically create WhatsApp Groups via your PC server, add the members, and link the Group ID instantly.</p>
+                            <button id="btn-auto-setup-groups" onclick="autoSetupWAGroups()" class="btn-add" style="background:#10b981; width:100%; justify-content:center;"><i class="fa-solid fa-robot"></i> Auto-Setup & Sync Native Groups</button>
+                        </div>
+
                         <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin-bottom:12px; font-size:14px; color:#0284c7;"><i class="fa-solid fa-link"></i> Map Native to WA Group</h4>
+                            <h4 style="margin-bottom:12px; font-size:14px; color:#0284c7;"><i class="fa-solid fa-link"></i> Map Native to WA Group (Manual Fallback)</h4>
                             
                             <div class="form-group">
                                 <label style="color:#0369a1;">Select Target Native (Gaam)</label>
@@ -982,6 +989,97 @@
             }
         }
 
+        // NEW: AUTO SETUP GROUPS (1-Click Creation & Sync)
+        async function autoSetupWAGroups() {
+            if(!isWABotConnected) return alert("WhatsApp PC Server must be connected to automatically create groups!");
+            if(!confirm("This will securely scan your database, create a WhatsApp Group for any Native that doesn't have one yet, and map the members automatically via your PC server. Proceed?")) return;
+
+            const btn = document.getElementById('btn-auto-setup-groups');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing Members & Groups...';
+            btn.disabled = true;
+
+            try {
+                // 1. Group members by Native to get participants
+                const memSnap = await db.collection('members').get();
+                let nativesMap = {}; // Example: { "ADALAJ": ["919876543210", ...] }
+                
+                memSnap.forEach(doc => {
+                    let d = doc.data();
+                    if(d.nativeName && d.nativeName.trim() !== "" && d.mobileNumber) {
+                        let native = d.nativeName.trim();
+                        let phoneStr = String(d.mobileNumber).replace(/[^0-9]/g, '');
+                        if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) {
+                            phoneStr = '91' + phoneStr.slice(-10);
+                        }
+                        if(phoneStr.length >= 10) {
+                            if(!nativesMap[native]) nativesMap[native] = [];
+                            if(!nativesMap[native].includes(phoneStr)) nativesMap[native].push(phoneStr);
+                        }
+                    }
+                });
+
+                // 2. Loop through each Native to Create & Sync Groups
+                let createdCount = 0;
+                let skippedCount = 0;
+                let errorCount = 0;
+
+                for(let native in nativesMap) {
+                    if(waGroupMappings[native]) {
+                        skippedCount++;
+                        printLog(`⏩ Group for ${native} already exists mapped. Skipped.`, "info");
+                    } else {
+                        // Unmapped Native -> Let's ask PC Server to create the group!
+                        printLog(`⚙️ Auto-Creating WhatsApp Group for ${native} with ${nativesMap[native].length} members...`, "primary");
+                        
+                        try {
+                            const res = await fetch(WA_API_URL + '/create-group', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    groupName: native + " - Notice Board",
+                                    participants: nativesMap[native]
+                                })
+                            });
+
+                            if(res.ok) {
+                                const data = await res.json();
+                                if(data.groupId) {
+                                    // Save the new groupId mapped directly to the Native in Firebase
+                                    await db.collection('wa_group_mappings').doc(native).set({
+                                        native: native,
+                                        groupId: data.groupId,
+                                        timestamp: Date.now()
+                                    });
+                                    waGroupMappings[native] = data.groupId;
+                                    createdCount++;
+                                    printLog(`✅ Successfully created & mapped group: ${native} (ID: ${data.groupId})`, "success");
+                                }
+                            } else {
+                                errorCount++;
+                                printLog(`❌ PC Server failed to create group for ${native}. (Does server support /create-group?)`, "error");
+                            }
+                        } catch(e) {
+                            errorCount++;
+                            printLog(`❌ Network error contacting PC Server for ${native}.`, "error");
+                        }
+                        
+                        // Delay 3 seconds between creations to avoid WhatsApp Ban limits
+                        await new Promise(r => setTimeout(r, 3000));
+                    }
+                }
+
+                alert(`Auto-Setup Complete!\n\nNew Groups Created: ${createdCount}\nGroups Skipped (Already Exist): ${skippedCount}\nErrors: ${errorCount}`);
+                loadMappedGroup(); // Refresh visual UI if a native was selected
+                
+            } catch(e) {
+                console.error(e);
+                alert("Error scanning database during auto-setup.");
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-robot"></i> Auto-Setup & Sync Native Groups';
+            btn.disabled = false;
+        }
+
         // --- SUBTAB: COMMITTEE SENDER DATABASE OPERATIONS ---
         async function loadCommitteeSenderList() {
             const listDiv = document.getElementById('wa-committee-members-list');
@@ -1237,7 +1335,7 @@
                 let mappedGroupId = document.getElementById('wa-group-id-input').value.trim();
                 
                 if(!selectedNative) return alert("Select a Native (Gaam) to announce to.");
-                if(!mappedGroupId) return alert("Please provide or map a Group ID to this Native first!");
+                if(!mappedGroupId) return alert("Please map or Auto-Setup a Group ID for this Native first!");
 
                 if(!confirm(`Send ONE single announcement directly to the WhatsApp Group mapped to ${selectedNative}?`)) return;
                 
