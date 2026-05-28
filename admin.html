@@ -115,9 +115,6 @@
         <button class="nav-btn" onclick="initCMS('downloads', 'Downloads')">Manage Downloads</button>
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="initCMS('members', 'Members Database')"><i class="fa-solid fa-users"></i> Manage Members</button>
         
-        <!-- NEW NATIVE ANNOUNCEMENT CHANNELS INTEGRATION -->
-        <button class="nav-btn" style="color: #3b82f6; font-weight: 600;" onclick="initChannels()"><i class="fa-solid fa-bullhorn"></i> Web Notice Board</button>
-
         <button class="nav-btn" style="border-top: 1px solid rgba(255,255,255,0.1); color: #25D366; font-weight: 600;" onclick="openWABroadcast()"><i class="fa-brands fa-whatsapp"></i> 1-Click Auto Sender</button>
         
         <!-- PREMIUM: Backup & Admin Logs -->
@@ -144,54 +141,6 @@
             
             <div class="table-container">
                 <table><thead><tr id="tableHeaders"><th>Record Info</th><th>Media</th><th>Actions</th></tr></thead><tbody id="tableBody"></tbody></table>
-            </div>
-        </div>
-
-        <!-- NEW: NATIVE ANNOUNCEMENT CHANNELS CONTAINER -->
-        <div id="channels-container" style="display:none;">
-            <div class="toolbar">
-                <div><h1>Web Notice Board (Website Feed)</h1><p style="color:#64748b; font-size:14px;">Post public notices & attachments to specific Native (Gaam) feeds on the website.</p></div>
-            </div>
-            <div style="display:flex; gap:20px; flex-wrap:wrap;">
-                
-                <!-- Compose Channel Post Panel -->
-                <div class="wa-panel" style="flex:1; min-width:350px;">
-                    <h3 style="margin-bottom:15px; color:var(--dark);"><i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> Create Web Notice</h3>
-                    
-                    <div class="form-group" style="margin-bottom:20px;">
-                        <label style="color:#3b82f6;"><i class="fa-solid fa-users-viewfinder"></i> Select Target Audience (Native/Gaam)</label>
-                        <select id="channel-native-select" class="wa-input" style="border-color:#93c5fd; font-weight:600;">
-                            <option value="ALL">All Natives (Global Announcement)</option>
-                            <!-- Dynamically populated from members db -->
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Announcement Message</label>
-                        <textarea id="channel-message" class="wa-input" rows="5" placeholder="Write your public announcement, meeting notice, or update here..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label style="color:#10b981;"><i class="fa-solid fa-link"></i> Attachment Link (Drive/ImgBB/File)</label>
-                        <input type="url" id="channel-attachment" class="wa-input" placeholder="https://drive.google.com/... or https://ibb.co/...">
-                    </div>
-                    
-                    <button onclick="postAnnouncement()" class="wa-btn" id="btn-publish-channel" style="background:#3b82f6;"><i class="fa-solid fa-paper-plane"></i> Publish to Web Feed</button>
-                </div>
-                
-                <!-- Channel Live Feed Panel -->
-                <div class="wa-panel" style="flex:1.2; min-width:400px; background:#f8fafc;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-                        <h3 style="margin:0;"><i class="fa-solid fa-rss" style="color:#f59e0b;"></i> Live Website Feed</h3>
-                        <select id="channel-filter-select" class="wa-input" style="width:auto; padding:6px 10px; margin:0; font-size:13px; font-weight:bold; color:#475569;" onchange="fetchAnnouncements()">
-                            <option value="ALL">Filter: All Announcements</option>
-                            <!-- Dynamically populated -->
-                        </select>
-                    </div>
-                    <div id="channel-feed-list" style="max-height: 550px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right:5px;">
-                        <p style="text-align:center; padding:20px; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Feed...</p>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -550,7 +499,6 @@
             document.getElementById('dashboard-container').style.display = 'none';
             document.getElementById('history-container').style.display = 'none';
             document.getElementById('logs-container').style.display = 'none';
-            document.getElementById('channels-container').style.display = 'none'; // Native Channels safely included
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         }
 
@@ -1848,7 +1796,7 @@
 
         async function exportDatabaseBackup() {
             const t = document.getElementById('toast'); t.innerText = "Generating Backup..."; t.classList.add('show');
-            const collectionsToBackup = ['members', 'events', 'committee', 'wa_templates', 'wa_smart_groups', 'native_announcements', 'wa_group_mappings'];
+            const collectionsToBackup = ['members', 'events', 'committee', 'wa_templates', 'wa_smart_groups', 'wa_group_mappings'];
             let backupData = {};
             
             try {
@@ -1903,126 +1851,6 @@
                 } catch(e) { alert("Invalid Backup File format or Network Error."); }
             };
             reader.readAsText(file);
-        }
-
-        // ==============================================================
-        // WEB NOTICE BOARD CHANNELS SYSTEM LOGIC (PRESERVED)
-        // ==============================================================
-        function initChannels() {
-            hideAllContainers();
-            document.getElementById('channels-container').style.display = 'block';
-            if(event) event.target.classList.add('active');
-            
-            loadNativesForChannels();
-            fetchAnnouncements();
-        }
-
-        async function loadNativesForChannels() {
-            try {
-                // Fetch the unique native names from the existing Member DB
-                const snap = await db.collection('members').get();
-                let uniqueNatives = new Set();
-                snap.forEach(doc => {
-                    let d = doc.data();
-                    if(d.nativeName && d.nativeName.trim() !== "") {
-                        uniqueNatives.add(d.nativeName.trim());
-                    }
-                });
-                
-                let html = '<option value="ALL">All Natives (Global Announcement)</option>';
-                let filterHtml = '<option value="ALL">Filter: All Announcements</option>';
-                
-                Array.from(uniqueNatives).sort().forEach(n => {
-                    html += `<option value="${n}">${n}</option>`;
-                    filterHtml += `<option value="${n}">${n}</option>`;
-                });
-                
-                document.getElementById('channel-native-select').innerHTML = html;
-                document.getElementById('channel-filter-select').innerHTML = filterHtml;
-            } catch(e) { console.error("Error loading natives for channels", e); }
-        }
-
-        async function postAnnouncement() {
-            const native = document.getElementById('channel-native-select').value;
-            const msg = document.getElementById('channel-message').value.trim();
-            const attachment = document.getElementById('channel-attachment').value.trim();
-
-            if(!msg && !attachment) return alert("Please enter an announcement message or provide an attachment link.");
-
-            const btn = document.getElementById('btn-publish-channel');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publishing...';
-            btn.disabled = true;
-
-            try {
-                await db.collection('native_announcements').add({
-                    native: native,
-                    message: msg,
-                    attachment: attachment,
-                    timestamp: Date.now()
-                });
-                
-                logAdminActivity("Web Notice Announcement", `Posted new notice to ${native} Web Feed.`);
-                
-                document.getElementById('channel-message').value = '';
-                document.getElementById('channel-attachment').value = '';
-                showToast("Web Notice Published successfully!");
-                
-            } catch(e) {
-                alert("Error publishing announcement.");
-            }
-            
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publish to Web Feed';
-            btn.disabled = false;
-        }
-
-        let feedSnapshotListener = null;
-
-        function fetchAnnouncements() {
-            const filter = document.getElementById('channel-filter-select').value;
-            
-            if(feedSnapshotListener) feedSnapshotListener(); // Cleanup old listener
-            
-            // Listen real-time to announcements
-            feedSnapshotListener = db.collection('native_announcements').orderBy('timestamp', 'desc').limit(100).onSnapshot(snap => {
-                const list = document.getElementById('channel-feed-list');
-                let html = '';
-                
-                snap.forEach(doc => {
-                    let d = doc.data();
-                    // Client-side filtering to avoid Firebase index limits instantly
-                    if(filter !== 'ALL' && d.native !== filter && d.native !== 'ALL') return;
-                    
-                    let dateStr = new Date(d.timestamp).toLocaleString();
-                    let badgeColor = d.native === 'ALL' ? '#3b82f6' : '#ea580c';
-                    let attachHtml = d.attachment ? `<div style="margin-top:12px; padding:10px; background:#eff6ff; border-radius:6px; border:1px solid #bfdbfe;"><a href="${d.attachment}" target="_blank" style="color:#2563eb; text-decoration:none; font-weight:600; font-size:13px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-paperclip"></i> Open Attachment</a></div>` : '';
-
-                    html += `
-                        <div style="background:white; border:1px solid var(--border); padding:18px; border-radius:10px; position:relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">
-                                <div>
-                                    <span style="background:${badgeColor}; color:white; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold;"><i class="fa-solid fa-bullseye"></i> ${d.native}</span>
-                                    <small style="color:#64748b; margin-left:10px; font-size:12px;"><i class="fa-regular fa-clock"></i> ${dateStr}</small>
-                                </div>
-                                <button onclick="deleteAnnouncement('${doc.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:15px; padding:5px;"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
-                            <div style="font-size:14px; color:var(--dark); white-space:pre-wrap; line-height: 1.6;">${d.message}</div>
-                            ${attachHtml}
-                        </div>
-                    `;
-                });
-                
-                if(!html) html = '<div style="padding:30px; text-align:center; color:#64748b; background:white; border-radius:8px; border:1px dashed var(--border);">No announcements found for this audience.</div>';
-                list.innerHTML = html;
-            });
-        }
-
-        async function deleteAnnouncement(id) {
-            if(!confirm("Are you sure you want to permanently delete this announcement?")) return;
-            try {
-                await db.collection('native_announcements').doc(id).delete();
-                showToast("Post Deleted Successfully!");
-                logAdminActivity("Deleted Announcement", `Announcement ID: ${id} was removed.`);
-            } catch(e) { alert("Error deleting post"); }
         }
 
         // Initialize default view
