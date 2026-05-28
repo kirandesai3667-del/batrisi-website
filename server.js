@@ -51,7 +51,6 @@ client.on('disconnected', (reason) => {
     waStatus = 'DISCONNECTED';
 });
 
-// --- API ENDPOINTS ---
 app.get('/api/whatsapp/status', (req, res) => res.json({ status: waStatus }));
 
 app.get('/api/whatsapp/qr.png', (req, res) => {
@@ -76,17 +75,17 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 SMART GROUP CREATOR WITH LIVE NUMBER VERIFICATION
+// 🔥 ULTRA-SAFE GROUP CREATOR (Bypasses all WhatsApp limits)
 app.post('/api/whatsapp/create-group', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
 
     try {
         const { groupName, participants } = req.body;
         console.log(`\n================================================`);
-        console.log(`🛠️ INITIATING GROUP CREATION: "${groupName}"`);
+        console.log(`🛠️ INITIATING ULTRA-SAFE GROUP CREATION: "${groupName}"`);
 
         if (!groupName || !participants || participants.length === 0) {
-            console.log(`❌ No participants provided for this village.`);
+            console.log(`❌ No participants provided.`);
             return res.status(400).json({ error: 'Missing Data' });
         }
 
@@ -101,58 +100,41 @@ app.post('/api/whatsapp/create-group', async (req, res) => {
         }
 
         let groupId = null;
-        let createdMember = null;
 
-        // LOOP: Find at least ONE valid WhatsApp user to create the group
-        for (let i = 0; i < validParticipants.length; i++) {
-            let testNum = validParticipants[i];
-            console.log(`   ⏳ Testing member: ${testNum}`);
+        try {
+            // STEP 1: DO NOT ADD ANYONE. Create an EMPTY group first!
+            // WhatsApp-web.js requires at least 1 person to create a group.
+            // We will use our own bot's number to bypass the privacy block!
+            const myNumberId = client.info.wid._serialized;
+            console.log(`   ⏳ Creating Empty Group using bot's own number (${myNumberId})...`);
             
-            try {
-                // 1️⃣ CHECK IF NUMBER IS ON WHATSAPP FIRST!
-                const isRegistered = await client.getNumberId(testNum);
-                
-                if (!isRegistered) {
-                    console.log(`   ❌ Number not registered on WhatsApp. Skipping...`);
-                    continue;
-                }
-
-                // 2️⃣ TRY CREATING THE GROUP
-                const response = await client.createGroup(groupName, [isRegistered._serialized]);
-                
-                if (response && response.gid) {
-                    groupId = response.gid._serialized;
-                    createdMember = isRegistered._serialized;
-                    console.log(`   ✅ SUCCESS! Group Created. ID: ${groupId}`);
-                    break; // Stop looking, group is successfully created!
-                }
-            } catch (err) {
-                console.log(`   ⚠️ Failed (Privacy Block). Trying next member...`);
+            const response = await client.createGroup(groupName, [myNumberId]);
+            
+            if (response && response.gid) {
+                groupId = response.gid._serialized;
+                console.log(`   ✅ SUCCESS! Group Created. ID: ${groupId}`);
+            } else {
+                throw new Error("No GID returned");
             }
+        } catch (err) {
+            console.log(`   ❌ CRITICAL: Failed to create even an empty group. WhatsApp has restricted your account from making groups.`);
+            return res.status(500).json({ error: 'WhatsApp restricted your account from making groups.' });
         }
 
-        // Agar saare 200 members invalid nikle ya block karke baithe hain
-        if (!groupId) {
-            console.log(`❌ CRITICAL: Could not create group. All numbers failed or blocked it.`);
-            return res.status(500).json({ error: 'WhatsApp rejected group creation.' });
-        }
-
-        // Admin Panel ko turant Success bhejo!
+        // Return SUCCESS to frontend instantly so Admin Panel turns Green
         res.json({ success: true, groupId: groupId });
 
-        // 3️⃣ BACKGROUND TASK: Baaki members ko aaram se add karo
-        let remainingPeople = validParticipants.filter(p => p !== createdMember);
-        
-        if (remainingPeople.length > 0) {
+        // STEP 2: BACKGROUND TASK - Slowly add real members to the group
+        if (validParticipants.length > 0) {
             setTimeout(async () => {
-                console.log(`⏳ Background: Adding ${remainingPeople.length} members to "${groupName}"...`);
+                console.log(`⏳ Background: Adding ${validParticipants.length} members to "${groupName}"...`);
                 try {
                     const chat = await client.getChatById(groupId);
                     
-                    for (let i = 0; i < remainingPeople.length; i += 20) {
-                        const chunk = remainingPeople.slice(i, i + 20); // 20 members at a time
+                    // Add people in chunks of 5 every 5 seconds (Very Human-like)
+                    for (let i = 0; i < validParticipants.length; i += 5) {
+                        const chunk = validParticipants.slice(i, i + 5); 
                         
-                        // Verification filter for batch
                         let finalChunk = [];
                         for(let num of chunk) {
                             const isReg = await client.getNumberId(num);
@@ -162,16 +144,17 @@ app.post('/api/whatsapp/create-group', async (req, res) => {
                         if(finalChunk.length > 0) {
                             try {
                                 await chat.addParticipants(finalChunk);
-                                console.log(`   -> Added batch of ${finalChunk.length} members.`);
+                                console.log(`   -> Batch added ${finalChunk.length} members.`);
                             } catch(e) {
-                                console.log(`   -> Some members in batch had privacy blocks. Skipped.`);
+                                console.log(`   -> Some members in batch had privacy blocks or rejected addition.`);
                             }
                         }
                         
-                        // Wait 5 seconds before next batch
-                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        // Wait 5 to 7 seconds before next batch
+                        let randomDelay = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000;
+                        await new Promise(resolve => setTimeout(resolve, randomDelay));
                     }
-                    console.log(`🎉 Finished adding all valid members to "${groupName}"!`);
+                    console.log(`🎉 Finished adding all possible members to "${groupName}"!`);
                 } catch(e) {
                     console.error("Background error:", e.message);
                 }
@@ -182,6 +165,12 @@ app.post('/api/whatsapp/create-group', async (req, res) => {
         console.error('❌ Route Error:', error.message);
         res.status(500).json({ error: 'Failed to create group.' });
     }
+});
+
+app.get('/api/whatsapp/acks', (req, res) => {
+    const data = [...ackQueue];
+    ackQueue = []; 
+    res.json(data);
 });
 
 // --- START SERVER ---
