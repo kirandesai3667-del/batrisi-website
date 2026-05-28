@@ -34,7 +34,6 @@ const client = new Client({
 });
 
 // --- WHATSAPP EVENT LISTENERS ---
-
 client.on('qr', async (qr) => {
     console.log('🟡 New QR Code Generated. Please open Admin Panel to scan...');
     waStatus = 'QR_READY';
@@ -52,29 +51,8 @@ client.on('disconnected', (reason) => {
     waStatus = 'DISCONNECTED';
 });
 
-client.on('message_ack', (msg, ack) => {
-    let statusText = '';
-    if(ack === 2) statusText = 'delivered';
-    if(ack === 3) statusText = 'read';
-    
-    if(statusText) {
-        ackQueue.push({ to: msg.to, status: statusText });
-        if(ackQueue.length > 50) ackQueue.shift();
-    }
-});
-
-client.on('message', msg => {
-    if(!msg.from.includes('@g.us')) {
-        ackQueue.push({ to: msg.from, status: 'replied', text: msg.body });
-        if(ackQueue.length > 50) ackQueue.shift();
-    }
-});
-
 // --- API ENDPOINTS ---
-
-app.get('/api/whatsapp/status', (req, res) => {
-    res.json({ status: waStatus });
-});
+app.get('/api/whatsapp/status', (req, res) => res.json({ status: waStatus }));
 
 app.get('/api/whatsapp/qr.png', (req, res) => {
     if (waStatus === 'QR_READY' && latestQR) {
@@ -87,100 +65,96 @@ app.get('/api/whatsapp/qr.png', (req, res) => {
 
 app.post('/api/whatsapp/send', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
-
     try {
         const { to, message } = req.body;
-        if (!to || !message) return res.status(400).json({ error: 'Missing parameters' });
-
         let chatId = to;
-        if (!chatId.includes('@g.us') && !chatId.includes('@c.us')) {
-            chatId = `${to}@c.us`; 
-        }
-
+        if (!chatId.includes('@g.us') && !chatId.includes('@c.us')) chatId = `${to}@c.us`; 
         const response = await client.sendMessage(chatId, message);
         res.json({ success: true, messageId: response.id.id });
     } catch (error) {
-        console.error('Send Error:', error);
         res.status(500).json({ error: 'Failed to send message' });
     }
 });
 
-// 🔥 SMART GROUP CREATOR (Fix for Large Audience Crash)
+// 🔥 ADVANCED SMART GROUP CREATOR (Bypasses Privacy Blockers)
 app.post('/api/whatsapp/create-group', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
 
     try {
         const { groupName, participants } = req.body;
-        
         if (!groupName || !participants || participants.length === 0) {
-            return res.status(400).json({ error: 'Missing groupName or participants' });
+            return res.status(400).json({ error: 'Missing Data' });
         }
 
-        // 1. Clean numbers properly
-        const validParticipants = [];
-        for (let p of participants) {
-            let num = String(p).replace(/[^0-9]/g, '');
-            if (num.length >= 10) validParticipants.push(`${num}@c.us`);
-        }
+        const validParticipants = participants.map(p => `${String(p).replace(/[^0-9]/g, '')}@c.us`);
 
-        if (validParticipants.length === 0) return res.status(400).json({ error: 'No valid numbers found' });
-
-        console.log(`⚙️ Attempting to create Group: "${groupName}"...`);
+        console.log(`\n⚙️ Attempting to create Group: "${groupName}"...`);
         
-        // 2. CREATE GROUP WITH ONLY 1 MEMBER FIRST (Safe Method)
-        const firstPerson = [validParticipants[0]];
-        const remainingPeople = validParticipants.slice(1);
+        let groupId = null;
+        let created = false;
+        let usedIndex = 0;
 
-        const response = await client.createGroup(groupName, firstPerson);
-        
-        if (!response || !response.gid) {
-            throw new Error("WhatsApp blocked group creation.");
+        // Try creating group with up to 10 different people (in case early ones have Privacy Blockers)
+        for (let i = 0; i < Math.min(10, validParticipants.length); i++) {
+            try {
+                console.log(`   -> Trying to create with member: ${validParticipants[i]}`);
+                const response = await client.createGroup(groupName, [validParticipants[i]]);
+                
+                if (response && response.gid) {
+                    groupId = response.gid._serialized;
+                    created = true;
+                    usedIndex = i;
+                    console.log(`   ✅ Success! Group ID: ${groupId}`);
+                    break; // Stop loop, group is created!
+                }
+            } catch (err) {
+                console.log(`   ⚠️ Failed (Privacy Block/Invalid). Trying next member...`);
+            }
         }
 
-        const groupId = response.gid._serialized;
-        console.log(`✅ Group created successfully! ID: ${groupId}`);
+        if (!created || !groupId) {
+            console.log(`❌ CRITICAL: Could not create group. First 10 members blocked it.`);
+            return res.status(500).json({ error: 'Failed. All tested members have privacy locks.' });
+        }
 
-        // 3. Return SUCCESS immediately to the frontend!
+        // Return SUCCESS to HTML frontend instantly
         res.json({ success: true, groupId: groupId });
 
-        // 4. BACKGROUND TASK: Add remaining members in chunks of 30
+        // BACKGROUND TASK: Add the rest of the members slowly
+        let remainingPeople = validParticipants.filter((_, index) => index !== usedIndex);
+        
         if (remainingPeople.length > 0) {
             setTimeout(async () => {
+                console.log(`⏳ Background: Adding ${remainingPeople.length} remaining members to "${groupName}"...`);
                 try {
-                    console.log(`⏳ Background: Adding ${remainingPeople.length} members to "${groupName}"...`);
                     const chat = await client.getChatById(groupId);
+                    const chunkSize = 25; // Add 25 people at a time to be ultra-safe
                     
-                    const chunkSize = 30; // Max 30 at a time
                     for (let i = 0; i < remainingPeople.length; i += chunkSize) {
                         const chunk = remainingPeople.slice(i, i + chunkSize);
-                        await chat.addParticipants(chunk);
-                        console.log(`   -> Added chunk of ${chunk.length} members...`);
-                        
-                        // Wait 5 seconds before adding next batch to avoid ban
+                        try {
+                            await chat.addParticipants(chunk);
+                            console.log(`   -> Batch added ${chunk.length} members successfully.`);
+                        } catch(chunkErr) {
+                            console.log(`   -> Some members in this batch had privacy locks, skipping them.`);
+                        }
+                        // 5 second delay between batches
                         await new Promise(resolve => setTimeout(resolve, 5000));
                     }
-                    console.log(`🎉 Finished adding all valid members to "${groupName}"!`);
-                } catch (addErr) {
-                    console.error(`⚠️ Notice: Some members couldn't be added to "${groupName}" (Privacy settings or invalid numbers).`);
+                    console.log(`🎉 Finished background adding for "${groupName}"!`);
+                } catch(e) {
+                    console.error("Background chunk error:", e.message);
                 }
-            }, 4000); // Starts 4 seconds after group creation
+            }, 3000);
         }
 
     } catch (error) {
-        console.error('❌ Group Creation Error:', error.message);
-        res.status(500).json({ error: 'Failed to create group. WhatsApp blocked the request.' });
+        res.status(500).json({ error: 'Failed to create group.' });
     }
-});
-
-app.get('/api/whatsapp/acks', (req, res) => {
-    const data = [...ackQueue];
-    ackQueue = []; 
-    res.json(data);
 });
 
 // --- START SERVER ---
 app.listen(PORT, () => {
     console.log(`🔥 PC SERVER IS RUNNING ON PORT ${PORT} 🔥`);
-    console.log(`Waiting for WhatsApp Web to initialize...`);
     client.initialize();
 });
