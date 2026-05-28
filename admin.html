@@ -213,10 +213,6 @@
                 <button id="subtab-committee-btn" class="wa-tab-btn" onclick="switchWASubTab('committee')">
                     <i class="fa-solid fa-user-shield"></i> Committee Member Sender
                 </button>
-                <!-- WA Native Group Announcements -->
-                <button id="subtab-group-btn" class="wa-tab-btn" onclick="switchWASubTab('group')" style="color:#0284c7;">
-                    <i class="fa-solid fa-bullhorn"></i> WA Native Groups
-                </button>
             </div>
 
             <div style="display:flex; gap:20px; flex-wrap:wrap;">
@@ -228,6 +224,7 @@
                     <div id="wa-general-panel">
                         <h3 style="margin-bottom:10px;">Select Audience & Group</h3>
                         
+                        <!-- PREMIUM UPGRADE: Advanced Smart Filters & Smart Groups -->
                         <div class="premium-filter-bar">
                             <input type="text" class="wa-input" id="wa-search" placeholder="Search Name, Mobile, Village..." onkeyup="filterWAMembers()" style="flex:1; margin-top:0;">
                             <select class="wa-input" id="wa-native-filter" onchange="filterWAMembers()" style="flex:1; margin-top:0; font-weight:600; color:var(--primary);">
@@ -277,44 +274,6 @@
                         <div id="wa-committee-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
                     </div>
 
-                    <!-- PANEL C: WA NATIVE GROUPS -->
-                    <div id="wa-group-panel" style="display:none;">
-                        <h3 style="margin-bottom:10px;">WhatsApp Native Announcements</h3>
-                        <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Send ONE message directly to an entire Native WhatsApp Group/Community without sending hundreds of individual messages.</p>
-                        
-                        <div class="form-group">
-                            <label style="color:#0369a1; font-weight:700;">Select Target Native (Gaam)</label>
-                            <!-- Users selects Native here. It controls both auto-setup and mapping! -->
-                            <select id="wa-group-native-select" class="wa-input" onchange="loadMappedGroup()" style="border-color:#bae6fd; font-weight:600;">
-                                <option value="">Select Native...</option>
-                            </select>
-                        </div>
-
-                        <!-- AUTOMATED GROUP CREATOR (NOW TARGETED) -->
-                        <div style="background:#f0fdf4; border:1px solid #6ee7b7; border-radius:8px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin-bottom:8px; font-size:14px; color:#047857;"><i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Auto Group Setup</h4>
-                            <p style="font-size:12px; color:#065f46; margin-bottom:12px;">Create a WhatsApp Group automatically for the <b>selected Gaam above</b> and add all its members.</p>
-                            <button id="btn-auto-setup-groups" onclick="autoSetupWAGroups()" class="btn-add" style="background:#10b981; width:100%; justify-content:center;"><i class="fa-solid fa-robot"></i> Auto-Setup Group for Selected Native</button>
-                        </div>
-
-                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin-bottom:12px; font-size:14px; color:#0284c7;"><i class="fa-solid fa-link"></i> Group ID Details / Manual Mapping</h4>
-                            
-                            <div class="form-group">
-                                <label style="color:#0369a1;">WhatsApp Group ID</label>
-                                <input type="text" id="wa-group-id-input" class="wa-input" placeholder="e.g. 120363000000000000@g.us" style="border-color:#bae6fd;">
-                                <small style="color:#0284c7; font-size:11px; display:block; margin-top:5px;">* This fills automatically after Auto-Setup. Or you can manually paste a Group ID here and save.</small>
-                            </div>
-                            
-                            <button onclick="saveGroupMapping()" class="btn-add" style="background:#0284c7; width:100%; justify-content:center; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Save Group Mapping</button>
-                        </div>
-                        
-                        <div style="background:#ecfdf5; padding:15px; border-radius:8px; font-size:13px; color:#065f46; border: 1px solid #a7f3d0;">
-                            <b><i class="fa-solid fa-circle-check"></i> Ready to Announce:</b><br>
-                            Once a Group ID exists for your selected native, draft your message on the right and click Send. The system will deliver <b>1 message</b> directly to the group!
-                        </div>
-                    </div>
-
                 </div>
 
                 <!-- RIGHT SIDEBAR: MESSAGE COMPOSER & STATUS -->
@@ -335,6 +294,7 @@
                     <label style="font-weight:600; font-size:14px;">Message Text *</label>
                     <textarea id="wa-message" class="wa-input" rows="4" placeholder="Example: {Hello|Hi|Namaste} {{member_name}}, aapke gao ki meeting rakhi gayi hai..."></textarea>
                     
+                    <!-- ORIGINAL SIMPLE LINK INPUT (Restored) -->
                     <label style="font-weight:600; font-size:14px; display:block; margin-top:15px; color:#10b981;">
                         <i class="fa-solid fa-link"></i> Attachment Link (Google Drive / ImgBB)
                     </label>
@@ -344,19 +304,26 @@
                         <button onclick="saveCurrentAsTemplate()" class="btn-outline" style="padding:4px 10px; font-size:12px;">Save as Template</button>
                     </div>
 
+                    <!-- ENTERPRISE ANTI-BAN SETTINGS (ULTRA-SAFE) -->
                     <div class="settings-box">
                         <div style="font-weight:600; color:var(--dark); margin-bottom:8px; display:flex; align-items:center; gap:5px;">
                             <i class="fa-solid fa-shield-halved"></i> AI Smart Queue + Load Balancer
                         </div>
                         <div class="settings-row">
                             <span>Take a pause of</span>
-                            <input type="number" id="ab-pause-sec" value="180" class="mini-input">
+                            <!-- DEFAULT 60 SECONDS PAUSE -->
+                            <input type="number" id="ab-pause-sec" value="60" class="mini-input">
                             <span>Seconds after every</span>
-                            <input type="number" id="ab-msg-count" value="40" class="mini-input">
+                            <!-- DEFAULT 25 MESSAGES -->
+                            <input type="number" id="ab-msg-count" value="25" class="mini-input">
                             <span>msgs.</span>
+                        </div>
+                        <div style="color:#10b981; margin-top: 10px; font-weight: 600; font-size: 12px; background: #d1fae5; padding: 8px; border-radius: 6px;">
+                            <i class="fa-solid fa-robot"></i> System will send 25 messages, take a pause, and then automatically send the next 25 until the selected Gaam is fully completed.
                         </div>
                     </div>
 
+                    <!-- PREMIUM UPGRADE: Smart Scheduled Broadcast -->
                     <div class="settings-box" style="background:#e0f2fe; border-color:#bae6fd;">
                         <div style="font-weight:600; color:#0369a1; margin-bottom:8px; display:flex; align-items:center; gap:5px;">
                             <i class="fa-solid fa-clock"></i> Smart Scheduled Broadcast
@@ -367,6 +334,7 @@
                         </div>
                     </div>
 
+                    <!-- SMART BROADCAST CONTROLS -->
                     <div id="wa-active-banner" style="display:none; background:#fef3c7; border:1px solid #f59e0b; padding:12px; border-radius:8px; margin-top:15px; font-size:13px; color:#92400e;">
                         <b>⚠️ Unfinished Campaign Detected:</b> You have an incomplete broadcast queue. You can resume it safely without duplicate messages, or stop to clear it.
                     </div>
@@ -389,6 +357,7 @@
                     <div id="wa-progress-panel" style="margin-top:25px; display:none;">
                         <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:10px;">
                             <h4 style="color:var(--dark);">Live Progress <span id="wa-stat-runstatus" style="margin-left: 10px; font-size: 12px; padding: 3px 8px; border-radius: 12px; background: #e2e8f0; color: #475569;">Stopped</span></h4>
+                            <!-- ENTERPRISE ETA & REPORT BUTTON -->
                             <span id="wa-stat-eta" style="font-size:12px; font-weight:600; color:#3b82f6; background:#eff6ff; padding:4px 8px; border-radius:4px;">ETA: Calculating...</span>
                         </div>
                         
@@ -454,6 +423,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // LOCALHOST API URL
         const WA_API_URL = "http://localhost:3000/api/whatsapp"; 
 
         const schemas = {
@@ -617,7 +587,6 @@
         // ==============================================================
         let waMembersList = [];
         let waCommitteeList = [];
-        let waGroupMappings = {}; 
         let currentWASubTab = 'general'; 
         let isWABotConnected = false;
         let isBroadcastingWA = false;
@@ -637,6 +606,7 @@
         let microPauseCounter = 0;
         let scheduledTimer = null; 
         let globalDuplicateSet = new Set(); 
+        let activeCampaignNative = ""; // Tracks which Native/Group is currently running
 
         const SEED_COMMITTEE_MEMBERS = [
             { memberName: "HITENDRABHAI JASHWANTLAL SHAH", mobileNumber: "9825698298" },
@@ -705,7 +675,6 @@
 
             loadSavedTemplatesOptions();
             loadSmartGroupsOptions();
-            loadWAGroups(); 
 
             const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
             waMembersList = [];
@@ -720,15 +689,11 @@
             });
             
             let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
-            let waGroupNativeHtml = '<option value="">Select Target Native (Gaam)...</option>';
-            
             Array.from(uniqueNatives).sort().forEach(n => {
                 nativeHtml += `<option value="${n}">${n}</option>`;
-                waGroupNativeHtml += `<option value="${n}">${n}</option>`;
             });
             
             document.getElementById('wa-native-filter').innerHTML = nativeHtml;
-            document.getElementById('wa-group-native-select').innerHTML = waGroupNativeHtml; 
 
             renderWAMembers(waMembersList);
             loadCommitteeSenderList();
@@ -742,7 +707,8 @@
                 queue: waQueue,
                 total: waTotalTasks,
                 sent: waSentCount,
-                failed: waFailedCount
+                failed: waFailedCount,
+                activeCampaignNative: activeCampaignNative
             };
             localStorage.setItem('wa_active_campaign', JSON.stringify(state));
         }
@@ -758,6 +724,7 @@
                         waSentCount = data.sent || 0;
                         waFailedCount = data.failed || 0;
                         currentCampaignId = data.campaignId;
+                        activeCampaignNative = data.activeCampaignNative || "Selected";
                         
                         waQueue.forEach(item => { if(item.status === 'sent') globalDuplicateSet.add(item.phone); });
 
@@ -832,6 +799,13 @@
                 printLog("✅ Campaign completed successfully and cleared from memory.", "success");
                 playVoiceAlert("Congratulations. Broadcast campaign completed successfully.");
                 logAdminActivity("Broadcast Finished", `Campaign Auto-Completed. Sent: ${waSentCount}`);
+                
+                // USER REQUEST: Custom Complete Message
+                setTimeout(() => {
+                    let displayNative = activeCampaignNative === 'ALL' ? 'All Natives' : activeCampaignNative;
+                    alert(`✅ ${displayNative} Native Ke Sare member ko msg chala gaya he! Ab aap dusre village ko chose kare.`);
+                }, 800);
+
             } else {
                 printLog("🛑 Campaign manually stopped and cleared. You can download the report below.", "error");
                 logAdminActivity("Broadcast Action", `Campaign Manually Stopped. Sent: ${waSentCount}`);
@@ -847,11 +821,9 @@
             currentWASubTab = tab;
             document.getElementById('subtab-general-btn').classList.remove('active');
             document.getElementById('subtab-committee-btn').classList.remove('active');
-            document.getElementById('subtab-group-btn').classList.remove('active');
             
             document.getElementById('wa-general-panel').style.display = 'none';
             document.getElementById('wa-committee-panel').style.display = 'none';
-            document.getElementById('wa-group-panel').style.display = 'none';
 
             if(tab === 'general') {
                 document.getElementById('subtab-general-btn').classList.add('active');
@@ -861,137 +833,7 @@
                 document.getElementById('subtab-committee-btn').classList.add('active');
                 document.getElementById('wa-committee-panel').style.display = 'block';
                 loadCommitteeSenderList();
-            } else if (tab === 'group') {
-                document.getElementById('subtab-group-btn').classList.add('active');
-                document.getElementById('wa-group-panel').style.display = 'block';
             }
-        }
-
-        // --- SUBTAB: WA NATIVE GROUPS MAPPING ---
-        async function loadWAGroups() {
-            try {
-                const snap = await db.collection('wa_group_mappings').get();
-                waGroupMappings = {};
-                snap.forEach(doc => {
-                    waGroupMappings[doc.id] = doc.data().groupId;
-                });
-            } catch(e) { console.error("Error loading WA group mappings", e); }
-        }
-
-        function loadMappedGroup() {
-            let native = document.getElementById('wa-group-native-select').value;
-            let input = document.getElementById('wa-group-id-input');
-            if (native && waGroupMappings[native]) {
-                input.value = waGroupMappings[native];
-            } else {
-                input.value = "";
-            }
-        }
-
-        async function saveGroupMapping() {
-            let native = document.getElementById('wa-group-native-select').value;
-            let groupId = document.getElementById('wa-group-id-input').value.trim();
-            
-            if(!native) return alert("Please select a Native (Gaam) first.");
-            if(!groupId) return alert("Please enter the WhatsApp Group ID.");
-            
-            try {
-                await db.collection('wa_group_mappings').doc(native).set({
-                    native: native,
-                    groupId: groupId,
-                    timestamp: Date.now()
-                });
-                waGroupMappings[native] = groupId;
-                showToast("Group Mapped Successfully!");
-                logAdminActivity("WA Group Mapped", `Mapped ${native} to group ${groupId}`);
-            } catch(e) {
-                alert("Database Error while mapping group!");
-            }
-        }
-
-        // 🟢 FIX: TARGETED AUTO-SETUP (Only runs for the selected Native!)
-        async function autoSetupWAGroups() {
-            if(!isWABotConnected) return alert("WhatsApp PC Server must be connected to automatically create groups!");
-            
-            const selectedNative = document.getElementById('wa-group-native-select').value;
-            if(!selectedNative) return alert("Please select a Target Native (Gaam) from the dropdown first!");
-            
-            if(waGroupMappings[selectedNative]) {
-                if(!confirm(`A WhatsApp Group ID already exists for ${selectedNative}. Are you sure you want to overwrite it and create a new group?`)) return;
-            } else {
-                if(!confirm(`System will securely scan your database and create a WhatsApp Group specifically for ${selectedNative}, adding all its members automatically. Proceed?`)) return;
-            }
-
-            const btn = document.getElementById('btn-auto-setup-groups');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Selected Native...';
-            btn.disabled = true;
-
-            try {
-                // Fetch ONLY members belonging to the selected native
-                const memSnap = await db.collection('members').where('nativeName', '==', selectedNative).get();
-                let nativeParticipants = []; 
-                
-                memSnap.forEach(doc => {
-                    let d = doc.data();
-                    if(d.mobileNumber) {
-                        let phoneStr = String(d.mobileNumber).replace(/[^0-9]/g, '');
-                        if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) {
-                            phoneStr = '91' + phoneStr.slice(-10);
-                        }
-                        if(phoneStr.length >= 10 && !nativeParticipants.includes(phoneStr)) {
-                            nativeParticipants.push(phoneStr);
-                        }
-                    }
-                });
-
-                if(nativeParticipants.length === 0) {
-                    alert(`No valid mobile numbers found for ${selectedNative} in the database.`);
-                    btn.innerHTML = '<i class="fa-solid fa-robot"></i> Auto-Setup Group for Selected Native';
-                    btn.disabled = false;
-                    return;
-                }
-
-                printLog(`⚙️ Auto-Creating WhatsApp Group for ${selectedNative} with ${nativeParticipants.length} members...`, "primary");
-                
-                try {
-                    const res = await fetch(WA_API_URL + '/create-group', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            groupName: selectedNative + " - Notice Board",
-                            participants: nativeParticipants
-                        })
-                    });
-
-                    if(res.ok) {
-                        const data = await res.json();
-                        if(data.groupId) {
-                            await db.collection('wa_group_mappings').doc(selectedNative).set({
-                                native: selectedNative,
-                                groupId: data.groupId,
-                                timestamp: Date.now()
-                            });
-                            waGroupMappings[selectedNative] = data.groupId;
-                            document.getElementById('wa-group-id-input').value = data.groupId;
-                            printLog(`✅ Successfully created & mapped group: ${selectedNative} (ID: ${data.groupId})`, "success");
-                            alert(`Group created successfully for ${selectedNative}!`);
-                        }
-                    } else {
-                        printLog(`❌ PC Server failed to create group for ${selectedNative}.`, "error");
-                        alert(`Failed to create group for ${selectedNative}. Please check terminal logs.`);
-                    }
-                } catch(e) {
-                    printLog(`❌ Network error contacting PC Server for ${selectedNative}.`, "error");
-                    alert(`Network Error: Make sure your PC Server is running and supports /create-group.`);
-                }
-                
-            } catch(e) {
-                console.error(e);
-                alert("Error scanning database during auto-setup.");
-            }
-
-            btn.innerHTML = '<i class="fa-solid fa-robot"></i> Auto-Setup Group for Selected Native';
-            btn.disabled = false;
         }
 
         async function loadCommitteeSenderList() {
@@ -1238,53 +1080,31 @@
             
             let selectedBoxes = [];
             
-            if(currentWASubTab === 'group') {
-                let selectedNative = document.getElementById('wa-group-native-select').value;
-                let mappedGroupId = document.getElementById('wa-group-id-input').value.trim();
-                
-                if(!selectedNative) return alert("Select a Native (Gaam) to announce to.");
-                if(!mappedGroupId) return alert("Please map or Auto-Setup a Group ID for this Native first!");
+            if(currentWASubTab === 'general') {
+                selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
+                let filterVal = document.getElementById('wa-native-filter').value;
+                activeCampaignNative = filterVal === 'ALL' ? 'All Selected' : filterVal;
+            } else if(currentWASubTab === 'committee') {
+                selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
+                activeCampaignNative = "Committee";
+            }
+            
+            if(selectedBoxes.length === 0) return alert("Select at least 1 recipient.");
+            if(!confirm(`Start Enterprise Auto-Sender for ${selectedBoxes.length} contacts?`)) return;
 
-                if(!confirm(`Send ONE single announcement directly to the WhatsApp Group mapped to ${selectedNative}?`)) return;
-                
-                logAdminActivity("Native Group Broadcast", `Sent 1 message to Group ID: ${mappedGroupId}`);
+            logAdminActivity("Broadcast Started", `Initiated to ${selectedBoxes.length} contacts.`);
 
-                waQueue = [{
-                    id: 'GROUP_' + Date.now(),
-                    name: selectedNative + ' WhatsApp Group',
-                    phone: mappedGroupId,
-                    isGroup: true, 
+            waQueue = selectedBoxes.map(cb => {
+                return { 
+                    id: cb.dataset.phone + '_' + Date.now(),
+                    name: cb.dataset.name, 
+                    phone: cb.dataset.phone, 
                     rawMsgTemplate: rawTemplate,
                     rawLink: linkInput,
                     status: 'pending',
                     retries: 0
-                }];
-                
-            } else {
-                if(currentWASubTab === 'general') {
-                    selectedBoxes = Array.from(document.querySelectorAll('.wa-checkbox:checked'));
-                } else if(currentWASubTab === 'committee') {
-                    selectedBoxes = Array.from(document.querySelectorAll('.wa-comm-checkbox:checked'));
-                }
-                
-                if(selectedBoxes.length === 0) return alert("Select at least 1 recipient.");
-                if(!confirm(`Start Enterprise Auto-Sender for ${selectedBoxes.length} contacts?`)) return;
-
-                logAdminActivity("Broadcast Started", `Initiated to ${selectedBoxes.length} contacts.`);
-
-                waQueue = selectedBoxes.map(cb => {
-                    return { 
-                        id: cb.dataset.phone + '_' + Date.now(),
-                        name: cb.dataset.name, 
-                        phone: cb.dataset.phone, 
-                        isGroup: false,
-                        rawMsgTemplate: rawTemplate,
-                        rawLink: linkInput,
-                        status: 'pending',
-                        retries: 0
-                    };
-                });
-            }
+                };
+            });
 
             document.getElementById('wa-btn-start').style.display = 'none';
             document.getElementById('wa-btn-pause').style.display = 'flex';
@@ -1323,8 +1143,8 @@
                 return;
             }
 
-            let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 40;
-            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 180;
+            let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 25;
+            let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 60;
             
             if(abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
@@ -1342,7 +1162,10 @@
                 if(itemIndex === -1) {
                     isBroadcastingWA = false;
                     printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                    let finishedNative = activeCampaignNative;
                     stopBroadcast(true); 
+                    
+                    // The completion alert triggered via setTimeout inside stopBroadcast
                     return;
                 } else {
                     printLog(`♻️ Smart Retry: Attempting to send failed message to ${waQueue[itemIndex].name}...`, "info");
@@ -1351,7 +1174,7 @@
 
             let item = waQueue[itemIndex];
             
-            if(!item.isGroup && (item.status === 'sent' || globalDuplicateSet.has(item.phone))) {
+            if(item.status === 'sent' || globalDuplicateSet.has(item.phone)) {
                 printLog(`⚠️ Duplicate Guard active: Prevented repeat send to ${item.name}.`, "warning");
                 item.status = 'sent'; 
                 saveCampaignState();
@@ -1367,14 +1190,12 @@
             }
 
             let phoneStr = String(item.phone);
-            if (!item.isGroup) {
-                phoneStr = phoneStr.replace(/[^0-9]/g, '');
-                if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
-            }
+            phoneStr = phoneStr.replace(/[^0-9]/g, '');
+            if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
 
             printLog(`Sending to ${item.name}...`, "info");
 
-            if( (!item.isGroup && (!phoneStr || phoneStr.length < 10)) || (item.isGroup && !phoneStr) ) {
+            if(!phoneStr || phoneStr.length < 10) {
                 item.status = 'failed';
                 item.retries = 3; 
                 waFailedCount++;
@@ -1390,7 +1211,7 @@
 
                     if(response.ok) { 
                         item.status = 'sent';
-                        if(!item.isGroup) globalDuplicateSet.add(item.phone); 
+                        globalDuplicateSet.add(item.phone); 
                         waSentCount++;
                         abSessionCount++; 
                         microPauseCounter++;
@@ -1491,7 +1312,6 @@
             }
         }
 
-        // Premium: Activity Logger
         async function logAdminActivity(action, details) {
             try {
                 await db.collection('admin_logs').add({
@@ -1722,7 +1542,7 @@
 
         async function exportDatabaseBackup() {
             const t = document.getElementById('toast'); t.innerText = "Generating Backup..."; t.classList.add('show');
-            const collectionsToBackup = ['members', 'events', 'committee', 'wa_templates', 'wa_smart_groups', 'wa_group_mappings'];
+            const collectionsToBackup = ['members', 'events', 'committee', 'wa_templates', 'wa_smart_groups'];
             let backupData = {};
             
             try {
