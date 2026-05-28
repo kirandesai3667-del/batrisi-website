@@ -13,7 +13,6 @@ let waStatus = 'DISCONNECTED';
 let latestQR = null;
 let ackQueue = []; 
 
-// 🟢 FIX: Added webVersionCache to stop the "Execution context destroyed" Error
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
@@ -106,28 +105,70 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
+// 🔥 SMART GROUP CREATOR (Fix for Large Audience Crash)
 app.post('/api/whatsapp/create-group', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
 
     try {
         const { groupName, participants } = req.body;
         
-        if (!groupName || !participants || !Array.isArray(participants)) {
-            return res.status(400).json({ error: 'Missing groupName or participants array' });
+        if (!groupName || !participants || participants.length === 0) {
+            return res.status(400).json({ error: 'Missing groupName or participants' });
         }
 
-        const formattedParticipants = participants.map(p => {
+        // 1. Clean numbers properly
+        const validParticipants = [];
+        for (let p of participants) {
             let num = String(p).replace(/[^0-9]/g, '');
-            return `${num}@c.us`;
-        });
+            if (num.length >= 10) validParticipants.push(`${num}@c.us`);
+        }
 
-        console.log(`Creating Group: "${groupName}" with ${formattedParticipants.length} members...`);
+        if (validParticipants.length === 0) return res.status(400).json({ error: 'No valid numbers found' });
+
+        console.log(`⚙️ Attempting to create Group: "${groupName}"...`);
         
-        const response = await client.createGroup(groupName, formattedParticipants);
-        res.json({ success: true, groupId: response.gid._serialized });
+        // 2. CREATE GROUP WITH ONLY 1 MEMBER FIRST (Safe Method)
+        const firstPerson = [validParticipants[0]];
+        const remainingPeople = validParticipants.slice(1);
+
+        const response = await client.createGroup(groupName, firstPerson);
+        
+        if (!response || !response.gid) {
+            throw new Error("WhatsApp blocked group creation.");
+        }
+
+        const groupId = response.gid._serialized;
+        console.log(`✅ Group created successfully! ID: ${groupId}`);
+
+        // 3. Return SUCCESS immediately to the frontend!
+        res.json({ success: true, groupId: groupId });
+
+        // 4. BACKGROUND TASK: Add remaining members in chunks of 30
+        if (remainingPeople.length > 0) {
+            setTimeout(async () => {
+                try {
+                    console.log(`⏳ Background: Adding ${remainingPeople.length} members to "${groupName}"...`);
+                    const chat = await client.getChatById(groupId);
+                    
+                    const chunkSize = 30; // Max 30 at a time
+                    for (let i = 0; i < remainingPeople.length; i += chunkSize) {
+                        const chunk = remainingPeople.slice(i, i + chunkSize);
+                        await chat.addParticipants(chunk);
+                        console.log(`   -> Added chunk of ${chunk.length} members...`);
+                        
+                        // Wait 5 seconds before adding next batch to avoid ban
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    }
+                    console.log(`🎉 Finished adding all valid members to "${groupName}"!`);
+                } catch (addErr) {
+                    console.error(`⚠️ Notice: Some members couldn't be added to "${groupName}" (Privacy settings or invalid numbers).`);
+                }
+            }, 4000); // Starts 4 seconds after group creation
+        }
+
     } catch (error) {
-        console.error('Group Creation Error:', error);
-        res.status(500).json({ error: 'Failed to create group. WhatsApp might have blocked additions.' });
+        console.error('❌ Group Creation Error:', error.message);
+        res.status(500).json({ error: 'Failed to create group. WhatsApp blocked the request.' });
     }
 });
 
