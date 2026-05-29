@@ -76,27 +76,31 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 FETCH EXISTING GROUPS FROM PHONE (Ye naya feature hai!)
+// 🔥 FETCH EXISTING GROUPS FROM PHONE 
 app.get('/api/whatsapp/get-groups', async (req, res) => {
-    if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
+    if (waStatus !== 'CONNECTED') {
+        console.log("❌ Frontend asked for groups, but WhatsApp is not connected.");
+        return res.status(400).json({ error: 'WhatsApp not connected' });
+    }
+    
     try {
-        console.log("📥 Fetching existing groups from WhatsApp...");
+        console.log("\n📥 Frontend (Admin Panel) Requested Groups...");
+        console.log("⏳ Fetching all chats from your phone. Please wait, this takes 10-20 seconds if you have many chats...");
         
-        // Fetch all chats from the connected WhatsApp
         const chats = await client.getChats();
         let groups = [];
         
-        // Filter only the Groups
         for (let chat of chats) {
             if (chat.isGroup) {
                 groups.push({ id: chat.id._serialized, name: chat.name });
             }
         }
         
-        console.log(`✅ Found ${groups.length} groups.`);
+        console.log(`✅ DONE! Found ${groups.length} WhatsApp Groups. Sending list to Admin Panel...`);
         res.json({ success: true, groups: groups });
+
     } catch (error) {
-        console.error("Error fetching groups:", error);
+        console.error("❌ CRITICAL ERROR fetching groups:", error.message);
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
 });
