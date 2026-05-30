@@ -139,4 +139,34 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
 });
 
 // 🔥 SEND MESSAGE TO EXACT GROUP NAME
-app.post('/api/whatsapp/group/send', async (re
+app.post('/api/whatsapp/group/send', async (req, res) => {
+    if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
+    try {
+        const { groupName, message } = req.body;
+        if (!groupName || !message) return res.status(400).json({ error: 'Missing Data' });
+
+        console.log(`\n📨 Sending message to Group: "${groupName}"...`);
+
+        const chats = await client.getChats();
+        const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
+        
+        if(!group) return res.status(404).json({ error: `Group "${groupName}" not found on your phone. Check spelling.` });
+
+        const response = await client.sendMessage(group.id._serialized, message);
+        console.log(`✅ Message sent to group!`);
+        res.json({ success: true, messageId: response.id.id });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/whatsapp/acks', (req, res) => {
+    const data = [...ackQueue];
+    ackQueue = []; 
+    res.json(data);
+});
+
+app.listen(PORT, () => {
+    console.log(`🔥 PC SERVER IS RUNNING ON PORT ${PORT} 🔥`);
+    client.initialize();
+});
