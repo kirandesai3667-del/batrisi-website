@@ -207,9 +207,9 @@
                 <button id="subtab-committee-btn" class="wa-tab-btn" onclick="switchWASubTab('committee')">
                     <i class="fa-solid fa-user-shield"></i> Committee Member Sender
                 </button>
-                <!-- 🔥 NEW SIMPLE WA GROUPS TAB -->
-                <button id="subtab-group-ui-btn" class="wa-tab-btn" onclick="switchWASubTab('group-ui')" style="color:#0284c7;">
-                    <i class="fa-solid fa-layer-group"></i> My WA Groups
+                <!-- 🔥 SMART WA GROUPS DIRECT TAB -->
+                <button id="subtab-group-btn" class="wa-tab-btn" onclick="switchWASubTab('group')" style="color:#0284c7;">
+                    <i class="fa-solid fa-layer-group"></i> Smart Group Sync
                 </button>
             </div>
 
@@ -270,27 +270,29 @@
                         <div id="wa-committee-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
                     </div>
 
-                    <!-- 🔥 PANEL C: DIRECT WHATSAPP GROUPS (NO ID REQUIRED) -->
-                    <div id="wa-group-ui-panel" style="display:none; background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <h3 style="margin-bottom:10px;"><i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Direct Group Manager</h3>
-                        <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Add members directly to your existing WhatsApp groups. Just type the exact group name!</p>
+                    <!-- 🔥 PANEL C: SMART GROUP SYNC -->
+                    <div id="wa-group-panel" style="display:none; background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <h3 style="margin-bottom:10px;"><i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Smart Group Sync</h3>
+                        <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Automatically add ALL members of a village from your database to your existing WhatsApp Group.</p>
                         
                         <div style="background:#f0fdf4; border:1px solid #6ee7b7; border-radius:8px; padding:15px; margin-bottom:15px;">
                             
-                            <!-- 1. GROUP NAME INPUT -->
+                            <!-- 1. SELECT NATIVE -->
                             <div class="form-group">
-                                <label style="color:#047857;">1. Exact WhatsApp Group Name</label>
-                                <input type="text" id="wa-direct-group-name" class="wa-input" placeholder="e.g. 32c Edu Society - Bahiyal" style="border-color:#6ee7b7; font-weight:bold;">
-                                <small style="color:#065f46; font-size:11px; display:block; margin-top:5px;">* Type the exact name as it appears on your phone.</small>
+                                <label style="color:#047857;">1. Select Native from Database</label>
+                                <select id="wa-bulk-native-select" class="wa-input" style="border-color:#6ee7b7; font-weight:bold;">
+                                    <option value="">Select Native...</option>
+                                </select>
                             </div>
 
-                            <!-- 2. MEMBER PHONE INPUT -->
+                            <!-- 2. EXACT GROUP NAME -->
                             <div class="form-group" style="margin-top:15px;">
-                                <label style="color:#047857;">2. Member Mobile Number</label>
-                                <input type="text" id="wa-direct-member-phone" class="wa-input" placeholder="e.g. 9876543210" style="border-color:#6ee7b7;">
+                                <label style="color:#047857;">2. Exact WhatsApp Group Name</label>
+                                <input type="text" id="wa-direct-group-name" class="wa-input" placeholder="e.g. 32c Edu Society - Bahiyal" style="border-color:#6ee7b7; font-weight:bold;">
+                                <small style="color:#065f46; font-size:11px; display:block; margin-top:5px;">* Must perfectly match the group name on your phone.</small>
                             </div>
                             
-                            <button id="btn-direct-add-member" onclick="addMemberByGroupName()" class="btn-add" style="background:#10b981; width:100%; justify-content:center; margin-top:10px;"><i class="fa-solid fa-user-plus"></i> Add Member Directly</button>
+                            <button id="btn-bulk-add-members" onclick="bulkAddMembersToGroup()" class="btn-add" style="background:#10b981; width:100%; justify-content:center; margin-top:15px; height:45px; font-size:15px;"><i class="fa-solid fa-users-viewfinder"></i> Auto-Sync All Members to Group</button>
                         </div>
 
                         <div style="background:#f0f9ff; padding:15px; border-radius:8px; font-size:13px; color:#0369a1; border: 1px solid #bae6fd;">
@@ -704,12 +706,14 @@
                 }
             });
             
-            let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
+            let nativeHtml = '<option value="">Select Native...</option>';
             Array.from(uniqueNatives).sort().forEach(n => {
                 nativeHtml += `<option value="${n}">${n}</option>`;
             });
             
-            document.getElementById('wa-native-filter').innerHTML = nativeHtml;
+            // Populate Dropdowns
+            document.getElementById('wa-native-filter').innerHTML = '<option value="ALL">All Natives (Gaam)</option>' + nativeHtml;
+            document.getElementById('wa-bulk-native-select').innerHTML = nativeHtml; 
 
             renderWAMembers(waMembersList);
             loadCommitteeSenderList();
@@ -820,7 +824,7 @@
                     if (currentWASubTab === 'general') {
                         let displayNative = activeCampaignNative === 'ALL' ? 'All Natives' : activeCampaignNative;
                         alert(`✅ ${displayNative} Native Ke Sare member ko msg chala gaya he! Ab aap dusre village ko chose kare.`);
-                    } else if (currentWASubTab === 'group-ui') {
+                    } else if (currentWASubTab === 'group') {
                         alert(`✅ Message successfully sent directly to Group: ${activeCampaignNative}!`);
                     } else {
                         alert(`✅ Broadcast Completed!`);
@@ -842,11 +846,11 @@
             currentWASubTab = tab;
             document.getElementById('subtab-general-btn').classList.remove('active');
             document.getElementById('subtab-committee-btn').classList.remove('active');
-            document.getElementById('subtab-group-ui-btn').classList.remove('active');
+            document.getElementById('subtab-group-btn').classList.remove('active');
             
             document.getElementById('wa-general-panel').style.display = 'none';
             document.getElementById('wa-committee-panel').style.display = 'none';
-            document.getElementById('wa-group-ui-panel').style.display = 'none';
+            document.getElementById('wa-group-panel').style.display = 'none';
             
             document.getElementById('general-settings-box').style.display = 'block';
             document.getElementById('start-btn-text').innerText = '1-Click Send All';
@@ -859,50 +863,76 @@
                 document.getElementById('subtab-committee-btn').classList.add('active');
                 document.getElementById('wa-committee-panel').style.display = 'block';
                 loadCommitteeSenderList();
-            } else if (tab === 'group-ui') {
-                document.getElementById('subtab-group-ui-btn').classList.add('active');
-                document.getElementById('wa-group-ui-panel').style.display = 'block';
+            } else if (tab === 'group') {
+                document.getElementById('subtab-group-btn').classList.add('active');
+                document.getElementById('wa-group-panel').style.display = 'block';
+                
                 document.getElementById('general-settings-box').style.display = 'none';
                 document.getElementById('start-btn-text').innerText = 'Send to Specific Group';
             }
         }
 
-        // 🔥 NEW: DIRECT ADD MEMBER BY EXACT NAME
-        async function addMemberByGroupName() {
+        // 🔥 SMART AUTO BULK SYNC (DATABASE TO GROUP)
+        async function bulkAddMembersToGroup() {
             if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
             
+            let native = document.getElementById('wa-bulk-native-select').value;
             let groupName = document.getElementById('wa-direct-group-name').value.trim();
-            let phone = document.getElementById('wa-direct-member-phone').value.trim();
 
+            if(!native) return alert("Please select a Native (Gaam) from the dropdown.");
             if(!groupName) return alert("Please type the Exact WhatsApp Group Name.");
-            if(!phone) return alert("Please enter the mobile number to add.");
 
-            const btn = document.getElementById('btn-direct-add-member');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
+            const btn = document.getElementById('btn-bulk-add-members');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching Database...';
             btn.disabled = true;
 
             try {
-                const response = await fetch(WA_API_URL + '/group/add-member', {
+                // Get all numbers for this native
+                const memSnap = await db.collection('members').where('nativeName', '==', native).get();
+                let nativeParticipants = []; 
+                
+                memSnap.forEach(doc => {
+                    let d = doc.data();
+                    if(d.mobileNumber) {
+                        nativeParticipants.push(d.mobileNumber);
+                    }
+                });
+
+                if(nativeParticipants.length === 0) {
+                    alert(`No members found for ${native} in the database.`);
+                    btn.innerHTML = '<i class="fa-solid fa-users-viewfinder"></i> Auto-Sync All Members to Group';
+                    btn.disabled = false;
+                    return;
+                }
+
+                if(!confirm(`Found ${nativeParticipants.length} members for ${native} in your database.\n\nDo you want to add ALL of them to the WhatsApp group "${groupName}"?`)) {
+                    btn.innerHTML = '<i class="fa-solid fa-users-viewfinder"></i> Auto-Sync All Members to Group';
+                    btn.disabled = false;
+                    return;
+                }
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing to WhatsApp...';
+
+                const response = await fetch(WA_API_URL + '/group/bulk-add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupName: groupName, phone: phone })
+                    body: JSON.stringify({ groupName: groupName, phones: nativeParticipants })
                 });
 
                 const data = await response.json();
 
                 if(response.ok && data.success) {
-                    showToast("Member successfully added to Group!");
-                    printLog(`✅ Successfully added ${phone} to group "${data.groupName}".`, "success");
-                    document.getElementById('wa-direct-member-phone').value = "";
+                    showToast("Bulk Sync Started!");
+                    printLog(`✅ Process started: Adding ${nativeParticipants.length} members to group "${groupName}". Check PC terminal for live progress.`, "success");
                 } else {
                     alert("Failed: " + (data.error || "Unknown Error"));
-                    printLog(`❌ Failed to add ${phone}: ${data.error}`, "error");
+                    printLog(`❌ Failed to sync: ${data.error}`, "error");
                 }
             } catch(e) {
                 alert("Network Error. Is PC Server running?");
             }
 
-            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add Member Directly';
+            btn.innerHTML = '<i class="fa-solid fa-users-viewfinder"></i> Auto-Sync All Members to Group';
             btn.disabled = false;
         }
 
@@ -1150,8 +1180,7 @@
             
             let selectedBoxes = [];
             
-            // --- BRANCHING FOR WA GROUP UI vs INDIVIDUAL BATCH BROADCAST ---
-            if(currentWASubTab === 'group-ui') {
+            if(currentWASubTab === 'group') {
                 let exactGroupName = document.getElementById('wa-direct-group-name').value.trim();
                 
                 if(!exactGroupName) return alert("Please type the Exact WhatsApp Group Name first.");
@@ -1163,9 +1192,9 @@
                 waQueue = [{
                     id: 'GROUP_' + Date.now(),
                     name: exactGroupName,
-                    phone: exactGroupName, // Using phone property to store name for the custom route
+                    phone: exactGroupName, 
                     isGroup: true, 
-                    isGroupName: true, // Flag for the processLocalQueue
+                    isGroupName: true, 
                     rawMsgTemplate: rawTemplate,
                     rawLink: linkInput,
                     status: 'pending',
@@ -1242,7 +1271,7 @@
             let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 25;
             let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 60;
             
-            if(currentWASubTab !== 'group-ui' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
+            if(currentWASubTab !== 'group' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
                 document.getElementById('wa-stat-eta').innerText = `Sleeping for ${pauseSec}s...`;
                 abSessionCount++; 
@@ -1258,6 +1287,7 @@
                 if(itemIndex === -1) {
                     isBroadcastingWA = false;
                     printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
+                    let finishedNative = activeCampaignNative;
                     stopBroadcast(true); 
                     return;
                 } else {
@@ -1282,7 +1312,6 @@
                 else userMsg = '🔗 *Attachment:*\n' + item.rawLink;
             }
 
-            // --- HANDLING FOR EXACT NAME DIRECT BROADCAST ---
             if (item.isGroupName) {
                 printLog(`Sending to Group: ${item.name}...`, "info");
                 try {
@@ -1310,7 +1339,6 @@
                     printLog(`❌ Network Error with PC Server.`, "error");
                 }
             } else {
-                // --- HANDLING FOR REGULAR NUMBERS ---
                 let phoneStr = String(item.phone);
                 phoneStr = phoneStr.replace(/[^0-9]/g, '');
                 if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
@@ -1376,7 +1404,7 @@
             updateWAUI();
 
             if(isBroadcastingWA) {
-                if (currentWASubTab === 'group-ui') {
+                if (currentWASubTab === 'group') {
                     setTimeout(processLocalQueue, 1000);
                     return;
                 }
