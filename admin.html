@@ -271,7 +271,7 @@
                     </div>
 
                     <!-- 🔥 PANEL C: DIRECT WHATSAPP GROUPS (SIMPLE VERSION) -->
-                    <div id="wa-group-ui-panel" style="display:none; background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <div id="wa-group-panel" style="display:none; background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                         <h3 style="margin-bottom:10px;"><i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Direct Group Manager</h3>
                         <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Add members directly to your existing WhatsApp groups. Just type the exact group name!</p>
                         
@@ -817,7 +817,7 @@
                     if (currentWASubTab === 'general') {
                         let displayNative = activeCampaignNative === 'ALL' ? 'All Natives' : activeCampaignNative;
                         alert(`✅ ${displayNative} Native Ke Sare member ko msg chala gaya he! Ab aap dusre village ko chose kare.`);
-                    } else if (currentWASubTab === 'group-ui') {
+                    } else if (currentWASubTab === 'group') {
                         alert(`✅ Message successfully sent directly to Group: ${activeCampaignNative}!`);
                     } else {
                         alert(`✅ Broadcast Completed!`);
@@ -839,11 +839,11 @@
             currentWASubTab = tab;
             document.getElementById('subtab-general-btn').classList.remove('active');
             document.getElementById('subtab-committee-btn').classList.remove('active');
-            document.getElementById('subtab-group-ui-btn').classList.remove('active');
+            document.getElementById('subtab-group-btn').classList.remove('active');
             
             document.getElementById('wa-general-panel').style.display = 'none';
             document.getElementById('wa-committee-panel').style.display = 'none';
-            document.getElementById('wa-group-ui-panel').style.display = 'none';
+            document.getElementById('wa-group-panel').style.display = 'none';
             
             document.getElementById('general-settings-box').style.display = 'block';
             document.getElementById('start-btn-text').innerText = '1-Click Send All';
@@ -856,9 +856,10 @@
                 document.getElementById('subtab-committee-btn').classList.add('active');
                 document.getElementById('wa-committee-panel').style.display = 'block';
                 loadCommitteeSenderList();
-            } else if (tab === 'group-ui') {
-                document.getElementById('subtab-group-ui-btn').classList.add('active');
-                document.getElementById('wa-group-ui-panel').style.display = 'block';
+            } else if (tab === 'group') {
+                document.getElementById('subtab-group-btn').classList.add('active');
+                document.getElementById('wa-group-panel').style.display = 'block';
+                
                 document.getElementById('general-settings-box').style.display = 'none';
                 document.getElementById('start-btn-text').innerText = 'Send to Specific Group';
             }
@@ -1148,7 +1149,7 @@
             let selectedBoxes = [];
             
             // --- BRANCHING FOR WA GROUP UI vs INDIVIDUAL BATCH BROADCAST ---
-            if(currentWASubTab === 'group-ui') {
+            if(currentWASubTab === 'group') {
                 let exactGroupName = document.getElementById('wa-direct-group-name').value.trim();
                 
                 if(!exactGroupName) return alert("Please type the Exact WhatsApp Group Name first.");
@@ -1239,7 +1240,7 @@
             let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 25;
             let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 60;
             
-            if(currentWASubTab !== 'group-ui' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
+            if(currentWASubTab !== 'group' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
                 document.getElementById('wa-stat-eta').innerText = `Sleeping for ${pauseSec}s...`;
                 abSessionCount++; 
@@ -1374,7 +1375,7 @@
             updateWAUI();
 
             if(isBroadcastingWA) {
-                if (currentWASubTab === 'group-ui') {
+                if (currentWASubTab === 'group') {
                     setTimeout(processLocalQueue, 1000);
                     return;
                 }
