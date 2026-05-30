@@ -50,6 +50,7 @@ client.on('disconnected', (reason) => {
     waStatus = 'DISCONNECTED';
 });
 
+// --- API ENDPOINTS ---
 app.get('/api/whatsapp/status', (req, res) => res.json({ status: waStatus }));
 
 app.get('/api/whatsapp/qr.png', (req, res) => {
@@ -61,7 +62,7 @@ app.get('/api/whatsapp/qr.png', (req, res) => {
     }
 });
 
-// Broadcast Message Endpoint
+// INDIVIDUAL BROADCAST ENDPOINT
 app.post('/api/whatsapp/send', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     try {
@@ -75,7 +76,7 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 SMART BULK SYNC: Ek Click me Pura Gaam (Village) Group me daalein!
+// 🔥 MISSING FEATURE ADDED: SMART BULK SYNC MEMBERS TO EXISTING GROUP
 app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     
@@ -85,23 +86,25 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
 
         console.log(`\n🔍 Searching for Group: "${groupName}"...`);
         const chats = await client.getChats();
+        
+        // Exact name match (ignores casing and extra spaces)
         const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
         
         if(!group) {
-            console.log(`❌ Group not found! Check spelling.`);
+            console.log(`❌ Group not found!`);
             return res.status(404).json({ error: `Group "${groupName}" not found on your phone. Please check spelling.` });
         }
 
-        console.log(`✅ Group Found! Processing ${phones.length} members from Database...`);
+        console.log(`✅ Group Found! Starting background sync...`);
         
-        // Return Success immediately to avoid Frontend loading forever
+        // Return Success immediately so frontend Button turns Green
         res.json({ success: true, message: "Processing started in background" });
 
-        // Background me Dheere-dheere add karega taki WhatsApp Block na kare
+        // Background me dheere-dheere add karega taki WhatsApp ban na kare
         setTimeout(async () => {
             let validParticipants = [];
             
-            // Clean numbers and check if they use WhatsApp
+            // Clean numbers
             for(let phone of phones) {
                 let num = String(phone).replace(/[^0-9]/g, '');
                 if (num.length >= 10) {
@@ -115,16 +118,16 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
 
             console.log(`✅ Verified ${validParticipants.length} valid WhatsApp numbers. Syncing to group...`);
             
-            // Chunks me add karo (20 at a time)
-            for (let i = 0; i < validParticipants.length; i += 20) {
-                const chunk = validParticipants.slice(i, i + 20);
+            // Chunks me add karo (15 logo ko ek baar me)
+            for (let i = 0; i < validParticipants.length; i += 15) {
+                const chunk = validParticipants.slice(i, i + 15);
                 try {
                     await group.addParticipants(chunk);
                     console.log(`   -> Batch added ${chunk.length} members.`);
                 } catch (e) {
-                    console.log(`   -> Some members in batch had privacy blocks. Skipped.`);
+                    console.log(`   -> Some members skipped (Privacy blocks or already in group).`);
                 }
-                await new Promise(r => setTimeout(r, 5000)); // Har 20 ke baad 5 second rest
+                await new Promise(r => setTimeout(r, 5000)); // Har 15 ke baad 5 sec rest
             }
             console.log(`🎉 SUCCESS: Finished syncing all members to "${groupName}"!`);
         }, 2000);
@@ -136,34 +139,4 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
 });
 
 // 🔥 SEND MESSAGE TO EXACT GROUP NAME
-app.post('/api/whatsapp/group/send', async (req, res) => {
-    if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
-    try {
-        const { groupName, message } = req.body;
-        if (!groupName || !message) return res.status(400).json({ error: 'Missing Data' });
-
-        console.log(`\n📨 Sending message to Group: "${groupName}"...`);
-
-        const chats = await client.getChats();
-        const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
-        
-        if(!group) return res.status(404).json({ error: `Group "${groupName}" not found on your phone. Check spelling.` });
-
-        const response = await client.sendMessage(group.id._serialized, message);
-        console.log(`✅ Message sent to group!`);
-        res.json({ success: true, messageId: response.id.id });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/whatsapp/acks', (req, res) => {
-    const data = [...ackQueue];
-    ackQueue = []; 
-    res.json(data);
-});
-
-app.listen(PORT, () => {
-    console.log(`🔥 PC SERVER IS RUNNING ON PORT ${PORT} 🔥`);
-    client.initialize();
-});
+app.post('/api/whatsapp/group/send', async (re
