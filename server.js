@@ -6,8 +6,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const app = express();
 const PORT = 3000;
 
-// CORS properly configured
-app.use(cors({ origin: '*' }));
+app.use(cors());
+// 🔥 Ye limit 50mb ki hai taaki 250+ numbers ek sath aane par crash na ho
 app.use(express.json({ limit: '50mb' })); 
 
 let waStatus = 'DISCONNECTED'; 
@@ -75,7 +75,7 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 SMART BULK SYNC ENDPOINT (Fixed)
+// 🔥 SMART BULK SYNC ENDPOINT (Ye route purane code me nahi tha, yahi error de raha tha!)
 app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     
@@ -85,10 +85,10 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
 
         console.log(`\n🔍 Received Request to sync members to: "${groupName}"`);
         
-        // 1️⃣ Send response immediately so frontend doesn't timeout!
+        // FRONTEND KO TURANT JAWAB DE DO TAAKI NETWORK ERROR NA AAYE
         res.json({ success: true, message: "Processing started in background" });
 
-        // 2️⃣ Background Processing
+        // BACKGROUND ME ARAM SE ADD KARO
         setTimeout(async () => {
             try {
                 const chats = await client.getChats();
@@ -126,7 +126,7 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
                     if(finalChunk.length > 0) {
                         try {
                             await group.addParticipants(finalChunk);
-                            console.log(`   -> Added ${finalChunk.length} members...`);
+                            console.log(`   -> Added batch of ${finalChunk.length} members...`);
                         } catch (e) {
                             console.log(`   -> Some members skipped (Privacy limits).`);
                         }
@@ -144,7 +144,7 @@ app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
     }
 });
 
-// 🔥 SEND MESSAGE DIRECTLY TO GROUP
+// SEND MESSAGE DIRECTLY TO GROUP
 app.post('/api/whatsapp/group/send', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     try {
