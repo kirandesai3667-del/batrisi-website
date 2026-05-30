@@ -50,7 +50,6 @@ client.on('disconnected', (reason) => {
     waStatus = 'DISCONNECTED';
 });
 
-// --- API ENDPOINTS ---
 app.get('/api/whatsapp/status', (req, res) => res.json({ status: waStatus }));
 
 app.get('/api/whatsapp/qr.png', (req, res) => {
@@ -62,6 +61,7 @@ app.get('/api/whatsapp/qr.png', (req, res) => {
     }
 });
 
+// For Individual Numbers
 app.post('/api/whatsapp/send', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     try {
@@ -75,34 +75,14 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 SIMPLE FETCH EXISTING GROUPS FROM PHONE
-app.get('/api/whatsapp/get-groups', async (req, res) => {
+// 🔥 NAYA FEATURE 1: ADD MEMBER BY EXACT GROUP NAME
+app.post('/api/whatsapp/group/add-member', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     try {
-        console.log("📥 Fetching existing groups directly from your phone...");
-        const chats = await client.getChats();
-        let groups = [];
-        for (let chat of chats) {
-            if (chat.isGroup) {
-                groups.push({ id: chat.id._serialized, name: chat.name });
-            }
-        }
-        console.log(`✅ Found ${groups.length} groups.`);
-        res.json({ success: true, groups: groups });
-    } catch (error) {
-        console.error("Error fetching groups:", error);
-        res.status(500).json({ error: 'Failed to fetch groups' });
-    }
-});
+        const { groupName, phone } = req.body;
+        if (!groupName || !phone) return res.status(400).json({ error: 'Missing Data' });
 
-// 🔥 DIRECT ADD MEMBER TO GROUP
-app.post('/api/whatsapp/group/add', async (req, res) => {
-    if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
-    try {
-        const { groupId, phone } = req.body;
-        if (!groupId || !phone) return res.status(400).json({ error: 'Missing Data' });
-
-        console.log(`⚙️ Adding ${phone} to Group: ${groupId}`);
+        console.log(`\n🔍 Searching for Group: "${groupName}"...`);
         
         let num = String(phone).replace(/[^0-9]/g, '');
         if (num.length >= 10) {
@@ -110,19 +90,48 @@ app.post('/api/whatsapp/group/add', async (req, res) => {
             const finalNum = `${num}@c.us`;
 
             const isReg = await client.getNumberId(finalNum);
-            if(!isReg) return res.status(400).json({ error: 'This number is not on WhatsApp.' });
+            if(!isReg) return res.status(400).json({ error: 'Number is not on WhatsApp.' });
 
-            const chat = await client.getChatById(groupId);
-            await chat.addParticipants([isReg._serialized]);
+            // Find Group silently
+            const chats = await client.getChats();
+            const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
             
-            console.log(`✅ Member added successfully!`);
-            res.json({ success: true });
+            if(!group) {
+                console.log(`❌ Group not found!`);
+                return res.status(404).json({ error: `Group "${groupName}" not found on your phone. Please check spelling.` });
+            }
+
+            console.log(`✅ Group Found! Adding member...`);
+            await group.addParticipants([isReg._serialized]);
+            res.json({ success: true, groupName: group.name });
         } else {
             res.status(400).json({ error: 'Invalid mobile number.' });
         }
     } catch (error) {
-        console.error('❌ Add Member Error:', error.message);
-        res.status(500).json({ error: 'Failed to add member. WhatsApp privacy issue or you are not admin.' });
+        console.error('❌ Error:', error.message);
+        res.status(500).json({ error: 'Failed to add member. Privacy issue or not admin.' });
+    }
+});
+
+// 🔥 NAYA FEATURE 2: SEND MESSAGE BY EXACT GROUP NAME
+app.post('/api/whatsapp/group/send', async (req, res) => {
+    if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
+    try {
+        const { groupName, message } = req.body;
+        if (!groupName || !message) return res.status(400).json({ error: 'Missing Data' });
+
+        console.log(`\n📨 Sending message to Group: "${groupName}"...`);
+
+        const chats = await client.getChats();
+        const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
+        
+        if(!group) return res.status(404).json({ error: `Group "${groupName}" not found on your phone. Check spelling.` });
+
+        const response = await client.sendMessage(group.id._serialized, message);
+        console.log(`✅ Message sent to group!`);
+        res.json({ success: true, messageId: response.id.id });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
