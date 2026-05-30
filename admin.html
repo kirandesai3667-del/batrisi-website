@@ -599,9 +599,6 @@
             }});
         }
 
-        // ==============================================================
-        // 1-CLICK LOCAL WHATSAPP SENDER, COMMITTEE, & DIRECT GROUPS
-        // ==============================================================
         let waMembersList = [];
         let waCommitteeList = [];
         
@@ -711,7 +708,6 @@
                 nativeHtml += `<option value="${n}">${n}</option>`;
             });
             
-            // Populate Dropdowns
             document.getElementById('wa-native-filter').innerHTML = '<option value="ALL">All Natives (Gaam)</option>' + nativeHtml;
             document.getElementById('wa-bulk-native-select').innerHTML = nativeHtml; 
 
@@ -872,7 +868,7 @@
             }
         }
 
-        // 🔥 SMART AUTO BULK SYNC (DATABASE TO GROUP)
+        // 🔥 SMART AUTO BULK SYNC ENDPOINT FIXED
         async function bulkAddMembersToGroup() {
             if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
             
@@ -883,7 +879,7 @@
             if(!groupName) return alert("Please type the Exact WhatsApp Group Name.");
 
             const btn = document.getElementById('btn-bulk-add-members');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching Database...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking Data...';
             btn.disabled = true;
 
             try {
@@ -919,9 +915,15 @@
                     body: JSON.stringify({ groupName: groupName, phones: nativeParticipants })
                 });
 
+                // Error Handle if Route doesn't exist
+                if(!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Server rejected: ${text}`);
+                }
+
                 const data = await response.json();
 
-                if(response.ok && data.success) {
+                if(data.success) {
                     showToast("Bulk Sync Started!");
                     printLog(`✅ Process started: Adding ${nativeParticipants.length} members to group "${groupName}". Check PC terminal for live progress.`, "success");
                 } else {
@@ -929,7 +931,7 @@
                     printLog(`❌ Failed to sync: ${data.error}`, "error");
                 }
             } catch(e) {
-                alert("Network Error. Is PC Server running?");
+                alert(`Error: Aapka PC Server purana hai ya band hai!\n\nDetails: ${e.message}\n\nPlease naya server.js save karein aur terminal restart karein!`);
             }
 
             btn.innerHTML = '<i class="fa-solid fa-users-viewfinder"></i> Auto-Sync All Members to Group';
