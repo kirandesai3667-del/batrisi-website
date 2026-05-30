@@ -84,27 +84,6 @@
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; }
         .badge.success { background: #10b981; } .badge.warning { background: #f59e0b; } .badge.danger { background: #ef4444; } .badge.info { background: #3b82f6; }
         .premium-filter-bar { display: flex; gap: 10px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap;}
-
-        /* 🔥 NEW: DIRECT WHATSAPP GROUPS UI CSS */
-        .wa-dark-panel { background: #111b21; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; height: 550px; border: 1px solid #222e35; }
-        .wa-dark-header { background: #202c33; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222e35;}
-        .wa-dark-header h3 { color: #e9edef; font-size: 16px; margin: 0; font-weight: 500; display:flex; align-items:center; gap:10px;}
-        .wa-dark-btn { background: #00a884; color: #111b21; border: none; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s;}
-        .wa-dark-btn:hover { background: #008f6f; }
-        .wa-dark-list { flex: 1; overflow-y: auto; }
-        .wa-chat-item { display: flex; align-items: center; padding: 12px 15px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #202c33; }
-        .wa-chat-item:hover { background: #202c33; }
-        .wa-chat-item.selected { background: #2a3942; border-left: 4px solid #00a884; }
-        .wa-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #fff; flex-shrink: 0; margin-right: 15px; background: linear-gradient(180deg, #53b0a6, #268d83); }
-        .wa-chat-details { flex: 1; overflow: hidden; }
-        .wa-chat-top { display: flex; justify-content: space-between; font-size: 12px; color: #8696a0; margin-bottom: 3px; }
-        .wa-chat-title { font-size: 16px; color: #e9edef; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-        
-        /* Direct Add Member Box */
-        .wa-add-member-box { background: #202c33; border-top: 1px solid #2a3942; padding: 15px; }
-        .wa-add-member-box h4 { color: #00a884; font-size: 13px; margin-bottom: 10px; }
-        .wa-dark-input { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; outline: none; }
-        .wa-dark-btn-full { width: 100%; background: #00a884; color: #111b21; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -228,9 +207,9 @@
                 <button id="subtab-committee-btn" class="wa-tab-btn" onclick="switchWASubTab('committee')">
                     <i class="fa-solid fa-user-shield"></i> Committee Member Sender
                 </button>
-                <!-- 🔥 NEW WA GROUPS DIRECT SYNC TAB -->
-                <button id="subtab-group-ui-btn" class="wa-tab-btn" onclick="switchWASubTab('group-ui')" style="color:#00a884; background:#111b21;">
-                    <i class="fa-solid fa-layer-group"></i> 📱 My WA Groups
+                <!-- 🔥 NEW SIMPLE WA GROUPS TAB -->
+                <button id="subtab-group-ui-btn" class="wa-tab-btn" onclick="switchWASubTab('group-ui')" style="color:#0284c7;">
+                    <i class="fa-solid fa-layer-group"></i> My WA Groups
                 </button>
             </div>
 
@@ -291,31 +270,32 @@
                         <div id="wa-committee-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
                     </div>
 
-                    <!-- 🔥 PANEL C: DIRECT WHATSAPP GROUPS (NO MAPPING REQUIRED) -->
-                    <div id="wa-group-ui-panel" class="wa-dark-panel" style="display:none;">
-                        <div class="wa-dark-header">
-                            <h3><i class="fa-brands fa-whatsapp" style="font-size:20px; color:#00a884;"></i> Direct Phone Groups</h3>
-                            <button class="wa-dark-btn" onclick="syncPhoneGroupsUI()"><i class="fa-solid fa-rotate"></i> Sync Phone</button>
-                        </div>
+                    <!-- 🔥 PANEL C: DIRECT WHATSAPP GROUPS (NO ID REQUIRED) -->
+                    <div id="wa-group-ui-panel" style="display:none; background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <h3 style="margin-bottom:10px;"><i class="fa-solid fa-layer-group" style="color:#0284c7;"></i> Direct Group Manager</h3>
+                        <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Add members directly to your existing WhatsApp groups. Just type the exact group name!</p>
                         
-                        <div style="background:#202c33; padding:10px 15px;">
-                            <input type="text" id="wa-group-search" placeholder="Search your groups..." class="wa-input" style="background:#2a3942; border:none; color:#e9edef; margin:0; font-size:13px;" onkeyup="filterUIWaGroups()">
+                        <div style="background:#f0fdf4; border:1px solid #6ee7b7; border-radius:8px; padding:15px; margin-bottom:15px;">
+                            
+                            <!-- 1. GROUP NAME INPUT -->
+                            <div class="form-group">
+                                <label style="color:#047857;">1. Exact WhatsApp Group Name</label>
+                                <input type="text" id="wa-direct-group-name" class="wa-input" placeholder="e.g. 32c Edu Society - Bahiyal" style="border-color:#6ee7b7; font-weight:bold;">
+                                <small style="color:#065f46; font-size:11px; display:block; margin-top:5px;">* Type the exact name as it appears on your phone.</small>
+                            </div>
+
+                            <!-- 2. MEMBER PHONE INPUT -->
+                            <div class="form-group" style="margin-top:15px;">
+                                <label style="color:#047857;">2. Member Mobile Number</label>
+                                <input type="text" id="wa-direct-member-phone" class="wa-input" placeholder="e.g. 9876543210" style="border-color:#6ee7b7;">
+                            </div>
+                            
+                            <button id="btn-direct-add-member" onclick="addMemberByGroupName()" class="btn-add" style="background:#10b981; width:100%; justify-content:center; margin-top:10px;"><i class="fa-solid fa-user-plus"></i> Add Member Directly</button>
                         </div>
 
-                        <div id="wa-clone-list" class="wa-dark-list">
-                            <div style="padding:30px; text-align:center; color:#8696a0; font-size:13px;">
-                                <i class="fa-solid fa-mobile-screen" style="font-size:30px; margin-bottom:10px; opacity:0.5;"></i><br>
-                                Click "Sync Phone" to load all your existing WhatsApp Groups (e.g. 32c Edu Society - Bahiyal) directly from your connected device.
-                            </div>
-                        </div>
-
-                        <!-- Add Member Box (Appears when a group is selected) -->
-                        <div id="wa-add-member-container" class="wa-add-member-box" style="display:none;">
-                            <h4><i class="fa-solid fa-user-plus"></i> Add Member to Selected Group</h4>
-                            <div style="display:flex; gap:10px;">
-                                <input type="text" id="wa-direct-add-phone" class="wa-dark-input" placeholder="Mobile Number (e.g. 9876543210)">
-                                <button id="btn-direct-add" class="wa-dark-btn-full" style="width:auto; padding:0 20px;" onclick="addMemberDirectlyToGroup()">Add</button>
-                            </div>
+                        <div style="background:#f0f9ff; padding:15px; border-radius:8px; font-size:13px; color:#0369a1; border: 1px solid #bae6fd;">
+                            <b><i class="fa-solid fa-bullhorn"></i> How to Broadcast:</b><br>
+                            Type the Group Name above, write your message on the right panel, and click "Send to Group"! The system will automatically find the group and drop the message.
                         </div>
                     </div>
 
@@ -623,10 +603,6 @@
         let waMembersList = [];
         let waCommitteeList = [];
         
-        let fetchedWAGroups = [];
-        let selectedWAGroupId = null;
-        let selectedWAGroupName = null;
-
         let currentWASubTab = 'general'; 
         let isWABotConnected = false;
         let isBroadcastingWA = false;
@@ -840,7 +816,6 @@
                 playVoiceAlert("Congratulations. Broadcast campaign completed successfully.");
                 logAdminActivity("Broadcast Finished", `Campaign Auto-Completed. Sent: ${waSentCount}`);
                 
-                // Show completion alert based on Tab
                 setTimeout(() => {
                     if (currentWASubTab === 'general') {
                         let displayNative = activeCampaignNative === 'ALL' ? 'All Natives' : activeCampaignNative;
@@ -873,7 +848,6 @@
             document.getElementById('wa-committee-panel').style.display = 'none';
             document.getElementById('wa-group-ui-panel').style.display = 'none';
             
-            // Manage UI controls visibility
             document.getElementById('general-settings-box').style.display = 'block';
             document.getElementById('start-btn-text').innerText = '1-Click Send All';
 
@@ -887,111 +861,39 @@
                 loadCommitteeSenderList();
             } else if (tab === 'group-ui') {
                 document.getElementById('subtab-group-ui-btn').classList.add('active');
-                document.getElementById('wa-group-ui-panel').style.display = 'flex';
-                // Hide batching settings since group is just 1 message
+                document.getElementById('wa-group-ui-panel').style.display = 'block';
                 document.getElementById('general-settings-box').style.display = 'none';
-                document.getElementById('start-btn-text').innerText = 'Send to Selected Group';
-                if(fetchedWAGroups.length === 0) syncPhoneGroupsUI(); // Auto fetch if empty
+                document.getElementById('start-btn-text').innerText = 'Send to Specific Group';
             }
         }
 
-        // 🔥 NEW: WHATSAPP GROUP UI CLONE FUNCTIONS
-        async function syncPhoneGroupsUI() {
-            if(!isWABotConnected) return alert("WhatsApp PC Server is not connected! Please scan QR first.");
+        // 🔥 NEW: DIRECT ADD MEMBER BY EXACT NAME
+        async function addMemberByGroupName() {
+            if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
             
-            const listDiv = document.getElementById('wa-clone-list');
-            listDiv.innerHTML = `<div style="padding:30px; text-align:center; color:#8696a0;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px; margin-bottom:10px;"></i><br>Syncing groups from your phone...</div>`;
-            
-            try {
-                const res = await fetch(WA_API_URL + '/get-groups');
-                const data = await res.json();
-                
-                if(!res.ok || !data.success) throw new Error("Failed to fetch groups");
-                
-                fetchedWAGroups = data.groups;
-                renderUIWaGroups(fetchedWAGroups);
-                
-            } catch(e) {
-                listDiv.innerHTML = `<div style="padding:30px; text-align:center; color:#ef4444;"><i class="fa-solid fa-circle-exclamation" style="font-size:24px; margin-bottom:10px;"></i><br>Error fetching groups from phone. Is server running?</div>`;
-            }
-        }
+            let groupName = document.getElementById('wa-direct-group-name').value.trim();
+            let phone = document.getElementById('wa-direct-member-phone').value.trim();
 
-        function renderUIWaGroups(groupsList) {
-            const listDiv = document.getElementById('wa-clone-list');
-            if(groupsList.length === 0) {
-                listDiv.innerHTML = `<div style="padding:30px; text-align:center; color:#8696a0;">No groups found matching search.</div>`;
-                return;
-            }
+            if(!groupName) return alert("Please type the Exact WhatsApp Group Name.");
+            if(!phone) return alert("Please enter the mobile number to add.");
 
-            let html = '';
-            groupsList.forEach(g => {
-                // Formatting name to mimic Community view if applicable
-                let commName = "My Groups";
-                let grpName = g.name;
-                
-                if(g.name.includes(" - ")) {
-                    let parts = g.name.split(" - ");
-                    commName = parts[0].trim();
-                    grpName = parts[1].trim();
-                }
-
-                html += `
-                    <div class="wa-chat-item" id="clone-item-${g.id}" onclick="selectWAGroup('${g.id}', '${g.name}')">
-                        <div class="wa-avatar"><i class="fa-solid fa-users"></i></div>
-                        <div class="wa-chat-details">
-                            <div class="wa-chat-top">
-                                <span>${commName}</span>
-                                <span><i class="fa-solid fa-check-double" style="color:#53b0a6;"></i></span>
-                            </div>
-                            <div class="wa-chat-title" id="title-${g.id}">${grpName}</div>
-                            <div class="wa-chat-sub">Click to select this group for announcement</div>
-                        </div>
-                    </div>
-                `;
-            });
-            listDiv.innerHTML = html;
-        }
-
-        function filterUIWaGroups() {
-            const q = document.getElementById('wa-group-search').value.toLowerCase();
-            const filtered = fetchedWAGroups.filter(g => g.name.toLowerCase().includes(q));
-            renderUIWaGroups(filtered);
-        }
-
-        function selectWAGroup(id, name) {
-            // Remove previous selection visual
-            document.querySelectorAll('.wa-chat-item').forEach(el => el.classList.remove('selected'));
-            // Add to new
-            document.getElementById(`clone-item-${id}`).classList.add('selected');
-            
-            selectedWAGroupId = id;
-            selectedWAGroupName = name;
-            
-            document.getElementById('wa-add-member-container').style.display = 'block';
-            printLog(`📌 Selected WhatsApp Group: ${name}`, "primary");
-        }
-
-        async function addMemberDirectlyToGroup() {
-            if(!selectedWAGroupId) return alert("Please select a group from the list first.");
-            const phone = document.getElementById('wa-direct-add-phone').value.trim();
-            if(!phone) return alert("Enter a mobile number first.");
-
-            const btn = document.getElementById('btn-direct-add');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            const btn = document.getElementById('btn-direct-add-member');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
             btn.disabled = true;
 
             try {
-                const response = await fetch(WA_API_URL + '/group/add', {
+                const response = await fetch(WA_API_URL + '/group/add-member', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupId: selectedWAGroupId, phone: phone })
+                    body: JSON.stringify({ groupName: groupName, phone: phone })
                 });
 
                 const data = await response.json();
+
                 if(response.ok && data.success) {
                     showToast("Member successfully added to Group!");
-                    printLog(`✅ Successfully added ${phone} to group ${selectedWAGroupName}.`, "success");
-                    document.getElementById('wa-direct-add-phone').value = "";
+                    printLog(`✅ Successfully added ${phone} to group "${data.groupName}".`, "success");
+                    document.getElementById('wa-direct-member-phone').value = "";
                 } else {
                     alert("Failed: " + (data.error || "Unknown Error"));
                     printLog(`❌ Failed to add ${phone}: ${data.error}`, "error");
@@ -1000,11 +902,9 @@
                 alert("Network Error. Is PC Server running?");
             }
 
-            btn.innerHTML = 'Add';
+            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add Member Directly';
             btn.disabled = false;
         }
-        // --- END WHATSAPP GROUP UI CLONE FUNCTIONS ---
-
 
         async function loadCommitteeSenderList() {
             const listDiv = document.getElementById('wa-committee-members-list');
@@ -1252,23 +1152,26 @@
             
             // --- BRANCHING FOR WA GROUP UI vs INDIVIDUAL BATCH BROADCAST ---
             if(currentWASubTab === 'group-ui') {
-                if(!selectedWAGroupId) return alert("Please select a WhatsApp Group from the list first!");
-
-                if(!confirm(`Send ONE single announcement directly to "${selectedWAGroupName}"?`)) return;
+                let exactGroupName = document.getElementById('wa-direct-group-name').value.trim();
                 
-                logAdminActivity("Group Announcement", `Sent 1 message to Group: ${selectedWAGroupName}`);
+                if(!exactGroupName) return alert("Please type the Exact WhatsApp Group Name first.");
+
+                if(!confirm(`Send ONE single announcement directly to "${exactGroupName}"?`)) return;
+                
+                logAdminActivity("Group Announcement", `Sent 1 message to Group: ${exactGroupName}`);
 
                 waQueue = [{
                     id: 'GROUP_' + Date.now(),
-                    name: selectedWAGroupName,
-                    phone: selectedWAGroupId,
+                    name: exactGroupName,
+                    phone: exactGroupName, // Using phone property to store name for the custom route
                     isGroup: true, 
+                    isGroupName: true, // Flag for the processLocalQueue
                     rawMsgTemplate: rawTemplate,
                     rawLink: linkInput,
                     status: 'pending',
                     retries: 0
                 }];
-                activeCampaignNative = selectedWAGroupName;
+                activeCampaignNative = exactGroupName;
                 
             } else {
                 if(currentWASubTab === 'general') {
@@ -1339,7 +1242,6 @@
             let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 25;
             let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 60;
             
-            // Skip batch pausing if it's a Group UI broadcast (since it's only 1 message)
             if(currentWASubTab !== 'group-ui' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
                 document.getElementById('wa-stat-eta').innerText = `Sleeping for ${pauseSec}s...`;
@@ -1356,7 +1258,6 @@
                 if(itemIndex === -1) {
                     isBroadcastingWA = false;
                     printLog(`🎉 Campaign Finished! Sent: ${waSentCount}, Failed: ${waFailedCount}`, "success");
-                    let finishedNative = activeCampaignNative;
                     stopBroadcast(true); 
                     return;
                 } else {
@@ -1381,65 +1282,92 @@
                 else userMsg = '🔗 *Attachment:*\n' + item.rawLink;
             }
 
-            let phoneStr = String(item.phone);
-            if (!item.isGroup) {
-                phoneStr = phoneStr.replace(/[^0-9]/g, '');
-                if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
-            }
-
-            printLog(`Sending to ${item.name}...`, "info");
-
-            if( (!item.isGroup && (!phoneStr || phoneStr.length < 10)) || (item.isGroup && !phoneStr) ) {
-                item.status = 'failed';
-                item.retries = 3; 
-                waFailedCount++;
-                printLog(`❌ Failed: Invalid Destination ID for ${item.name}`, "error");
-            } else {
+            // --- HANDLING FOR EXACT NAME DIRECT BROADCAST ---
+            if (item.isGroupName) {
+                printLog(`Sending to Group: ${item.name}...`, "info");
                 try {
-                    let payload = { to: phoneStr, message: userMsg };
-                    
-                    const response = await fetch(WA_API_URL + '/send', {
+                    let payload = { groupName: item.phone, message: userMsg };
+                    const response = await fetch(WA_API_URL + '/group/send', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
-                    if(response.ok) { 
+                    if(response.ok) {
                         item.status = 'sent';
-                        if(!item.isGroup) globalDuplicateSet.add(item.phone); 
                         waSentCount++;
-                        abSessionCount++; 
-                        microPauseCounter++;
-                        waConsecutiveFails = 0; 
-                        
-                        if (item.retries > 0) waFailedCount--; 
-                        printLog(`✅ Sent to ${item.name}!`, "success"); 
-                        
+                        printLog(`✅ Sent directly to Group!`, "success");
                         const lastSentEl = document.getElementById('wa-stat-lastsent');
                         if(lastSentEl) lastSentEl.innerText = item.name;
-
-                    } else { 
+                    } else {
                         const errData = await response.json();
-                        item.retries = (item.retries || 0) + 1;
-                        if(item.retries >= 3) {
-                            item.status = 'failed';
-                            waFailedCount++;
-                            printLog(`❌ Failed for ${item.name} permanently: ${errData.error || 'Server Error'}`, "error"); 
-                        } else {
-                            item.status = 'pending'; 
-                            printLog(`⚠️ Will retry ${item.name} later (${item.retries}/3).`, "info");
-                        }
+                        item.status = 'failed';
+                        waFailedCount++;
+                        printLog(`❌ Failed: ${errData.error || 'Check Spelling of Group Name'}`, "error");
                     }
-                } catch(e) { 
-                    item.retries = (item.retries || 0) + 1;
-                    waConsecutiveFails++;
-                    printLog(`❌ PC Server Network Error for ${item.name}.`, "error"); 
-                    
-                    if(waConsecutiveFails >= 3) {
-                        printLog(`🛑 Multiple network failures detected. Auto-pausing to prevent system/ban issues.`, "error"); 
-                        pauseBroadcast();
-                        saveCampaignState();
-                        updateWAUI();
-                        return;
+                } catch(e) {
+                    item.status = 'failed';
+                    waFailedCount++;
+                    printLog(`❌ Network Error with PC Server.`, "error");
+                }
+            } else {
+                // --- HANDLING FOR REGULAR NUMBERS ---
+                let phoneStr = String(item.phone);
+                phoneStr = phoneStr.replace(/[^0-9]/g, '');
+                if(phoneStr && !phoneStr.startsWith('91') && phoneStr.length >= 10) phoneStr = '91' + phoneStr.slice(-10);
+                
+                printLog(`Sending to ${item.name}...`, "info");
+
+                if( !phoneStr || phoneStr.length < 10 ) {
+                    item.status = 'failed';
+                    item.retries = 3; 
+                    waFailedCount++;
+                    printLog(`❌ Failed: Invalid Destination ID for ${item.name}`, "error");
+                } else {
+                    try {
+                        let payload = { to: phoneStr, message: userMsg };
+                        const response = await fetch(WA_API_URL + '/send', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if(response.ok) { 
+                            item.status = 'sent';
+                            globalDuplicateSet.add(item.phone); 
+                            waSentCount++;
+                            abSessionCount++; 
+                            microPauseCounter++;
+                            waConsecutiveFails = 0; 
+                            
+                            if (item.retries > 0) waFailedCount--; 
+                            printLog(`✅ Sent to ${item.name}!`, "success"); 
+                            
+                            const lastSentEl = document.getElementById('wa-stat-lastsent');
+                            if(lastSentEl) lastSentEl.innerText = item.name;
+
+                        } else { 
+                            const errData = await response.json();
+                            item.retries = (item.retries || 0) + 1;
+                            if(item.retries >= 3) {
+                                item.status = 'failed';
+                                waFailedCount++;
+                                printLog(`❌ Failed for ${item.name} permanently: ${errData.error || 'Server Error'}`, "error"); 
+                            } else {
+                                item.status = 'pending'; 
+                                printLog(`⚠️ Will retry ${item.name} later (${item.retries}/3).`, "info");
+                            }
+                        }
+                    } catch(e) { 
+                        item.retries = (item.retries || 0) + 1;
+                        waConsecutiveFails++;
+                        printLog(`❌ PC Server Network Error for ${item.name}.`, "error"); 
+                        
+                        if(waConsecutiveFails >= 3) {
+                            printLog(`🛑 Multiple network failures detected. Auto-pausing to prevent system/ban issues.`, "error"); 
+                            pauseBroadcast();
+                            saveCampaignState();
+                            updateWAUI();
+                            return;
+                        }
                     }
                 }
             }
@@ -1448,7 +1376,6 @@
             updateWAUI();
 
             if(isBroadcastingWA) {
-                // Ignore random delays if it's a 1-message group broadcast
                 if (currentWASubTab === 'group-ui') {
                     setTimeout(processLocalQueue, 1000);
                     return;
