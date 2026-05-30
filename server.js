@@ -6,7 +6,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+// CORS properly configured
+app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '50mb' })); 
 
 let waStatus = 'DISCONNECTED'; 
@@ -74,79 +75,76 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 SMART BULK SYNC (Instantly replies to frontend to avoid Network Error)
+// 🔥 SMART BULK SYNC ENDPOINT (Fixed)
 app.post('/api/whatsapp/group/bulk-add', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     
-    const { groupName, phones } = req.body;
-    if (!groupName || !phones || !Array.isArray(phones)) return res.status(400).json({ error: 'Missing Data' });
+    try {
+        const { groupName, phones } = req.body;
+        if (!groupName || !phones || !Array.isArray(phones)) return res.status(400).json({ error: 'Missing Data' });
 
-    // 1️⃣ FRONTEND KO TURANT JAWAB DE DO TAAKI NETWORK ERROR NA AAYE
-    console.log(`\n✅ Request received for ${groupName}. Replying instantly to Admin Panel...`);
-    res.json({ success: true, message: "Processing started in background" });
+        console.log(`\n🔍 Received Request to sync members to: "${groupName}"`);
+        
+        // 1️⃣ Send response immediately so frontend doesn't timeout!
+        res.json({ success: true, message: "Processing started in background" });
 
-    // 2️⃣ PEECHE AARAM SE WHATSAPP GROUPS FIND KARO AUR ADD KARO
-    setTimeout(async () => {
-        try {
-            console.log(`\n🔍 Background Task: Searching for Group "${groupName}" on phone...`);
-            const chats = await client.getChats();
-            
-            // Exact name match
-            const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
-            
-            if(!group) {
-                console.log(`❌ Background Error: Group "${groupName}" not found on phone! Check spelling.`);
-                return;
-            }
-
-            console.log(`✅ Group Found! Filtering ${phones.length} numbers...`);
-            let validParticipants = [];
-            
-            // Clean numbers
-            for(let phone of phones) {
-                let num = String(phone).replace(/[^0-9]/g, '');
-                if (num.length >= 10) {
-                    if (!num.startsWith('91') && num.length === 10) num = '91' + num;
-                    validParticipants.push(`${num}@c.us`);
-                }
-            }
-
-            console.log(`✅ Ready to add ${validParticipants.length} cleaned numbers to the group.`);
-            
-            // Chunks me add karo (15 logo ko ek baar me)
-            for (let i = 0; i < validParticipants.length; i += 15) {
-                const chunk = validParticipants.slice(i, i + 15);
+        // 2️⃣ Background Processing
+        setTimeout(async () => {
+            try {
+                const chats = await client.getChats();
+                const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
                 
-                // Double verify inside the loop
-                let finalChunk = [];
-                for(let num of chunk) {
-                    try {
-                        const isReg = await client.getNumberId(num);
-                        if(isReg) finalChunk.push(isReg._serialized);
-                    } catch(e) {}
+                if(!group) {
+                    console.log(`❌ Group "${groupName}" not found on your phone! Check spelling.`);
+                    return;
                 }
 
-                if(finalChunk.length > 0) {
-                    try {
-                        await group.addParticipants(finalChunk);
-                        console.log(`   -> Batch added ${finalChunk.length} members.`);
-                    } catch (e) {
-                        console.log(`   -> Some members in batch had privacy blocks. Skipped.`);
+                console.log(`✅ Group Found! Filtering ${phones.length} valid WhatsApp numbers...`);
+                let validParticipants = [];
+                
+                for(let phone of phones) {
+                    let num = String(phone).replace(/[^0-9]/g, '');
+                    if (num.length >= 10) {
+                        if (!num.startsWith('91') && num.length === 10) num = '91' + num;
+                        validParticipants.push(`${num}@c.us`);
                     }
                 }
-                
-                // Wait 5 seconds to bypass bans
-                await new Promise(r => setTimeout(r, 5000));
-            }
-            console.log(`🎉 SUCCESS: Finished syncing all members to "${groupName}"!`);
 
-        } catch (error) {
-            console.error('❌ Background Bulk Add Error:', error.message);
-        }
-    }, 100); // Response bhejne ke 0.1 sec baad start karega
+                console.log(`✅ Ready to add members. Adding them safely in batches...`);
+                
+                for (let i = 0; i < validParticipants.length; i += 15) {
+                    const chunk = validParticipants.slice(i, i + 15);
+                    
+                    let finalChunk = [];
+                    for(let num of chunk) {
+                        try {
+                            const isReg = await client.getNumberId(num);
+                            if(isReg) finalChunk.push(isReg._serialized);
+                        } catch(e) {}
+                    }
+
+                    if(finalChunk.length > 0) {
+                        try {
+                            await group.addParticipants(finalChunk);
+                            console.log(`   -> Added ${finalChunk.length} members...`);
+                        } catch (e) {
+                            console.log(`   -> Some members skipped (Privacy limits).`);
+                        }
+                    }
+                    await new Promise(r => setTimeout(r, 5000));
+                }
+                console.log(`🎉 SUCCESS: Fully synced all possible members to "${groupName}"!`);
+            } catch(e) {
+                console.log("Background error:", e.message);
+            }
+        }, 500);
+
+    } catch (error) {
+        console.error('❌ Route Error:', error.message);
+    }
 });
 
-// SEND MESSAGE TO EXACT GROUP NAME
+// 🔥 SEND MESSAGE DIRECTLY TO GROUP
 app.post('/api/whatsapp/group/send', async (req, res) => {
     if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     try {
@@ -154,7 +152,6 @@ app.post('/api/whatsapp/group/send', async (req, res) => {
         if (!groupName || !message) return res.status(400).json({ error: 'Missing Data' });
 
         console.log(`\n📨 Sending message to Group: "${groupName}"...`);
-
         const chats = await client.getChats();
         const group = chats.find(c => c.isGroup && c.name.trim().toLowerCase() === groupName.trim().toLowerCase());
         
