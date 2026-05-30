@@ -84,6 +84,27 @@
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; }
         .badge.success { background: #10b981; } .badge.warning { background: #f59e0b; } .badge.danger { background: #ef4444; } .badge.info { background: #3b82f6; }
         .premium-filter-bar { display: flex; gap: 10px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap;}
+
+        /* 🔥 NEW: DIRECT WHATSAPP GROUPS UI CSS */
+        .wa-dark-panel { background: #111b21; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; height: 550px; border: 1px solid #222e35; }
+        .wa-dark-header { background: #202c33; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222e35;}
+        .wa-dark-header h3 { color: #e9edef; font-size: 16px; margin: 0; font-weight: 500; display:flex; align-items:center; gap:10px;}
+        .wa-dark-btn { background: #00a884; color: #111b21; border: none; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s;}
+        .wa-dark-btn:hover { background: #008f6f; }
+        .wa-dark-list { flex: 1; overflow-y: auto; }
+        .wa-chat-item { display: flex; align-items: center; padding: 12px 15px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #202c33; }
+        .wa-chat-item:hover { background: #202c33; }
+        .wa-chat-item.selected { background: #2a3942; border-left: 4px solid #00a884; }
+        .wa-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #fff; flex-shrink: 0; margin-right: 15px; background: linear-gradient(180deg, #53b0a6, #268d83); }
+        .wa-chat-details { flex: 1; overflow: hidden; }
+        .wa-chat-top { display: flex; justify-content: space-between; font-size: 12px; color: #8696a0; margin-bottom: 3px; }
+        .wa-chat-title { font-size: 16px; color: #e9edef; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+        
+        /* Direct Add Member Box */
+        .wa-add-member-box { background: #202c33; border-top: 1px solid #2a3942; padding: 15px; }
+        .wa-add-member-box h4 { color: #00a884; font-size: 13px; margin-bottom: 10px; }
+        .wa-dark-input { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; outline: none; }
+        .wa-dark-btn-full { width: 100%; background: #00a884; color: #111b21; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -207,9 +228,9 @@
                 <button id="subtab-committee-btn" class="wa-tab-btn" onclick="switchWASubTab('committee')">
                     <i class="fa-solid fa-user-shield"></i> Committee Member Sender
                 </button>
-                <!-- 🔥 NEW WA GROUPS MANAGER TAB -->
-                <button id="subtab-group-btn" class="wa-tab-btn" onclick="switchWASubTab('group')" style="color:#0284c7;">
-                    <i class="fa-solid fa-layer-group"></i> Manage WA Groups
+                <!-- 🔥 NEW WA GROUPS DIRECT SYNC TAB -->
+                <button id="subtab-group-ui-btn" class="wa-tab-btn" onclick="switchWASubTab('group-ui')" style="color:#00a884; background:#111b21;">
+                    <i class="fa-solid fa-layer-group"></i> 📱 My WA Groups
                 </button>
             </div>
 
@@ -270,45 +291,31 @@
                         <div id="wa-committee-members-list" class="wa-list-box"><p style="padding:20px; text-align:center; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Committee...</p></div>
                     </div>
 
-                    <!-- 🔥 PANEL C: NEW GROUP MANAGER (Manual Map + Add Members) -->
-                    <div id="wa-group-panel" style="display:none; background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <h3 style="margin-bottom:10px;">WhatsApp Group Manager</h3>
-                        <p style="font-size:13px; color:#64748b; margin-bottom:15px;">Manually link your existing WhatsApp groups and instantly add new members to them.</p>
-
-                        <div class="form-group">
-                            <label style="color:#0369a1; font-weight:700;">Select Target Native (Gaam)</label>
-                            <select id="wa-group-native-select" class="wa-input" onchange="loadMappedGroup()" style="border-color:#bae6fd; font-weight:600;">
-                                <option value="">Select Native...</option>
-                            </select>
+                    <!-- 🔥 PANEL C: DIRECT WHATSAPP GROUPS (NO MAPPING REQUIRED) -->
+                    <div id="wa-group-ui-panel" class="wa-dark-panel" style="display:none;">
+                        <div class="wa-dark-header">
+                            <h3><i class="fa-brands fa-whatsapp" style="font-size:20px; color:#00a884;"></i> Direct Phone Groups</h3>
+                            <button class="wa-dark-btn" onclick="syncPhoneGroupsUI()"><i class="fa-solid fa-rotate"></i> Sync Phone</button>
+                        </div>
+                        
+                        <div style="background:#202c33; padding:10px 15px;">
+                            <input type="text" id="wa-group-search" placeholder="Search your groups..." class="wa-input" style="background:#2a3942; border:none; color:#e9edef; margin:0; font-size:13px;" onkeyup="filterUIWaGroups()">
                         </div>
 
-                        <!-- MAP GROUP ID -->
-                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin-bottom:12px; font-size:14px; color:#0284c7;"><i class="fa-solid fa-link"></i> Map WhatsApp Group ID</h4>
-                            
-                            <div class="form-group">
-                                <label style="color:#0369a1;">WhatsApp Group ID</label>
-                                <input type="text" id="wa-group-id-input" class="wa-input" placeholder="e.g. 120363000000000000@g.us" style="border-color:#bae6fd;">
-                                <small style="color:#0284c7; font-size:11px; display:block; margin-top:5px;">* Paste your existing group ID here and save.</small>
+                        <div id="wa-clone-list" class="wa-dark-list">
+                            <div style="padding:30px; text-align:center; color:#8696a0; font-size:13px;">
+                                <i class="fa-solid fa-mobile-screen" style="font-size:30px; margin-bottom:10px; opacity:0.5;"></i><br>
+                                Click "Sync Phone" to load all your existing WhatsApp Groups (e.g. 32c Edu Society - Bahiyal) directly from your connected device.
                             </div>
-                            
-                            <button onclick="saveGroupMapping()" class="btn-add" style="background:#0284c7; width:100%; justify-content:center; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Save Group Mapping</button>
                         </div>
 
-                        <!-- ADD MEMBER DIRECTLY TO WA GROUP -->
-                        <div style="background:#f0fdf4; border:1px solid #6ee7b7; border-radius:8px; padding:15px; margin-bottom:15px;">
-                            <h4 style="margin-bottom:12px; font-size:14px; color:#047857;"><i class="fa-solid fa-user-plus"></i> Add Member to WA Group</h4>
-                            <p style="font-size:12px; color:#065f46; margin-bottom:12px;">Add any mobile number directly to the mapped WhatsApp group for this Native.</p>
-                            
-                            <div class="form-group" style="display:flex; gap:10px; align-items:center;">
-                                <input type="text" id="wa-new-member-phone" class="wa-input" placeholder="Mobile No. (e.g. 9876543210)" style="margin:0; border-color:#6ee7b7; flex:1;">
+                        <!-- Add Member Box (Appears when a group is selected) -->
+                        <div id="wa-add-member-container" class="wa-add-member-box" style="display:none;">
+                            <h4><i class="fa-solid fa-user-plus"></i> Add Member to Selected Group</h4>
+                            <div style="display:flex; gap:10px;">
+                                <input type="text" id="wa-direct-add-phone" class="wa-dark-input" placeholder="Mobile Number (e.g. 9876543210)">
+                                <button id="btn-direct-add" class="wa-dark-btn-full" style="width:auto; padding:0 20px;" onclick="addMemberDirectlyToGroup()">Add</button>
                             </div>
-                            <button id="btn-add-wa-member" onclick="addMemberToWAGroup()" class="btn-add" style="background:#10b981; width:100%; justify-content:center; margin-top:10px;"><i class="fa-solid fa-plus"></i> Add to WhatsApp Group</button>
-                        </div>
-
-                        <div style="background:#ecfdf5; padding:15px; border-radius:8px; font-size:13px; color:#065f46; border: 1px solid #a7f3d0;">
-                            <b><i class="fa-solid fa-circle-check"></i> Ready to Announce:</b><br>
-                            Draft your message on the right and click Send. The system will deliver <b>1 message</b> directly to this specific group!
                         </div>
                     </div>
 
@@ -611,11 +618,15 @@
         }
 
         // ==============================================================
-        // 1-CLICK LOCAL WHATSAPP SENDER, COMMITTEE, & NATIVE GROUPS
+        // 1-CLICK LOCAL WHATSAPP SENDER, COMMITTEE, & DIRECT GROUPS
         // ==============================================================
         let waMembersList = [];
         let waCommitteeList = [];
-        let waGroupMappings = {}; 
+        
+        let fetchedWAGroups = [];
+        let selectedWAGroupId = null;
+        let selectedWAGroupName = null;
+
         let currentWASubTab = 'general'; 
         let isWABotConnected = false;
         let isBroadcastingWA = false;
@@ -704,7 +715,6 @@
 
             loadSavedTemplatesOptions();
             loadSmartGroupsOptions();
-            loadWAGroups(); 
 
             const snap = await db.collection('members').orderBy('timestamp', 'desc').get();
             waMembersList = [];
@@ -719,15 +729,11 @@
             });
             
             let nativeHtml = '<option value="ALL">All Natives (Gaam)</option>';
-            let waGroupNativeHtml = '<option value="">Select Native...</option>';
-            
             Array.from(uniqueNatives).sort().forEach(n => {
                 nativeHtml += `<option value="${n}">${n}</option>`;
-                waGroupNativeHtml += `<option value="${n}">${n}</option>`;
             });
             
             document.getElementById('wa-native-filter').innerHTML = nativeHtml;
-            document.getElementById('wa-group-native-select').innerHTML = waGroupNativeHtml; 
 
             renderWAMembers(waMembersList);
             loadCommitteeSenderList();
@@ -834,12 +840,13 @@
                 playVoiceAlert("Congratulations. Broadcast campaign completed successfully.");
                 logAdminActivity("Broadcast Finished", `Campaign Auto-Completed. Sent: ${waSentCount}`);
                 
+                // Show completion alert based on Tab
                 setTimeout(() => {
                     if (currentWASubTab === 'general') {
                         let displayNative = activeCampaignNative === 'ALL' ? 'All Natives' : activeCampaignNative;
                         alert(`✅ ${displayNative} Native Ke Sare member ko msg chala gaya he! Ab aap dusre village ko chose kare.`);
-                    } else if (currentWASubTab === 'group') {
-                        alert(`✅ Message successfully sent directly to Group!`);
+                    } else if (currentWASubTab === 'group-ui') {
+                        alert(`✅ Message successfully sent directly to Group: ${activeCampaignNative}!`);
                     } else {
                         alert(`✅ Broadcast Completed!`);
                     }
@@ -860,12 +867,13 @@
             currentWASubTab = tab;
             document.getElementById('subtab-general-btn').classList.remove('active');
             document.getElementById('subtab-committee-btn').classList.remove('active');
-            document.getElementById('subtab-group-btn').classList.remove('active');
+            document.getElementById('subtab-group-ui-btn').classList.remove('active');
             
             document.getElementById('wa-general-panel').style.display = 'none';
             document.getElementById('wa-committee-panel').style.display = 'none';
-            document.getElementById('wa-group-panel').style.display = 'none';
+            document.getElementById('wa-group-ui-panel').style.display = 'none';
             
+            // Manage UI controls visibility
             document.getElementById('general-settings-box').style.display = 'block';
             document.getElementById('start-btn-text').innerText = '1-Click Send All';
 
@@ -877,97 +885,125 @@
                 document.getElementById('subtab-committee-btn').classList.add('active');
                 document.getElementById('wa-committee-panel').style.display = 'block';
                 loadCommitteeSenderList();
-            } else if (tab === 'group') {
-                document.getElementById('subtab-group-btn').classList.add('active');
-                document.getElementById('wa-group-panel').style.display = 'block';
-                
+            } else if (tab === 'group-ui') {
+                document.getElementById('subtab-group-ui-btn').classList.add('active');
+                document.getElementById('wa-group-ui-panel').style.display = 'flex';
+                // Hide batching settings since group is just 1 message
                 document.getElementById('general-settings-box').style.display = 'none';
                 document.getElementById('start-btn-text').innerText = 'Send to Selected Group';
+                if(fetchedWAGroups.length === 0) syncPhoneGroupsUI(); // Auto fetch if empty
             }
         }
 
-        // --- SUBTAB: WA NATIVE GROUPS MAPPING & ADDING ---
-        async function loadWAGroups() {
-            try {
-                const snap = await db.collection('wa_group_mappings').get();
-                waGroupMappings = {};
-                snap.forEach(doc => {
-                    waGroupMappings[doc.id] = doc.data().groupId;
-                });
-            } catch(e) { console.error("Error loading WA group mappings", e); }
-        }
-
-        function loadMappedGroup() {
-            let native = document.getElementById('wa-group-native-select').value;
-            let idInput = document.getElementById('wa-group-id-input');
-            if (native && waGroupMappings[native]) {
-                idInput.value = waGroupMappings[native];
-            } else {
-                idInput.value = "";
-            }
-        }
-
-        async function saveGroupMapping() {
-            let native = document.getElementById('wa-group-native-select').value;
-            let groupId = document.getElementById('wa-group-id-input').value.trim();
+        // 🔥 NEW: WHATSAPP GROUP UI CLONE FUNCTIONS
+        async function syncPhoneGroupsUI() {
+            if(!isWABotConnected) return alert("WhatsApp PC Server is not connected! Please scan QR first.");
             
-            if(!native) return alert("Please select a Native (Gaam) first.");
-            if(!groupId) return alert("Please enter the WhatsApp Group ID.");
+            const listDiv = document.getElementById('wa-clone-list');
+            listDiv.innerHTML = `<div style="padding:30px; text-align:center; color:#8696a0;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px; margin-bottom:10px;"></i><br>Syncing groups from your phone...</div>`;
             
             try {
-                await db.collection('wa_group_mappings').doc(native).set({
-                    native: native,
-                    groupId: groupId,
-                    timestamp: Date.now()
-                });
-                waGroupMappings[native] = groupId;
-                showToast("Group ID Saved Manually!");
-                logAdminActivity("WA Group Mapped", `Manually Mapped ${native} to group ${groupId}`);
+                const res = await fetch(WA_API_URL + '/get-groups');
+                const data = await res.json();
+                
+                if(!res.ok || !data.success) throw new Error("Failed to fetch groups");
+                
+                fetchedWAGroups = data.groups;
+                renderUIWaGroups(fetchedWAGroups);
+                
             } catch(e) {
-                alert("Database Error while mapping group!");
+                listDiv.innerHTML = `<div style="padding:30px; text-align:center; color:#ef4444;"><i class="fa-solid fa-circle-exclamation" style="font-size:24px; margin-bottom:10px;"></i><br>Error fetching groups from phone. Is server running?</div>`;
             }
         }
 
-        // 🔥 ADD NEW MEMBER TO WHATSAPP GROUP DIRECTLY
-        async function addMemberToWAGroup() {
-            if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
+        function renderUIWaGroups(groupsList) {
+            const listDiv = document.getElementById('wa-clone-list');
+            if(groupsList.length === 0) {
+                listDiv.innerHTML = `<div style="padding:30px; text-align:center; color:#8696a0;">No groups found matching search.</div>`;
+                return;
+            }
+
+            let html = '';
+            groupsList.forEach(g => {
+                // Formatting name to mimic Community view if applicable
+                let commName = "My Groups";
+                let grpName = g.name;
+                
+                if(g.name.includes(" - ")) {
+                    let parts = g.name.split(" - ");
+                    commName = parts[0].trim();
+                    grpName = parts[1].trim();
+                }
+
+                html += `
+                    <div class="wa-chat-item" id="clone-item-${g.id}" onclick="selectWAGroup('${g.id}', '${g.name}')">
+                        <div class="wa-avatar"><i class="fa-solid fa-users"></i></div>
+                        <div class="wa-chat-details">
+                            <div class="wa-chat-top">
+                                <span>${commName}</span>
+                                <span><i class="fa-solid fa-check-double" style="color:#53b0a6;"></i></span>
+                            </div>
+                            <div class="wa-chat-title" id="title-${g.id}">${grpName}</div>
+                            <div class="wa-chat-sub">Click to select this group for announcement</div>
+                        </div>
+                    </div>
+                `;
+            });
+            listDiv.innerHTML = html;
+        }
+
+        function filterUIWaGroups() {
+            const q = document.getElementById('wa-group-search').value.toLowerCase();
+            const filtered = fetchedWAGroups.filter(g => g.name.toLowerCase().includes(q));
+            renderUIWaGroups(filtered);
+        }
+
+        function selectWAGroup(id, name) {
+            // Remove previous selection visual
+            document.querySelectorAll('.wa-chat-item').forEach(el => el.classList.remove('selected'));
+            // Add to new
+            document.getElementById(`clone-item-${id}`).classList.add('selected');
             
-            let native = document.getElementById('wa-group-native-select').value;
-            let groupId = document.getElementById('wa-group-id-input').value.trim();
-            let phone = document.getElementById('wa-new-member-phone').value.trim();
+            selectedWAGroupId = id;
+            selectedWAGroupName = name;
+            
+            document.getElementById('wa-add-member-container').style.display = 'block';
+            printLog(`📌 Selected WhatsApp Group: ${name}`, "primary");
+        }
 
-            if(!native || !groupId) return alert("Please select a Native and ensure it has a mapped Group ID first.");
-            if(!phone) return alert("Please enter the mobile number to add.");
+        async function addMemberDirectlyToGroup() {
+            if(!selectedWAGroupId) return alert("Please select a group from the list first.");
+            const phone = document.getElementById('wa-direct-add-phone').value.trim();
+            if(!phone) return alert("Enter a mobile number first.");
 
-            const btn = document.getElementById('btn-add-wa-member');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
+            const btn = document.getElementById('btn-direct-add');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
             try {
                 const response = await fetch(WA_API_URL + '/group/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupId: groupId, phone: phone })
+                    body: JSON.stringify({ groupId: selectedWAGroupId, phone: phone })
                 });
 
                 const data = await response.json();
-
                 if(response.ok && data.success) {
                     showToast("Member successfully added to Group!");
-                    printLog(`✅ Successfully added ${phone} to ${native} group.`, "success");
-                    document.getElementById('wa-new-member-phone').value = "";
+                    printLog(`✅ Successfully added ${phone} to group ${selectedWAGroupName}.`, "success");
+                    document.getElementById('wa-direct-add-phone').value = "";
                 } else {
                     alert("Failed: " + (data.error || "Unknown Error"));
                     printLog(`❌ Failed to add ${phone}: ${data.error}`, "error");
                 }
-
             } catch(e) {
                 alert("Network Error. Is PC Server running?");
             }
 
-            btn.innerHTML = '<i class="fa-solid fa-plus"></i> Add to WhatsApp Group';
+            btn.innerHTML = 'Add';
             btn.disabled = false;
         }
+        // --- END WHATSAPP GROUP UI CLONE FUNCTIONS ---
 
 
         async function loadCommitteeSenderList() {
@@ -1214,28 +1250,25 @@
             
             let selectedBoxes = [];
             
-            if(currentWASubTab === 'group') {
-                let selectedNative = document.getElementById('wa-group-native-select').value;
-                let mappedGroupId = document.getElementById('wa-group-id-input').value.trim();
-                
-                if(!selectedNative) return alert("Select a Native (Gaam) to announce to.");
-                if(!mappedGroupId) return alert("Please map a Group ID for this Native first!");
+            // --- BRANCHING FOR WA GROUP UI vs INDIVIDUAL BATCH BROADCAST ---
+            if(currentWASubTab === 'group-ui') {
+                if(!selectedWAGroupId) return alert("Please select a WhatsApp Group from the list first!");
 
-                if(!confirm(`Send ONE single announcement directly to the WhatsApp Group mapped to ${selectedNative}?`)) return;
+                if(!confirm(`Send ONE single announcement directly to "${selectedWAGroupName}"?`)) return;
                 
-                logAdminActivity("Native Group Broadcast", `Sent 1 message to Group ID: ${mappedGroupId}`);
+                logAdminActivity("Group Announcement", `Sent 1 message to Group: ${selectedWAGroupName}`);
 
                 waQueue = [{
                     id: 'GROUP_' + Date.now(),
-                    name: selectedNative + ' WhatsApp Group',
-                    phone: mappedGroupId,
+                    name: selectedWAGroupName,
+                    phone: selectedWAGroupId,
                     isGroup: true, 
                     rawMsgTemplate: rawTemplate,
                     rawLink: linkInput,
                     status: 'pending',
                     retries: 0
                 }];
-                activeCampaignNative = selectedNative;
+                activeCampaignNative = selectedWAGroupName;
                 
             } else {
                 if(currentWASubTab === 'general') {
@@ -1306,7 +1339,8 @@
             let maxCount = parseInt(document.getElementById('ab-msg-count').value, 10) || 25;
             let pauseSec = parseInt(document.getElementById('ab-pause-sec').value, 10) || 60;
             
-            if(currentWASubTab !== 'group' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
+            // Skip batch pausing if it's a Group UI broadcast (since it's only 1 message)
+            if(currentWASubTab !== 'group-ui' && abSessionCount > 0 && abSessionCount % maxCount === 0) {
                 printLog(`🛡️ Anti-Ban Sleep active: Long pause for ${pauseSec} seconds...`, "info");
                 document.getElementById('wa-stat-eta').innerText = `Sleeping for ${pauseSec}s...`;
                 abSessionCount++; 
@@ -1414,7 +1448,8 @@
             updateWAUI();
 
             if(isBroadcastingWA) {
-                if (currentWASubTab === 'group') {
+                // Ignore random delays if it's a 1-message group broadcast
+                if (currentWASubTab === 'group-ui') {
                     setTimeout(processLocalQueue, 1000);
                     return;
                 }
@@ -1707,7 +1742,7 @@
 
         async function exportDatabaseBackup() {
             const t = document.getElementById('toast'); t.innerText = "Generating Backup..."; t.classList.add('show');
-            const collectionsToBackup = ['members', 'events', 'committee', 'wa_templates', 'wa_smart_groups', 'wa_group_mappings'];
+            const collectionsToBackup = ['members', 'events', 'committee', 'wa_templates', 'wa_smart_groups'];
             let backupData = {};
             
             try {
