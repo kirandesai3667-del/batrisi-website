@@ -41,7 +41,7 @@ client.on('qr', async (qr) => {
 });
 
 client.on('ready', () => {
-    console.log('🟢 WHATSAPP IS CONNECTED & READY!');
+    console.log('✅ SERVER WORKING: WHATSAPP CONNECTED!');
     waStatus = 'CONNECTED';
     latestQR = null;
 });
@@ -76,32 +76,41 @@ app.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
-// 🔥 FETCH EXISTING GROUPS FROM PHONE 
-app.get('/api/whatsapp/get-groups', async (req, res) => {
-    if (waStatus !== 'CONNECTED') {
-        console.log("❌ Frontend asked for groups, but WhatsApp is not connected.");
-        return res.status(400).json({ error: 'WhatsApp not connected' });
-    }
-    
+// 🔥 NAYA FEATURE: Kisi bhi number ko Group me Add karein
+app.post('/api/whatsapp/group/add', async (req, res) => {
+    if (waStatus !== 'CONNECTED') return res.status(400).json({ error: 'WhatsApp not connected' });
     try {
-        console.log("\n📥 Frontend (Admin Panel) Requested Groups...");
-        console.log("⏳ Fetching all chats from your phone. Please wait, this takes 10-20 seconds if you have many chats...");
+        const { groupId, phone } = req.body;
         
-        const chats = await client.getChats();
-        let groups = [];
-        
-        for (let chat of chats) {
-            if (chat.isGroup) {
-                groups.push({ id: chat.id._serialized, name: chat.name });
-            }
-        }
-        
-        console.log(`✅ DONE! Found ${groups.length} WhatsApp Groups. Sending list to Admin Panel...`);
-        res.json({ success: true, groups: groups });
+        if (!groupId || !phone) return res.status(400).json({ error: 'Missing Data' });
 
+        console.log(`\n⚙️ Adding ${phone} to Group ID: ${groupId}`);
+        
+        // Clean mobile number
+        let num = String(phone).replace(/[^0-9]/g, '');
+        if (num.length >= 10) {
+            if (!num.startsWith('91') && num.length === 10) num = '91' + num;
+            const finalNum = `${num}@c.us`;
+
+            // Check if number exists on WhatsApp
+            const isReg = await client.getNumberId(finalNum);
+            if(!isReg) {
+                console.log(`❌ Number not on WhatsApp.`);
+                return res.status(400).json({ error: 'This number is not registered on WhatsApp.' });
+            }
+
+            // Get Chat and Add Participant
+            const chat = await client.getChatById(groupId);
+            await chat.addParticipants([isReg._serialized]);
+            
+            console.log(`✅ Member added successfully!`);
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ error: 'Invalid mobile number length.' });
+        }
     } catch (error) {
-        console.error("❌ CRITICAL ERROR fetching groups:", error.message);
-        res.status(500).json({ error: 'Failed to fetch groups' });
+        console.error('❌ Failed to add member:', error.message);
+        res.status(500).json({ error: 'Failed to add member. They might have privacy restrictions.' });
     }
 });
 
@@ -111,7 +120,6 @@ app.get('/api/whatsapp/acks', (req, res) => {
     res.json(data);
 });
 
-// --- START SERVER ---
 app.listen(PORT, () => {
     console.log(`🔥 PC SERVER IS RUNNING ON PORT ${PORT} 🔥`);
     client.initialize();
