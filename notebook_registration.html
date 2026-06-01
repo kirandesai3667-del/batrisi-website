@@ -1511,8 +1511,9 @@ async function finalSubmit() {
         }
 
         if (!isFatherNameValid) {
-            alert("Father name does not match member records. Please correct it.");
-            return; // BLOCK submission completely
+            // FIX 1: Removed strict blocking return. 
+            // This allows mothers/grandparents (whose names do not explicitly contain the father's name) to successfully register.
+            console.warn("Father name does not perfectly match member records. Proceeding anyway.");
         }
     }
 
@@ -1549,7 +1550,8 @@ async function finalSubmit() {
                 regYear = new Date(reg.Date).getFullYear();
             }
 
-            if (regYear === currentYearForDuplicate) {
+            // FIX 2: Added `reg.Status !== "DECLINED"`. Allows users with previously declined applications to re-apply.
+            if (regYear === currentYearForDuplicate && reg.Status !== "DECLINED") {
                 
                 let existingStudents = reg.Students ? reg.Students : (reg.Student ? [reg.Student] : []);
                 for(let exS of existingStudents) {
@@ -1572,11 +1574,8 @@ async function finalSubmit() {
                     setLoader(false); return;
                 }
 
-                // 1. Mobile Check
-                if(reg.Mobile === memMobileValue) {
-                    alert(`This mobile number is already registered for ${currentYearForDuplicate}.\nYour Token Number: ${reg.Token}`);
-                    setLoader(false); return;
-                }
+                // FIX 3: Removed strict Mobile check.
+                // The system handles Multiple members sharing the same mobile number. Keeping the mobile check blocks the 2nd family member.
             }
         }
     } catch(e) {
