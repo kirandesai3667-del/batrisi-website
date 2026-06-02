@@ -893,49 +893,87 @@
                     return;
                 }
 
+                // Connection Check Before Sync
+                try {
+                    let checkRes = await fetch(WA_API_URL + '/status');
+                    if(!checkRes.ok) throw new Error("Status check failed");
+                } catch(e) {
+                    alert("Cannot reach PC Server. Please check if your local WhatsApp Bot is running.");
+                    btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Auto-Sync All Members';
+                    btn.disabled = false;
+                    return;
+                }
+
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing to WhatsApp...';
+                printLog(`✅ Connected to WhatsApp Server.`, "success");
                 printLog(`⏳ Starting Auto-Sync for ${nativeParticipants.length} members to group "${groupName}". Please wait...`, "info");
 
                 let successCount = 0;
                 let failCount = 0;
+                let skipCount = 0;
                 let total = nativeParticipants.length;
 
                 for (let i = 0; i < total; i++) {
-                    let phone = nativeParticipants[i];
+                    let rawPhone = nativeParticipants[i];
                     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing (${i+1}/${total})...`;
 
-                    try {
-                        const response = await fetch(WA_API_URL + '/group/add-member', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ groupName: groupName, phone: phone })
-                        });
+                    // Validation & Cleaning
+                    let phoneStr = String(rawPhone || '').replace(/[^0-9]/g, '');
+                    if (!phoneStr || phoneStr.length < 10 || phoneStr.match(/^0+$/)) {
+                        skipCount++;
+                        printLog(`⚠️ [${i+1}/${total}] Invalid Number Skipped: ${rawPhone || 'Empty'}`, "warning");
+                        continue;
+                    }
+                    if (phoneStr.length === 10) phoneStr = '91' + phoneStr;
 
-                        if(!response.ok) {
-                            throw new Error(`Server rejected with status ${response.status}`);
+                    let retries = 2;
+                    let success = false;
+
+                    while(retries > 0 && !success) {
+                        try {
+                            printLog(`Adding member ${phoneStr}...`, "info");
+                            const response = await fetch(WA_API_URL + '/group/add-member', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ groupName: groupName, phone: phoneStr })
+                            });
+
+                            if(!response.ok) {
+                                throw new Error(`Server rejected with status ${response.status}`);
+                            }
+
+                            const data = await response.json();
+
+                            if(data.success) {
+                                success = true;
+                                successCount++;
+                                printLog(`✅ [${i+1}/${total}] Successfully added ${phoneStr}`, "success");
+                            } else {
+                                // If API returned explicit failure (not authorized, already in group), don't retry network
+                                printLog(`❌ [${i+1}/${total}] Failed to add ${phoneStr}: ${data.error || 'Unknown Error'}`, "error");
+                                failCount++;
+                                break; 
+                            }
+                        } catch(e) {
+                            retries--;
+                            if(retries > 0) {
+                                printLog(`🔄 Network Error for ${phoneStr}. Retrying...`, "warning");
+                                await new Promise(r => setTimeout(r, 2000)); // wait before retry
+                            } else {
+                                failCount++;
+                                printLog(`❌ [${i+1}/${total}] Network Error for ${phoneStr} after retries.`, "error");
+                            }
                         }
-
-                        const data = await response.json();
-
-                        if(data.success) {
-                            successCount++;
-                            printLog(`✅ [${i+1}/${total}] Successfully added ${phone}`, "success");
-                        } else {
-                            failCount++;
-                            printLog(`❌ [${i+1}/${total}] Failed to add ${phone}: ${data.error || 'Unknown Error'}`, "error");
-                        }
-                    } catch(e) {
-                        failCount++;
-                        printLog(`❌ [${i+1}/${total}] Network Error for ${phone}`, "error");
                     }
 
                     // Delay between additions to prevent WhatsApp from flagging/banning
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    if(success) await new Promise(resolve => setTimeout(resolve, 3500));
+                    else await new Promise(resolve => setTimeout(resolve, 1500));
                 }
 
-                showToast("Bulk Sync Started!");
-                printLog(`✅ Bulk Sync Finished: ${successCount} successfully added, ${failCount} failed.`, "success");
-                alert(`Auto-Sync Completed!\n\nSuccessfully Added: ${successCount}\nFailed: ${failCount}`);
+                showToast("Bulk Sync Finished!");
+                printLog(`✅ Sync Complete: ${successCount} added, ${failCount} failed, ${skipCount} skipped.`, "success");
+                alert(`Auto-Sync Completed!\n\nSuccessfully Added: ${successCount}\nSkipped (Invalid): ${skipCount}\nFailed: ${failCount}`);
 
             } catch(e) {
                 alert(`Error: Aapka PC Server band hai ya purana hai!\n\nDetails: ${e.message}`);
@@ -951,34 +989,42 @@
             if(!isWABotConnected) return alert("WhatsApp is not connected! Turn on PC Server.");
             
             let groupName = document.getElementById('wa-direct-group-name').value.trim();
-            let phone = document.getElementById('wa-direct-member-phone').value.trim();
+            let rawPhone = document.getElementById('wa-direct-member-phone').value.trim();
 
             if(!groupName) return alert("Please type the Exact WhatsApp Group Name above first.");
-            if(!phone) return alert("Please enter the mobile number to add.");
+            if(!rawPhone) return alert("Please enter the mobile number to add.");
+
+            let phoneStr = String(rawPhone || '').replace(/[^0-9]/g, '');
+            if (!phoneStr || phoneStr.length < 10 || phoneStr.match(/^0+$/)) {
+                return alert("Invalid mobile number entered.");
+            }
+            if (phoneStr.length === 10) phoneStr = '91' + phoneStr;
 
             const btn = document.getElementById('btn-direct-add-member');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
             try {
+                printLog(`Adding member ${phoneStr}...`, "info");
                 const response = await fetch(WA_API_URL + '/group/add-member', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupName: groupName, phone: phone })
+                    body: JSON.stringify({ groupName: groupName, phone: phoneStr })
                 });
 
                 const data = await response.json();
 
                 if(response.ok && data.success) {
                     showToast("Member successfully added to Group!");
-                    printLog(`✅ Successfully added ${phone} to group "${data.groupName}".`, "success");
+                    printLog(`✅ Successfully added ${phoneStr} to group "${groupName}".`, "success");
                     document.getElementById('wa-direct-member-phone').value = "";
                 } else {
                     alert("Failed: " + (data.error || "Unknown Error"));
-                    printLog(`❌ Failed to add ${phone}: ${data.error}`, "error");
+                    printLog(`❌ Failed to add ${phoneStr}: ${data.error}`, "error");
                 }
             } catch(e) {
                 alert("Network Error. Is PC Server running?");
+                printLog(`❌ Network Error for ${phoneStr}`, "error");
             }
 
             btn.innerHTML = 'Add';
@@ -1203,7 +1249,7 @@
         function printLog(msg, type="info") {
             const logsDiv = document.getElementById('wa-logs');
             const time = new Date().toLocaleTimeString();
-            let color = type === "error" ? "#ef4444" : type === "success" ? "#10b981" : type === "primary" ? "#ea580c" : "#a5b4fc";
+            let color = type === "error" ? "#ef4444" : type === "success" ? "#10b981" : type === "primary" ? "#ea580c" : type === "warning" ? "#f59e0b" : "#a5b4fc";
             logsDiv.innerHTML += `<div style="color:${color}; margin-bottom:5px;">[${time}] ${msg}</div>`;
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
