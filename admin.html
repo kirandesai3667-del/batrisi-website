@@ -894,29 +894,52 @@
                 }
 
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing to WhatsApp...';
+                printLog(`⏳ Starting Auto-Sync for ${nativeParticipants.length} members to group "${groupName}". Please wait...`, "info");
 
-                const response = await fetch(WA_API_URL + '/group/bulk-add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupName: groupName, phones: nativeParticipants })
-                });
+                let successCount = 0;
+                let failCount = 0;
+                let total = nativeParticipants.length;
 
-                if(!response.ok) {
-                    const text = await response.text();
-                    throw new Error(`Server rejected: ${text}`);
+                for (let i = 0; i < total; i++) {
+                    let phone = nativeParticipants[i];
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing (${i+1}/${total})...`;
+
+                    try {
+                        const response = await fetch(WA_API_URL + '/group/add-member', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ groupName: groupName, phone: phone })
+                        });
+
+                        if(!response.ok) {
+                            throw new Error(`Server rejected with status ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        if(data.success) {
+                            successCount++;
+                            printLog(`✅ [${i+1}/${total}] Successfully added ${phone}`, "success");
+                        } else {
+                            failCount++;
+                            printLog(`❌ [${i+1}/${total}] Failed to add ${phone}: ${data.error || 'Unknown Error'}`, "error");
+                        }
+                    } catch(e) {
+                        failCount++;
+                        printLog(`❌ [${i+1}/${total}] Network Error for ${phone}`, "error");
+                    }
+
+                    // Delay between additions to prevent WhatsApp from flagging/banning
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                 }
 
-                const data = await response.json();
+                showToast("Bulk Sync Started!");
+                printLog(`✅ Bulk Sync Finished: ${successCount} successfully added, ${failCount} failed.`, "success");
+                alert(`Auto-Sync Completed!\n\nSuccessfully Added: ${successCount}\nFailed: ${failCount}`);
 
-                if(data.success) {
-                    showToast("Bulk Sync Started!");
-                    printLog(`✅ Process started: Adding ${nativeParticipants.length} members to group "${groupName}". Check PC terminal for live progress.`, "success");
-                } else {
-                    alert("Failed: " + (data.error || "Unknown Error"));
-                    printLog(`❌ Failed to sync: ${data.error}`, "error");
-                }
             } catch(e) {
                 alert(`Error: Aapka PC Server band hai ya purana hai!\n\nDetails: ${e.message}`);
+                printLog(`❌ Sync Error: ${e.message}`, "error");
             }
 
             btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Auto-Sync All Members';
