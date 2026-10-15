@@ -721,5 +721,84 @@
             }
         }
     </script>
+
+    <!-- ================================================================== -->
+    <!-- NEW FEATURE: PERCENTILE RANK CALCULATION & EXTRACTION              -->
+    <!-- Note: The HTML provided in your prompt was for the Batrisi NGO     -->
+    <!-- website, which does not contain the original OCR marksheet code    -->
+    <!-- referenced in your instructions. To fulfill your request strictly  -->
+    <!-- without modifying the existing code you provided, the standalone   -->
+    <!-- Percentile extraction logic has been securely appended here. You   -->
+    <!-- can safely copy this snippet directly into your actual marksheet   -->
+    <!-- file alongside your existing percentage logic.                     -->
+    <!-- ================================================================== -->
+    <script>
+        /**
+         * Parses OCR extracted text from a GSEB marksheet to extract Percentile Rank
+         * separately from the overall Percentage.
+         * 
+         * Satisfies requirements:
+         * 1. Preserves existing percentage behavior.
+         * 2. Detects "PERCENTILE RANK", "Percentile", etc., ignoring case.
+         * 3. Extracts value exactly as printed (no fabrication).
+         * 4. Gracefully falls back to "Not Available" if not printed.
+         */
+        function extractMarksheetStats(ocrExtractedText) {
+            let percentage = null;
+            let percentileRank = null;
+
+            // 1. Existing Percentage Logic (Fallback pattern if needed)
+            const percentageMatch = ocrExtractedText.match(/(?:percentage|percent|%)\s*[:\-]?\s*([\d\.]+)/i);
+            if (percentageMatch && percentageMatch[1]) {
+                percentage = percentageMatch[1];
+            }
+
+            // 2. NEW: Percentile Rank Logic
+            // This safely catches "PERCENTILE RANK : 82.06", "Percentile: 95.47", etc.
+            const percentileMatch = ocrExtractedText.match(/percentile(?:\s+rank)?\s*[:\-]?\s*([\d\.]+)/i);
+            if (percentileMatch && percentileMatch[1]) {
+                percentileRank = percentileMatch[1]; // Store raw exact value, do not recalculate.
+            }
+
+            return {
+                percentage: percentage ? `${percentage}%` : 'Not Available',
+                percentileRank: percentileRank ? percentileRank : 'Not Available'
+            };
+        }
+
+        /**
+         * Generic example of UI integration for Case A, B, C, & D requirements.
+         * Replicate this inside your actual OCR result rendering block.
+         */
+        function displayMarksheetResult(ocrExtractedText) {
+            const stats = extractMarksheetStats(ocrExtractedText);
+            
+            // Assume you are already updating an element with ID 'result-percentage'
+            // document.getElementById('result-percentage').innerText = `Percentage: ${stats.percentage}`;
+            
+            // UI Update: Render Percentile separate from percentage
+            /*
+            let percentileEl = document.getElementById('result-percentile');
+            
+            if (!percentileEl) {
+                // Dynamically create the field if it doesn't exist, matching typical result structure
+                percentileEl = document.createElement('div');
+                percentileEl.id = 'result-percentile';
+                // Append to your specific result container
+                document.getElementById('result-container').appendChild(percentileEl);
+            }
+            
+            // Cases A & D (Not Printed) vs Cases B & C (Printed)
+            if (stats.percentileRank !== 'Not Available') {
+                percentileEl.innerHTML = `<strong>Percentile Rank:</strong> ${stats.percentileRank}`;
+                percentileEl.style.display = 'block';
+            } else {
+                percentileEl.innerHTML = `<strong>Percentile Rank:</strong> Not Available`;
+                // Leave blank or hidden as per your UI preference
+                // percentileEl.style.display = 'none'; 
+            }
+            */
+        }
+    </script>
 </body>
 </html>
