@@ -677,11 +677,40 @@
                 </div>
 
                 <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-top:10px; margin-bottom:15px;">
-                    <div class="fs-form-grid">
+                    <div class="form-group" style="margin-bottom:15px;">
+                        <label>Grading System *</label>
+                        <select id="iv_grading_system" onchange="toggleIVGradingSystem()" style="width:100%; padding:10px; border: 1px solid var(--border); border-radius: 8px; outline: none; background: white; font-family: inherit;">
+                            <option value="Marks">Marks-Based (Standard 1 to 12)</option>
+                            <option value="CPI">CPI-Based (Bachelor's / Degree)</option>
+                        </select>
+                    </div>
+
+                    <div id="iv_marks_container" class="fs-form-grid" style="margin-bottom:15px;">
                         <div class="form-group" style="margin-bottom:0;"><label>Marks Obtained *</label><input type="number" id="iv_marks" min="0" placeholder="e.g. 478" oninput="calcIVPercentage()"></div>
                         <div class="form-group" style="margin-bottom:0;"><label>Total Marks *</label><input type="number" id="iv_total" min="1" placeholder="e.g. 500" oninput="calcIVPercentage()"></div>
-                        <div class="form-group" style="margin-bottom:0; grid-column: 1 / -1;"><label>Automatic Percentage Calculation</label><input type="text" id="iv_percentage" placeholder="0.00%" style="background:#dcfce7; color:#166534; font-weight:bold; font-size:16px;" readonly></div>
                     </div>
+
+                    <div id="iv_cpi_container" class="fs-form-grid" style="display:none; margin-bottom:15px;">
+                        <div class="form-group" style="margin-bottom:0;"><label>CPI *</label><input type="number" id="iv_cpi" min="0" max="10" step="0.01" placeholder="e.g. 8.38" oninput="calcIVPercentage()"></div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Semester *</label>
+                            <select id="iv_semester" style="width:100%; padding:10px; border: 1px solid var(--border); border-radius: 8px; outline: none; background: white; font-family: inherit;">
+                                <option value="">Select Semester</option>
+                                <option value="1">Semester 1</option>
+                                <option value="2">Semester 2</option>
+                                <option value="3">Semester 3</option>
+                                <option value="4">Semester 4</option>
+                                <option value="5">Semester 5</option>
+                                <option value="6">Semester 6</option>
+                                <option value="7">Semester 7</option>
+                                <option value="8">Semester 8</option>
+                                <option value="9">Semester 9</option>
+                                <option value="10">Semester 10</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0; grid-column: 1 / -1;"><label>Automatic Percentage Calculation</label><input type="text" id="iv_percentage" placeholder="0.00%" style="background:#dcfce7; color:#166534; font-weight:bold; font-size:16px;" readonly></div>
                 </div>
 
                 <div class="form-group"><label>School / College / Institute Name *</label><input type="text" id="iv_schoolName" placeholder="Full name of institute"></div>
@@ -2373,21 +2402,50 @@
             else { containerEl.style.display = 'none'; }
         }
 
+        function toggleIVGradingSystem() {
+            const sys = document.getElementById('iv_grading_system').value;
+            if(sys === 'CPI') {
+                document.getElementById('iv_marks_container').style.display = 'none';
+                document.getElementById('iv_cpi_container').style.display = 'grid';
+            } else {
+                document.getElementById('iv_marks_container').style.display = 'grid';
+                document.getElementById('iv_cpi_container').style.display = 'none';
+            }
+            calcIVPercentage();
+        }
+
         function calcIVPercentage() {
-            let marks = parseFloat(document.getElementById('iv_marks').value);
-            let total = parseFloat(document.getElementById('iv_total').value);
+            const sys = document.getElementById('iv_grading_system').value;
             let percEl = document.getElementById('iv_percentage');
 
-            if (!isNaN(marks) && !isNaN(total) && total > 0 && marks >= 0) {
-                if (marks > total) {
-                    percEl.value = "Invalid (Marks > Total)";
+            if (sys === 'CPI') {
+                let cpi = parseFloat(document.getElementById('iv_cpi').value);
+                if (!isNaN(cpi) && cpi >= 0 && cpi <= 10) {
+                    let perc = (cpi - 0.5) * 10;
+                    if(perc < 0) perc = 0;
+                    percEl.value = perc.toFixed(2) + '%';
+                    percEl.style.color = "#166534";
+                } else if (!isNaN(cpi) && (cpi < 0 || cpi > 10)) {
+                    percEl.value = "Invalid CPI (0-10)";
                     percEl.style.color = "#ef4444";
                 } else {
-                    percEl.value = ((marks / total) * 100).toFixed(2) + '%';
-                    percEl.style.color = "#166534";
+                    percEl.value = "";
                 }
             } else {
-                percEl.value = "";
+                let marks = parseFloat(document.getElementById('iv_marks').value);
+                let total = parseFloat(document.getElementById('iv_total').value);
+
+                if (!isNaN(marks) && !isNaN(total) && total > 0 && marks >= 0) {
+                    if (marks > total) {
+                        percEl.value = "Invalid (Marks > Total)";
+                        percEl.style.color = "#ef4444";
+                    } else {
+                        percEl.value = ((marks / total) * 100).toFixed(2) + '%';
+                        percEl.style.color = "#166534";
+                    }
+                } else {
+                    percEl.value = "";
+                }
             }
         }
 
@@ -2432,7 +2490,7 @@
             const fields = [
                 'iv_formNumber', 'iv_formDate', 'iv_memberNumber', 'iv_memberName', 'iv_nativeName', 'iv_mobileNumber', 'iv_address',
                 'iv_studentName', 'iv_standard', 'iv_resultDate', 'iv_medium', 'iv_medium_other', 'iv_faculty', 'iv_faculty_other', 
-                'iv_marks', 'iv_total', 'iv_percentage', 'iv_schoolName'
+                'iv_grading_system', 'iv_cpi', 'iv_semester', 'iv_marks', 'iv_total', 'iv_percentage', 'iv_schoolName'
             ];
             
             fields.forEach(f => {
@@ -2480,14 +2538,21 @@
                     document.getElementById('iv_faculty').value = data.faculty || "";
                 }
 
+                document.getElementById('iv_grading_system').value = data.gradingSystem || "Marks";
+                document.getElementById('iv_cpi').value = data.cpi || "";
+                document.getElementById('iv_semester').value = data.semester || "";
                 document.getElementById('iv_marks').value = data.marks || "";
                 document.getElementById('iv_total').value = data.total || "";
                 document.getElementById('iv_percentage').value = data.percentage || "";
                 document.getElementById('iv_schoolName').value = data.schoolName || "";
+                
+                toggleIVGradingSystem();
 
             } else {
                 document.getElementById('iv_formNumber').value = generateIVFormNumber();
                 document.getElementById('iv_formDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('iv_grading_system').value = "Marks";
+                toggleIVGradingSystem();
             }
             
             document.getElementById('inamVitranModal').style.display = 'flex';
@@ -2507,11 +2572,25 @@
             }
 
             // Validation Check
-            let marks = parseFloat(document.getElementById('iv_marks').value) || 0;
-            let total = parseFloat(document.getElementById('iv_total').value) || 0;
-            if(total > 0 && marks > total) {
-                alert("Invalid math: Marks obtained cannot be greater than Total Marks.");
-                return;
+            let sys = document.getElementById('iv_grading_system').value;
+            if (sys === 'Marks') {
+                let marks = parseFloat(document.getElementById('iv_marks').value) || 0;
+                let total = parseFloat(document.getElementById('iv_total').value) || 0;
+                if(total > 0 && marks > total) {
+                    alert("Invalid math: Marks obtained cannot be greater than Total Marks.");
+                    return;
+                }
+            } else if (sys === 'CPI') {
+                let cpi = parseFloat(document.getElementById('iv_cpi').value);
+                if (isNaN(cpi) || cpi < 0 || cpi > 10) {
+                    alert("Invalid CPI: Must be between 0 and 10.");
+                    return;
+                }
+                let sem = document.getElementById('iv_semester').value;
+                if(!sem) {
+                    alert("Please select a semester for CPI grading.");
+                    return;
+                }
             }
             
             const btn = document.getElementById(saveAndNew ? 'ivSaveNewBtn' : 'ivSaveBtn');
@@ -2535,6 +2614,9 @@
                 resultDate: document.getElementById('iv_resultDate').value.trim(),
                 medium: finalMedium,
                 faculty: finalFaculty,
+                gradingSystem: sys,
+                cpi: document.getElementById('iv_cpi').value.trim(),
+                semester: document.getElementById('iv_semester').value.trim(),
                 marks: document.getElementById('iv_marks').value.trim(),
                 total: document.getElementById('iv_total').value.trim(),
                 percentage: document.getElementById('iv_percentage').value.trim(),
@@ -2581,6 +2663,25 @@
             
             document.getElementById('printDocumentTitle').innerText = "INAM VITRAN APPLICATION RECORD";
 
+            let resultHTML = '';
+            if (data.gradingSystem === 'CPI') {
+                resultHTML = `
+                    <tr><th>Result Date</th><td>${formatIndianDate(data.resultDate)}</td></tr>
+                    <tr><th>Grading System</th><td>CPI-Based</td></tr>
+                    <tr><th>Semester</th><td>Semester ${data.semester || '-'}</td></tr>
+                    <tr><th>CPI</th><td>${data.cpi || '-'}</td></tr>
+                    <tr><th>Percentage</th><td style="font-weight:bold; font-size:16px;">${data.percentage || '-'}</td></tr>
+                `;
+            } else {
+                resultHTML = `
+                    <tr><th>Result Date</th><td>${formatIndianDate(data.resultDate)}</td></tr>
+                    <tr><th>Grading System</th><td>Marks-Based</td></tr>
+                    <tr><th>Marks Obtained</th><td>${data.marks || '-'}</td></tr>
+                    <tr><th>Total Marks</th><td>${data.total || '-'}</td></tr>
+                    <tr><th>Percentage</th><td style="font-weight:bold; font-size:16px;">${data.percentage || '-'}</td></tr>
+                `;
+            }
+
             const printContent = `
                 <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
                     <div><b>Form Number:</b> ${data.formNumber || '-'}</div>
@@ -2607,10 +2708,7 @@
                 
                 <div class="print-section-title">RESULT & MARKS</div>
                 <table class="print-table" style="margin-top:0;">
-                    <tr><th>Result Date</th><td>${formatIndianDate(data.resultDate)}</td></tr>
-                    <tr><th>Marks Obtained</th><td>${data.marks || '-'}</td></tr>
-                    <tr><th>Total Marks</th><td>${data.total || '-'}</td></tr>
-                    <tr><th>Percentage</th><td style="font-weight:bold; font-size:16px;">${data.percentage || '-'}</td></tr>
+                    ${resultHTML}
                 </table>
                 
                 <div class="print-footer" style="margin-top: 80px;">
@@ -2633,7 +2731,7 @@
                 return;
             }
 
-            let csvContent = "Form Number,Form Date,Member Number,Member Name,Native (Village),Mobile Number,Address,Student Name,Standard,Medium,Faculty,Result Date,Marks Obtained,Total Marks,Percentage,Institute Name\n";
+            let csvContent = "Form Number,Form Date,Member Number,Member Name,Native (Village),Mobile Number,Address,Student Name,Standard,Medium,Faculty,Result Date,Grading System,Marks Obtained,Total Marks,CPI,Semester,Percentage,Institute Name\n";
 
             allInamVitranList.forEach(data => {
                 let row = [
@@ -2649,8 +2747,11 @@
                     data.medium || '',
                     data.faculty || '',
                     formatIndianDate(data.resultDate),
+                    data.gradingSystem || 'Marks',
                     data.marks || '',
                     data.total || '',
+                    data.cpi || '',
+                    data.semester || '',
                     data.percentage || '',
                     data.schoolName || ''
                 ];
