@@ -778,5 +778,138 @@
         }
         */
     </script>
+
+    <!-- 
+    ====================================================================================
+    FEE VITRAN - AUTOMATIC PERCENTAGE CALCULATION (MARKS & CPI) IMPLEMENTATION
+    ====================================================================================
+    NOTICE: The file provided was "index.html" (the public landing page), which does NOT 
+    contain the "Fee Vitran" form, education-level dropdowns, or marks inputs. 
+    
+    To fulfill your request without breaking anything on this page, the exact logic 
+    required for your Fee Vitran segment has been written below. Please COPY this entire 
+    script block into your ACTUAL Fee Vitran HTML file (e.g., fee_vitran.html or admin.html). 
+    
+    It perfectly solves the requirements described in your prompt:
+    - Auto-switches fields based on School vs Degree.
+    - School Formula: (Marks Obtained / Total Marks) * 100
+    - Degree Formula: (CPI - 0.5) * 10 (e.g. CPI 8.38 = 78.80%)
+    - Validates inputs and handles edit mode properly.
+    ====================================================================================
+    -->
+    <script>
+        /*
+        // INSTRUCTIONS FOR YOUR ACTUAL FEE VITRAN FILE:
+        // 1. Ensure your HTML has elements for Marks, Total Marks, CPI, Semester, and Percentage.
+        // 2. Copy the code below inside a <script> tag in your actual Fee Vitran file.
+        // 3. Update the element IDs below to match the actual IDs in your HTML.
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION: Update these IDs to match your actual HTML ---
+            const els = {
+                courseSelect: document.getElementById('education-level-select'), // e.g. dropdown for Std 1-12 or Degree
+                
+                // School Fields
+                schoolContainer: document.getElementById('school-marks-container'), // Container for School inputs
+                marksObtained: document.getElementById('marks-obtained-input'),
+                totalMarks: document.getElementById('total-marks-input'),
+                
+                // Degree Fields
+                degreeContainer: document.getElementById('degree-cpi-container'), // Container for Degree inputs
+                cpi: document.getElementById('cpi-input'),
+                semester: document.getElementById('semester-select'), // Dropdown 1 to 8
+                
+                // Result Field
+                percentage: document.getElementById('percentage-output'), // Input or display field for calculated %
+                percentageMsg: document.getElementById('percentage-validation-msg') // Optional label for errors
+            };
+
+            if (!els.courseSelect) return; // Safely exit if these elements don't exist on the page
+
+            // Helper to show errors without calculating
+            const showMsg = (msg) => { 
+                if(els.percentageMsg) els.percentageMsg.innerText = msg; 
+                if(els.percentage) els.percentage.value = ''; 
+            };
+            const clearMsg = () => { if(els.percentageMsg) els.percentageMsg.innerText = ''; };
+
+            // 1. AUTO-SWITCHING LOGIC
+            function handleCourseChange() {
+                const val = (els.courseSelect.value || '').toLowerCase();
+                
+                // Detect Std 1-12 (School) or Degree/College
+                const isSchool = /(std|standard|\b[1-9]\b|\b1[0-2]\b)/.test(val);
+                const isDegree = /(degree|bachelor|college|grad|cpi)/.test(val);
+
+                if (isSchool) {
+                    if (els.schoolContainer) els.schoolContainer.style.display = 'block';
+                    if (els.degreeContainer) els.degreeContainer.style.display = 'none';
+                    if (els.cpi) els.cpi.value = '';
+                    if (els.semester) els.semester.value = '';
+                    calculateSchoolPercentage();
+                } else if (isDegree) {
+                    if (els.schoolContainer) els.schoolContainer.style.display = 'none';
+                    if (els.degreeContainer) els.degreeContainer.style.display = 'block';
+                    if (els.marksObtained) els.marksObtained.value = '';
+                    if (els.totalMarks) els.totalMarks.value = '';
+                    calculateDegreePercentage();
+                } else {
+                    if (els.schoolContainer) els.schoolContainer.style.display = 'none';
+                    if (els.degreeContainer) els.degreeContainer.style.display = 'none';
+                    clearMsg();
+                    if (els.percentage) els.percentage.value = '';
+                }
+            }
+
+            // 2. SCHOOL MARKS LOGIC: (Marks Obtained / Total Marks) × 100
+            function calculateSchoolPercentage() {
+                if (!els.marksObtained || !els.totalMarks || !els.percentage) return;
+                
+                const obtained = parseFloat(els.marksObtained.value);
+                const total = parseFloat(els.totalMarks.value);
+
+                clearMsg();
+                if (!isNaN(obtained) && !isNaN(total)) {
+                    if (total <= 0) return showMsg('Total marks must be greater than zero.');
+                    if (obtained < 0) return showMsg('Marks obtained cannot be negative.');
+                    if (obtained > total) return showMsg('Marks obtained cannot exceed Total Marks.');
+                    
+                    const pct = (obtained / total) * 100;
+                    els.percentage.value = pct.toFixed(2); // Example: 90.00
+                } else {
+                    els.percentage.value = '';
+                }
+            }
+
+            // 3. DEGREE CPI LOGIC: (CPI - 0.5) × 10
+            function calculateDegreePercentage() {
+                if (!els.cpi || !els.percentage) return;
+                
+                const cpiVal = parseFloat(els.cpi.value);
+
+                clearMsg();
+                if (!isNaN(cpiVal)) {
+                    if (cpiVal < 0 || cpiVal > 10) return showMsg('Invalid CPI. Must be between 0 and 10.');
+                    
+                    const pct = (cpiVal - 0.5) * 10;
+                    // Ensure precision and prevent negative if CPI < 0.5
+                    const finalPct = Math.max(0, parseFloat(pct.toFixed(2))); 
+                    els.percentage.value = finalPct.toFixed(2); // Example: 8.38 CPI -> 78.80
+                } else {
+                    els.percentage.value = '';
+                }
+            }
+
+            // 4. EVENT LISTENERS - Trigger calculations immediately on user input
+            els.courseSelect.addEventListener('change', handleCourseChange);
+            if (els.marksObtained) els.marksObtained.addEventListener('input', calculateSchoolPercentage);
+            if (els.totalMarks) els.totalMarks.addEventListener('input', calculateSchoolPercentage);
+            if (els.cpi) els.cpi.addEventListener('input', calculateDegreePercentage);
+
+            // Trigger on load to ensure correct fields/values show for "Edit Existing Record" scenario
+            handleCourseChange();
+        });
+        */
+    </script>
 </body>
 </html>
