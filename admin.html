@@ -229,6 +229,15 @@
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <input type="text" id="ivSearchInput" placeholder="Search Form/Member/Student..." style="padding:10px; border-radius:8px; border:1px solid var(--border); outline:none; min-width:250px;" onkeyup="searchInamVitranRecords()">
+                    
+                    <!-- NEW CATEGORY FILTERS (AUTO ORGANIZED) -->
+                    <select id="ivStandardFilter" style="padding:10px; border-radius:8px; border:1px solid var(--border); outline:none; font-weight:600; color:var(--primary);" onchange="searchInamVitranRecords()">
+                        <option value="ALL">All Standards</option>
+                    </select>
+                    <select id="ivMediumFilter" style="padding:10px; border-radius:8px; border:1px solid var(--border); outline:none; font-weight:600; color:#10b981;" onchange="searchInamVitranRecords()">
+                        <option value="ALL">All Mediums</option>
+                    </select>
+                    
                     <button class="btn-add" onclick="openInamVitranModal()"><i class="fa-solid fa-plus"></i> New Form</button>
                     
                     <button class="btn-add" style="background:#10b981;" onclick="exportInamVitranToCSV()"><i class="fa-solid fa-file-excel"></i> Download Excel</button>
@@ -2345,8 +2354,11 @@
                     inamVitranDataObj[doc.id] = d;
                     allInamVitranList.push({ id: doc.id, ...d });
                     
+                    let safeStandard = d.standard ? d.standard.trim() : 'Uncategorized';
+                    let safeMedium = d.medium ? d.medium.trim() : 'Uncategorized';
+
                     html += `
-                        <tr class="iv-row-item">
+                        <tr class="iv-row-item" data-standard="${safeStandard.toLowerCase()}" data-medium="${safeMedium.toLowerCase()}">
                             <td>
                                 <span style="background:#e2e8f0; padding:3px 8px; border-radius:20px; font-weight:700; color:var(--dark); font-size:12px;">${d.formNumber || '-'}</span><br>
                                 <small style="color:var(--text-muted); display:inline-block; margin-top:5px;"><i class="fa-solid fa-calendar-days"></i> ${formatIndianDate(d.formDate)}</small>
@@ -2370,15 +2382,48 @@
                 
                 if (html === "") html = '<tr><td colspan="4" style="text-align:center;">No Inam Vitran records found.</td></tr>';
                 body.innerHTML = html;
+
+                // --- INAM VITRAN AUTO CATEGORIZATION LOGIC START ---
+                let uniqueStandards = [...new Set(allInamVitranList.map(item => item.standard ? item.standard.trim() : 'Uncategorized'))].sort();
+                let uniqueMediums = [...new Set(allInamVitranList.map(item => item.medium ? item.medium.trim() : 'Uncategorized'))].sort();
+                
+                let currentStd = document.getElementById('ivStandardFilter').value;
+                let stdHtml = '<option value="ALL">All Standards</option>';
+                uniqueStandards.forEach(std => stdHtml += `<option value="${std}">${std}</option>`);
+                document.getElementById('ivStandardFilter').innerHTML = stdHtml;
+                if(currentStd && currentStd !== "ALL" && uniqueStandards.includes(currentStd)) document.getElementById('ivStandardFilter').value = currentStd;
+
+                let currentMed = document.getElementById('ivMediumFilter').value;
+                let medHtml = '<option value="ALL">All Mediums</option>';
+                uniqueMediums.forEach(med => medHtml += `<option value="${med}">${med}</option>`);
+                document.getElementById('ivMediumFilter').innerHTML = medHtml;
+                if(currentMed && currentMed !== "ALL" && uniqueMediums.includes(currentMed)) document.getElementById('ivMediumFilter').value = currentMed;
+
+                setTimeout(searchInamVitranRecords, 50); // Re-apply filters automatically on data refresh
+                // --- INAM VITRAN AUTO CATEGORIZATION LOGIC END ---
             });
         }
 
         function searchInamVitranRecords() {
             const query = document.getElementById('ivSearchInput').value.toLowerCase();
+            const stdFilter = document.getElementById('ivStandardFilter').value;
+            const medFilter = document.getElementById('ivMediumFilter').value;
+
             const rows = document.querySelectorAll('.iv-row-item');
             rows.forEach(row => {
-                if (row.innerText.toLowerCase().includes(query)) { row.style.display = ''; } 
-                else { row.style.display = 'none'; }
+                const textMatch = row.innerText.toLowerCase().includes(query);
+                
+                const rowStd = row.getAttribute('data-standard');
+                const rowMed = row.getAttribute('data-medium');
+
+                const stdMatch = (stdFilter === 'ALL' || rowStd === stdFilter.toLowerCase());
+                const medMatch = (medFilter === 'ALL' || rowMed === medFilter.toLowerCase());
+
+                if (textMatch && stdMatch && medMatch) { 
+                    row.style.display = ''; 
+                } else { 
+                    row.style.display = 'none'; 
+                }
             });
         }
 
