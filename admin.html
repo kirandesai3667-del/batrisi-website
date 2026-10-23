@@ -624,25 +624,38 @@
             <!-- Panel 1: Form & Member Fetch -->
             <div class="fs-panel blue">
                 <div class="fs-panel-header"><i class="fa-solid fa-file-invoice"></i> 1. Form & Member Details</div>
+                
+                <div class="form-group" style="margin-bottom:15px; border-bottom:1px solid #cbd5e1; padding-bottom:10px;">
+                    <label style="display:inline-block; margin-right:15px; font-weight:600;"><input type="radio" name="iv_memberType" value="existing" checked onchange="toggleIVMemberType()"> Existing Master Member</label>
+                    <label style="display:inline-block; font-weight:600;"><input type="radio" name="iv_memberType" value="new" onchange="toggleIVMemberType()"> New Member Entry</label>
+                </div>
+
                 <div class="fs-form-grid">
                     <div class="form-group"><label>Form Number *</label><input type="text" id="iv_formNumber" placeholder="Auto-generated" style="background:#e2e8f0; font-weight:bold;" readonly></div>
                     <div class="form-group"><label>Form Date *</label><input type="date" id="iv_formDate"></div>
                 </div>
 
-                <div class="form-group" style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;">
-                    <div style="flex:1;">
-                        <label>Enter Member Number *</label>
-                        <input type="text" id="iv_memberNumber" placeholder="Search Member ID..." onblur="autoFetchIVMemberDetails()" style="font-size:16px; font-weight:bold; border-color:#3b82f6;">
+                <div class="fs-form-grid" style="align-items:flex-end; margin-top:10px; margin-bottom:10px;">
+                    <div class="form-group" style="margin-bottom:0; display:flex; gap:15px; align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label>Enter Member Number *</label>
+                            <input type="text" id="iv_memberNumber" placeholder="Search Member ID..." onblur="autoFetchIVMemberDetails()" oninput="this.value = this.value.toUpperCase()" style="font-size:16px; font-weight:bold; border-color:#3b82f6;">
+                        </div>
+                        <button id="iv_fetchBtn" onclick="autoFetchIVMemberDetails()" class="btn-add" style="height: 44px; background:#3b82f6;"><i class="fa-solid fa-magnifying-glass"></i> Fetch Data</button>
                     </div>
-                    <button onclick="autoFetchIVMemberDetails()" class="btn-add" style="height: 44px; background:#3b82f6;"><i class="fa-solid fa-magnifying-glass"></i> Fetch Data</button>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Reference Member Number</label>
+                        <input type="text" id="iv_refMemberNumber" placeholder="Ref. Member No." oninput="this.value = this.value.toUpperCase()" style="font-size:16px; font-weight:bold; border-color:#8b5cf6;">
+                    </div>
                 </div>
+                
                 <div id="iv_fetch_msg" style="font-size:13px; font-weight:600; margin-bottom:15px; min-height:18px;"></div>
                 
                 <div class="fs-form-grid">
-                    <div class="form-group"><label>Member Name</label><input type="text" id="iv_memberName" readonly style="background:#e2e8f0; color:#475569;"></div>
-                    <div class="form-group"><label>Native Name (Gaam)</label><input type="text" id="iv_nativeName" readonly style="background:#e2e8f0; color:#475569;"></div>
+                    <div class="form-group"><label>Member Name</label><input type="text" id="iv_memberName" readonly style="background:#e2e8f0; color:#475569;" oninput="this.value = this.value.toUpperCase()"></div>
+                    <div class="form-group"><label>Native Name (Gaam)</label><input type="text" id="iv_nativeName" readonly style="background:#e2e8f0; color:#475569;" oninput="this.value = this.value.toUpperCase()"></div>
                     <div class="form-group"><label>Mobile Number</label><input type="text" id="iv_mobileNumber" readonly style="background:#e2e8f0; color:#475569;"></div>
-                    <div class="form-group"><label>Address</label><input type="text" id="iv_address" readonly style="background:#e2e8f0; color:#475569;"></div>
+                    <div class="form-group"><label>Address</label><input type="text" id="iv_address" readonly style="background:#e2e8f0; color:#475569;" oninput="this.value = this.value.toUpperCase()"></div>
                 </div>
             </div>
 
@@ -650,10 +663,10 @@
             <div class="fs-panel purple" style="margin-bottom:0;">
                 <div class="fs-panel-header"><i class="fa-solid fa-user-graduate"></i> 2. Student & Education Details</div>
                 
-                <div class="form-group"><label>Student Full Name (As per Marksheet) *</label><input type="text" id="iv_studentName"></div>
+                <div class="form-group"><label>Student Full Name (As per Marksheet) *</label><input type="text" id="iv_studentName" oninput="this.value = this.value.toUpperCase()"></div>
 
                 <div class="fs-form-grid">
-                    <div class="form-group"><label>Standard (Std.) *</label><input type="text" id="iv_standard" placeholder="e.g. 10th, 12th, B.Com"></div>
+                    <div class="form-group"><label>Standard (Std.) *</label><input type="text" id="iv_standard" placeholder="e.g. 10th, 12th, B.Com" oninput="this.value = this.value.toUpperCase()"></div>
                     <div class="form-group"><label>Result Date *</label><input type="date" id="iv_resultDate"></div>
                     
                     <div class="form-group">
@@ -665,7 +678,7 @@
                             <option value="Hindi">Hindi</option>
                             <option value="Other">Other (Please Specify)</option>
                         </select>
-                        <div id="iv_medium_other_container" style="display:none; margin-top:5px;"><input type="text" id="iv_medium_other" placeholder="Specify Medium..."></div>
+                        <div id="iv_medium_other_container" style="display:none; margin-top:5px;"><input type="text" id="iv_medium_other" placeholder="Specify Medium..." oninput="this.value = this.value.toUpperCase()"></div>
                     </div>
 
                     <div class="form-group">
@@ -681,7 +694,7 @@
                             <option value="Medical">Medical</option>
                             <option value="Other">Other (Please Specify)</option>
                         </select>
-                        <div id="iv_faculty_other_container" style="display:none; margin-top:5px;"><input type="text" id="iv_faculty_other" placeholder="Specify Stream..."></div>
+                        <div id="iv_faculty_other_container" style="display:none; margin-top:5px;"><input type="text" id="iv_faculty_other" placeholder="Specify Stream..." oninput="this.value = this.value.toUpperCase()"></div>
                     </div>
                 </div>
 
@@ -722,7 +735,7 @@
                     <div class="form-group" style="margin-bottom:0; grid-column: 1 / -1;"><label>Automatic Percentage Calculation</label><input type="text" id="iv_percentage" placeholder="0.00%" style="background:#dcfce7; color:#166534; font-weight:bold; font-size:16px;" readonly></div>
                 </div>
 
-                <div class="form-group"><label>School / College / Institute Name *</label><input type="text" id="iv_schoolName" placeholder="Full name of institute"></div>
+                <div class="form-group"><label>School / College / Institute Name *</label><input type="text" id="iv_schoolName" placeholder="Full name of institute" oninput="this.value = this.value.toUpperCase()"></div>
             </div>
 
             <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:25px; flex-wrap:wrap;">
@@ -2494,7 +2507,35 @@
             }
         }
 
+        function toggleIVMemberType() {
+            const isNew = document.querySelector('input[name="iv_memberType"]:checked').value === 'new';
+            const nameEl = document.getElementById('iv_memberName');
+            const nativeEl = document.getElementById('iv_nativeName');
+            const mobileEl = document.getElementById('iv_mobileNumber');
+            const addrEl = document.getElementById('iv_address');
+            const fetchBtn = document.getElementById('iv_fetchBtn');
+            const msgEl = document.getElementById('iv_fetch_msg');
+            
+            if(isNew) {
+                nameEl.readOnly = false; nameEl.style.background = '#ffffff';
+                nativeEl.readOnly = false; nativeEl.style.background = '#ffffff';
+                mobileEl.readOnly = false; mobileEl.style.background = '#ffffff';
+                addrEl.readOnly = false; addrEl.style.background = '#ffffff';
+                fetchBtn.style.display = 'none';
+                msgEl.innerHTML = '';
+            } else {
+                nameEl.readOnly = true; nameEl.style.background = '#e2e8f0';
+                nativeEl.readOnly = true; nativeEl.style.background = '#e2e8f0';
+                mobileEl.readOnly = true; mobileEl.style.background = '#e2e8f0';
+                addrEl.readOnly = true; addrEl.style.background = '#e2e8f0';
+                fetchBtn.style.display = 'block';
+            }
+        }
+
         async function autoFetchIVMemberDetails() {
+            const isNew = document.querySelector('input[name="iv_memberType"]:checked').value === 'new';
+            if (isNew) return; // Do not auto-fetch for new members
+
             const memNo = document.getElementById('iv_memberNumber').value.trim();
             const msgEl = document.getElementById('iv_fetch_msg');
             
@@ -2533,7 +2574,7 @@
             document.getElementById('iv_fetch_msg').innerText = "";
             
             const fields = [
-                'iv_formNumber', 'iv_formDate', 'iv_memberNumber', 'iv_memberName', 'iv_nativeName', 'iv_mobileNumber', 'iv_address',
+                'iv_formNumber', 'iv_formDate', 'iv_memberNumber', 'iv_refMemberNumber', 'iv_memberName', 'iv_nativeName', 'iv_mobileNumber', 'iv_address',
                 'iv_studentName', 'iv_standard', 'iv_resultDate', 'iv_medium', 'iv_medium_other', 'iv_faculty', 'iv_faculty_other', 
                 'iv_grading_system', 'iv_cpi', 'iv_semester', 'iv_marks', 'iv_total', 'iv_percentage', 'iv_schoolName'
             ];
@@ -2549,10 +2590,18 @@
             if (id && inamVitranDataObj[id]) {
                 const data = inamVitranDataObj[id];
                 
+                if (data.isNewMember) {
+                    document.querySelector('input[name="iv_memberType"][value="new"]').checked = true;
+                } else {
+                    document.querySelector('input[name="iv_memberType"][value="existing"]').checked = true;
+                }
+                toggleIVMemberType();
+
                 // Form & Member
                 document.getElementById('iv_formNumber').value = data.formNumber || "";
                 document.getElementById('iv_formDate').value = data.formDate || "";
                 document.getElementById('iv_memberNumber').value = data.memberNumber || "";
+                document.getElementById('iv_refMemberNumber').value = data.refMemberNumber || "";
                 document.getElementById('iv_memberName').value = data.memberName || "";
                 document.getElementById('iv_nativeName').value = data.nativeName || "";
                 document.getElementById('iv_mobileNumber').value = data.mobileNumber || "";
@@ -2597,6 +2646,8 @@
                 document.getElementById('iv_formNumber').value = generateIVFormNumber();
                 document.getElementById('iv_formDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('iv_grading_system').value = "Marks";
+                document.querySelector('input[name="iv_memberType"][value="existing"]').checked = true;
+                toggleIVMemberType();
                 toggleIVGradingSystem();
             }
             
@@ -2610,6 +2661,7 @@
         async function saveInamVitranRecord(saveAndNew = false) {
             const memberNumber = document.getElementById('iv_memberNumber').value.trim();
             const studentName = document.getElementById('iv_studentName').value.trim();
+            const isNewMember = document.querySelector('input[name="iv_memberType"]:checked').value === 'new';
             
             if (!memberNumber || !studentName) {
                 alert("Member Number and Student Name are required!");
@@ -2643,29 +2695,45 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
             btn.disabled = true;
 
+            if (isNewMember) {
+                try {
+                    const snap = await db.collection('members').where('memberNumber', '==', memberNumber).get();
+                    if (!snap.empty) {
+                        alert("This Member Number already exists in the Master Database. Please select 'Existing Master Member' or enter a different new number.");
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+                } catch(e) {
+                    console.log("Error checking existing member DB:", e);
+                }
+            }
+
             let finalMedium = document.getElementById('iv_medium').value === 'Other' ? document.getElementById('iv_medium_other').value.trim() : document.getElementById('iv_medium').value;
             let finalFaculty = document.getElementById('iv_faculty').value === 'Other' ? document.getElementById('iv_faculty_other').value.trim() : document.getElementById('iv_faculty').value;
             
             const dataObj = {
                 formNumber: document.getElementById('iv_formNumber').value.trim(),
                 formDate: document.getElementById('iv_formDate').value.trim(),
-                memberNumber: memberNumber,
-                memberName: document.getElementById('iv_memberName').value.trim(),
-                nativeName: document.getElementById('iv_nativeName').value.trim(),
+                memberNumber: memberNumber.toUpperCase(),
+                refMemberNumber: document.getElementById('iv_refMemberNumber').value.trim().toUpperCase(),
+                isNewMember: isNewMember,
+                memberName: document.getElementById('iv_memberName').value.trim().toUpperCase(),
+                nativeName: document.getElementById('iv_nativeName').value.trim().toUpperCase(),
                 mobileNumber: document.getElementById('iv_mobileNumber').value.trim(),
-                address: document.getElementById('iv_address').value.trim(),
-                studentName: studentName,
-                standard: document.getElementById('iv_standard').value.trim(),
+                address: document.getElementById('iv_address').value.trim().toUpperCase(),
+                studentName: studentName.toUpperCase(),
+                standard: document.getElementById('iv_standard').value.trim().toUpperCase(),
                 resultDate: document.getElementById('iv_resultDate').value.trim(),
-                medium: finalMedium,
-                faculty: finalFaculty,
+                medium: finalMedium.toUpperCase(),
+                faculty: finalFaculty.toUpperCase(),
                 gradingSystem: sys,
                 cpi: document.getElementById('iv_cpi').value.trim(),
                 semester: document.getElementById('iv_semester').value.trim(),
                 marks: document.getElementById('iv_marks').value.trim(),
                 total: document.getElementById('iv_total').value.trim(),
                 percentage: document.getElementById('iv_percentage').value.trim(),
-                schoolName: document.getElementById('iv_schoolName').value.trim()
+                schoolName: document.getElementById('iv_schoolName').value.trim().toUpperCase()
             };
             
             try {
@@ -2736,6 +2804,7 @@
                 <div class="print-section-title">MEMBER INFORMATION</div>
                 <table class="print-table" style="margin-top:0;">
                     <tr><th>Member Number</th><td>${data.memberNumber || '-'}</td></tr>
+                    <tr><th>Reference Member No.</th><td>${data.refMemberNumber || '-'}</td></tr>
                     <tr><th>Member Name</th><td>${data.memberName || '-'}</td></tr>
                     <tr><th>Native (Village)</th><td>${data.nativeName || '-'}</td></tr>
                     <tr><th>Mobile Number</th><td>${data.mobileNumber || '-'}</td></tr>
@@ -2776,13 +2845,14 @@
                 return;
             }
 
-            let csvContent = "Form Number,Form Date,Member Number,Member Name,Native (Village),Mobile Number,Address,Student Name,Standard,Medium,Faculty,Result Date,Grading System,Marks Obtained,Total Marks,CPI,Semester,Percentage,Institute Name\n";
+            let csvContent = "Form Number,Form Date,Member Number,Reference Member Number,Member Name,Native (Village),Mobile Number,Address,Student Name,Standard,Medium,Faculty,Result Date,Grading System,Marks Obtained,Total Marks,CPI,Semester,Percentage,Institute Name\n";
 
             allInamVitranList.forEach(data => {
                 let row = [
                     data.formNumber || '',
                     formatIndianDate(data.formDate),
                     data.memberNumber || '',
+                    data.refMemberNumber || '',
                     data.memberName || '',
                     data.nativeName || '',
                     data.mobileNumber || '',
