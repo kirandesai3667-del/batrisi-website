@@ -11,6 +11,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- ADDED SHEETJS FOR EXCEL WORKBOOK GENERATION -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root { --primary: #ea580c; --dark: #0f172a; --sidebar: #1e293b; --bg: #f1f5f9; --border: #e2e8f0; }
@@ -2845,6 +2847,8 @@
                 return;
             }
 
+            // ====== ORIGINAL CSV LOGIC PRESERVED ======
+            /*
             let csvContent = "Form Number,Form Date,Member Number,Reference Member Number,Member Name,Native (Village),Mobile Number,Address,Student Name,Standard,Medium,Faculty,Result Date,Grading System,Marks Obtained,Total Marks,CPI,Semester,Percentage,Institute Name\n";
 
             allInamVitranList.forEach(data => {
@@ -2886,6 +2890,118 @@
             
             logAdminActivity("Exported Inam Vitran", `Exported ${allInamVitranList.length} records to Excel/CSV.`);
             showToast("Exported Successfully!");
+            */
+            // ===========================================
+
+            // ====== NEW MULTI-SHEET EXCEL EXPORT LOGIC ======
+            if (typeof XLSX === 'undefined') {
+                alert("Excel library is loading, please wait and try again in a few seconds.");
+                return;
+            }
+
+            const headers = ["Form Number", "Form Date", "Member Number", "Reference Member Number", "Member Name", "Native (Village)", "Mobile Number", "Address", "Student Name", "Standard", "Medium", "Faculty", "Result Date", "Grading System", "Marks Obtained", "Total Marks", "CPI", "Semester", "Percentage", "Institute Name"];
+
+            const targetSheets = [
+                "STD 1 - Guj", "STD 1 - Eng", "STD 2 - Guj", "STD 2 - Eng",
+                "STD 3 - Guj", "STD 3 - Eng", "STD 4 - Guj", "STD 4 - Eng",
+                "STD 5 - Guj", "STD 5 - Eng", "STD 6 - Guj", "STD 6 - Eng",
+                "STD 7 - Guj", "STD 7 - Eng", "STD 8 - Guj", "STD 8 - Eng",
+                "STD 9 - Guj", "STD 9 - Eng", "STD 10 - Guj", "STD 10 - Eng",
+                "STD 11 - Com - Guj", "STD 11 - Com - Eng", "STD 11 - Sci - Guj", "STD 11 - Sci - Eng",
+                "STD 12 - Com - Guj", "STD 12 - Com - Eng", "STD 12 - Sci - Guj", "STD 12 - Sci - Eng",
+                "Others"
+            ];
+
+            let sheetData = {};
+            targetSheets.forEach(s => sheetData[s] = [headers]);
+
+            allInamVitranList.forEach(data => {
+                let row = [
+                    data.formNumber || '',
+                    formatIndianDate(data.formDate),
+                    data.memberNumber || '',
+                    data.refMemberNumber || '',
+                    data.memberName || '',
+                    data.nativeName || '',
+                    data.mobileNumber || '',
+                    data.address || '',
+                    data.studentName || '',
+                    data.standard || '',
+                    data.medium || '',
+                    data.faculty || '',
+                    formatIndianDate(data.resultDate),
+                    data.gradingSystem || 'Marks',
+                    data.marks || '',
+                    data.total || '',
+                    data.cpi || '',
+                    data.semester || '',
+                    data.percentage || '',
+                    data.schoolName || ''
+                ];
+
+                let stdRaw = String(data.standard || '').toUpperCase();
+                let medRaw = String(data.medium || '').toUpperCase();
+                let facRaw = String(data.faculty || '').toUpperCase();
+
+                let stdNum = null;
+                let match = stdRaw.match(/\b(1[0-2]|[1-9])\b/);
+                if (match) {
+                    stdNum = parseInt(match[1]);
+                } else {
+                    if (stdRaw.includes('FIRST') || stdRaw.includes('1ST')) stdNum = 1;
+                    else if (stdRaw.includes('SECOND') || stdRaw.includes('2ND')) stdNum = 2;
+                    else if (stdRaw.includes('THIRD') || stdRaw.includes('3RD')) stdNum = 3;
+                    else if (stdRaw.includes('FOURTH') || stdRaw.includes('4TH')) stdNum = 4;
+                    else if (stdRaw.includes('FIFTH') || stdRaw.includes('5TH')) stdNum = 5;
+                    else if (stdRaw.includes('SIXTH') || stdRaw.includes('6TH')) stdNum = 6;
+                    else if (stdRaw.includes('SEVENTH') || stdRaw.includes('7TH')) stdNum = 7;
+                    else if (stdRaw.includes('EIGHTH') || stdRaw.includes('8TH')) stdNum = 8;
+                    else if (stdRaw.includes('NINTH') || stdRaw.includes('9TH')) stdNum = 9;
+                    else if (stdRaw.includes('TENTH') || stdRaw.includes('10TH')) stdNum = 10;
+                    else if (stdRaw.includes('ELEVENTH') || stdRaw.includes('11TH')) stdNum = 11;
+                    else if (stdRaw.includes('TWELFTH') || stdRaw.includes('12TH')) stdNum = 12;
+                }
+
+                let med = null;
+                if (medRaw.includes('ENG')) med = 'Eng';
+                else if (medRaw.includes('GUJ')) med = 'Guj';
+
+                let fac = null;
+                if (facRaw.includes('COM')) fac = 'Com';
+                else if (facRaw.includes('SCI')) fac = 'Sci';
+
+                let sheetName = 'Others';
+
+                if (stdNum >= 1 && stdNum <= 10 && med) {
+                    sheetName = `STD ${stdNum} - ${med}`;
+                } else if ((stdNum === 11 || stdNum === 12) && med && fac) {
+                    sheetName = `STD ${stdNum} - ${fac} - ${med}`;
+                }
+
+                sheetData[sheetName].push(row);
+            });
+
+            let wb = XLSX.utils.book_new();
+
+            targetSheets.forEach(sheetName => {
+                let ws = XLSX.utils.aoa_to_sheet(sheetData[sheetName]);
+                
+                // Adjust column widths automatically
+                const wscols = [
+                    {wch: 15}, {wch: 12}, {wch: 15}, {wch: 22}, {wch: 25}, 
+                    {wch: 18}, {wch: 15}, {wch: 35}, {wch: 25}, {wch: 12}, 
+                    {wch: 12}, {wch: 15}, {wch: 12}, {wch: 15}, {wch: 15}, 
+                    {wch: 15}, {wch: 10}, {wch: 10}, {wch: 15}, {wch: 30}
+                ];
+                ws['!cols'] = wscols;
+
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            });
+
+            XLSX.writeFile(wb, "Student_Data_STD_1_to_12.xlsx");
+
+            logAdminActivity("Exported Inam Vitran to Excel", `Exported ${allInamVitranList.length} records to multi-sheet Excel.`);
+            showToast("Excel Workbook Exported Successfully!");
         }
 
         initCMS('events', 'Events');
