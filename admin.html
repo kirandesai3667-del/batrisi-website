@@ -2893,7 +2893,7 @@
             */
             // ===========================================
 
-            // ====== NEW MULTI-SHEET EXCEL EXPORT LOGIC ======
+            // ====== NEW SINGLE-SHEET EXCEL EXPORT LOGIC ======
             if (typeof XLSX === 'undefined') {
                 alert("Excel library is loading, please wait and try again in a few seconds.");
                 return;
@@ -2901,19 +2901,7 @@
 
             const headers = ["Form Number", "Form Date", "Member Number", "Reference Member Number", "Member Name", "Native (Village)", "Mobile Number", "Address", "Student Name", "Standard", "Medium", "Faculty", "Result Date", "Grading System", "Marks Obtained", "Total Marks", "CPI", "Semester", "Percentage", "Institute Name"];
 
-            const targetSheets = [
-                "STD 1 - Guj", "STD 1 - Eng", "STD 2 - Guj", "STD 2 - Eng",
-                "STD 3 - Guj", "STD 3 - Eng", "STD 4 - Guj", "STD 4 - Eng",
-                "STD 5 - Guj", "STD 5 - Eng", "STD 6 - Guj", "STD 6 - Eng",
-                "STD 7 - Guj", "STD 7 - Eng", "STD 8 - Guj", "STD 8 - Eng",
-                "STD 9 - Guj", "STD 9 - Eng", "STD 10 - Guj", "STD 10 - Eng",
-                "STD 11 - Com - Guj", "STD 11 - Com - Eng", "STD 11 - Sci - Guj", "STD 11 - Sci - Eng",
-                "STD 12 - Com - Guj", "STD 12 - Com - Eng", "STD 12 - Sci - Guj", "STD 12 - Sci - Eng",
-                "Others"
-            ];
-
-            let sheetData = {};
-            targetSheets.forEach(s => sheetData[s] = [headers]);
+            let groups = {};
 
             allInamVitranList.forEach(data => {
                 let row = [
@@ -2943,6 +2931,8 @@
                 let medRaw = String(data.medium || '').toUpperCase();
                 let facRaw = String(data.faculty || '').toUpperCase();
 
+                let sectionName = "DHARMIK EXAMS & OTHERS";
+
                 let stdNum = null;
                 let match = stdRaw.match(/\b(1[0-2]|[1-9])\b/);
                 if (match) {
@@ -2962,45 +2952,97 @@
                     else if (stdRaw.includes('TWELFTH') || stdRaw.includes('12TH')) stdNum = 12;
                 }
 
-                let med = null;
-                if (medRaw.includes('ENG')) med = 'Eng';
-                else if (medRaw.includes('GUJ')) med = 'Guj';
+                let med = "OTHERS";
+                if (medRaw.includes('ENG')) med = 'ENGLISH MEDIUM';
+                else if (medRaw.includes('GUJ')) med = 'GUJARATI MEDIUM';
+                else if (medRaw.includes('HIN')) med = 'HINDI MEDIUM';
 
-                let fac = null;
-                if (facRaw.includes('COM')) fac = 'Com';
-                else if (facRaw.includes('SCI')) fac = 'Sci';
+                let fac = "GENERAL";
+                if (facRaw.includes('COM')) fac = 'COMMERCE';
+                else if (facRaw.includes('SCI')) fac = 'SCIENCE';
+                else if (facRaw.includes('ART')) fac = 'ARTS';
 
-                let sheetName = 'Others';
-
-                if (stdNum >= 1 && stdNum <= 10 && med) {
-                    sheetName = `STD ${stdNum} - ${med}`;
-                } else if ((stdNum === 11 || stdNum === 12) && med && fac) {
-                    sheetName = `STD ${stdNum} - ${fac} - ${med}`;
+                // Categorization Logic
+                if (stdRaw.includes('DHARMIK') || medRaw.includes('DHARMIK') || facRaw.includes('DHARMIK') || data.schoolName?.toUpperCase().includes('DHARMIK')) {
+                    sectionName = "DHARMIK EXAMS";
+                } else if (stdNum >= 1 && stdNum <= 10) {
+                    sectionName = `STD ${stdNum} - ${med}`;
+                } else if (stdNum === 11 || stdNum === 12) {
+                    sectionName = `STD ${stdNum} - ${fac} - ${med}`;
+                } else {
+                    sectionName = "DHARMIK EXAMS & OTHERS";
                 }
 
-                sheetData[sheetName].push(row);
+                if (!groups[sectionName]) {
+                    groups[sectionName] = [];
+                }
+                groups[sectionName].push(row);
+            });
+
+            // Order the sections properly
+            let orderedKeys = [];
+            for (let i = 1; i <= 10; i++) {
+                orderedKeys.push(`STD ${i} - GUJARATI MEDIUM`);
+                orderedKeys.push(`STD ${i} - ENGLISH MEDIUM`);
+                orderedKeys.push(`STD ${i} - HINDI MEDIUM`);
+                orderedKeys.push(`STD ${i} - OTHERS`);
+            }
+            for (let i = 11; i <= 12; i++) {
+                ['COMMERCE', 'SCIENCE', 'ARTS', 'GENERAL'].forEach(stream => {
+                    ['GUJARATI MEDIUM', 'ENGLISH MEDIUM', 'HINDI MEDIUM', 'OTHERS'].forEach(medium => {
+                        orderedKeys.push(`STD ${i} - ${stream} - ${medium}`);
+                    });
+                });
+            }
+            orderedKeys.push("DHARMIK EXAMS");
+            orderedKeys.push("DHARMIK EXAMS & OTHERS");
+
+            let finalAoA = [];
+            let allKeys = Object.keys(groups);
+            
+            // First append ordered keys
+            orderedKeys.forEach(key => {
+                if (allKeys.includes(key) && groups[key].length > 0) {
+                    if (finalAoA.length > 0) {
+                        finalAoA.push([]); // Empty row for spacing
+                        finalAoA.push([]);
+                    }
+                    finalAoA.push([`SECTION: ${key}`]); // Section header
+                    finalAoA.push(headers); // Column headers
+                    groups[key].forEach(row => finalAoA.push(row));
+                }
+            });
+
+            // Then append any remaining unexpected keys (just in case)
+            let remainingKeys = allKeys.filter(k => !orderedKeys.includes(k)).sort();
+            remainingKeys.forEach(key => {
+                if (groups[key].length > 0) {
+                    if (finalAoA.length > 0) {
+                        finalAoA.push([]); 
+                        finalAoA.push([]);
+                    }
+                    finalAoA.push([`SECTION: ${key}`]); 
+                    finalAoA.push(headers); 
+                    groups[key].forEach(row => finalAoA.push(row));
+                }
             });
 
             let wb = XLSX.utils.book_new();
+            let ws = XLSX.utils.aoa_to_sheet(finalAoA);
+            
+            // Adjust column widths automatically
+            const wscols = [
+                {wch: 15}, {wch: 12}, {wch: 15}, {wch: 22}, {wch: 25}, 
+                {wch: 18}, {wch: 15}, {wch: 35}, {wch: 25}, {wch: 12}, 
+                {wch: 12}, {wch: 15}, {wch: 12}, {wch: 15}, {wch: 15}, 
+                {wch: 15}, {wch: 10}, {wch: 10}, {wch: 15}, {wch: 30}
+            ];
+            ws['!cols'] = wscols;
 
-            targetSheets.forEach(sheetName => {
-                let ws = XLSX.utils.aoa_to_sheet(sheetData[sheetName]);
-                
-                // Adjust column widths automatically
-                const wscols = [
-                    {wch: 15}, {wch: 12}, {wch: 15}, {wch: 22}, {wch: 25}, 
-                    {wch: 18}, {wch: 15}, {wch: 35}, {wch: 25}, {wch: 12}, 
-                    {wch: 12}, {wch: 15}, {wch: 12}, {wch: 15}, {wch: 15}, 
-                    {wch: 15}, {wch: 10}, {wch: 10}, {wch: 15}, {wch: 30}
-                ];
-                ws['!cols'] = wscols;
+            XLSX.utils.book_append_sheet(wb, ws, "All Student Data");
+            XLSX.writeFile(wb, "BATRISI_ALL_STUDENT_DATA.xlsx");
 
-                XLSX.utils.book_append_sheet(wb, ws, sheetName);
-            });
-
-            XLSX.writeFile(wb, "Student_Data_STD_1_to_12.xlsx");
-
-            logAdminActivity("Exported Inam Vitran to Excel", `Exported ${allInamVitranList.length} records to multi-sheet Excel.`);
+            logAdminActivity("Exported Inam Vitran to Excel", `Exported ${allInamVitranList.length} records to a single Excel sheet.`);
             showToast("Excel Workbook Exported Successfully!");
         }
 
